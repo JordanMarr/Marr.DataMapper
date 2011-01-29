@@ -1,4 +1,4 @@
-/*  Copyright (C) 2008 - 2010 Jordan Marr
+/*  Copyright (C) 2008 - 2011 Jordan Marr
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
