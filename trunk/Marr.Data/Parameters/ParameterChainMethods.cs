@@ -44,10 +44,10 @@ namespace Marr.Data.Parameters
 
             // Check for a registered IConverter
             Type valueType = value.GetType();
-            var converters = MapRepository.Instance.TypeConverters;
-            if (converters.ContainsKey(valueType))
+
+            IConverter converter = MapRepository.Instance.GetConverter(valueType);
+            if (converter != null)
             {
-                IConverter converter = converters[valueType];
                 Parameter.Value = converter.ToDB(value);
             }
             else

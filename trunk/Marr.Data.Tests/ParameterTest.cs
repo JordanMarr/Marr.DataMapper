@@ -90,6 +90,38 @@ namespace Marr.Data.Tests
             Assert.AreEqual(true, paramChain.Parameter.Value);
         }
 
+        private enum GenderType
+        {
+            Male,
+            Female
+        }
+
+        [TestMethod]
+        public void AddParameter_When_Enum_Converter_Is_Registerd_Should_Use_For_Any_Enums()
+        {
+            // Arrange
+            IDataMapper db = CreateDataMapper();
+            DbParameter parameter = MockRepository.GenerateStub<DbParameter>();
+            _command
+                .Expect(c => c.CreateParameter())
+                .Return(parameter);
+
+            DbParameterCollection parameters = MockRepository.GenerateStub<DbParameterCollection>();
+
+            _command
+                .Expect(c => c.Parameters)
+                .Return(parameters);
+
+            // Register a BooleanYNConverter
+            MapRepository.Instance.RegisterTypeConverter(typeof(Enum), new Converters.EnumStringConverter());
+
+            // Act
+            ParameterChainMethods paramChain = db.AddParameter("GenderType", GenderType.Male);
+
+            // Assert
+            Assert.AreEqual("Male", paramChain.Parameter.Value);
+            Assert.IsInstanceOfType(paramChain.Parameter.Value, typeof(string));
+        }
 
     }
 }

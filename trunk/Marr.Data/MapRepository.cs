@@ -246,6 +246,10 @@ namespace Marr.Data
 
         /// <summary>
         /// Checks for a type converter (if one exists).
+        /// 1) Checks for a converter specified for a specific column.
+        /// 2) Checks for a converter registered for the current columns data type.
+        /// 3) Checks to see if a converter is registered for all enums (type of Enum) if the current column is an enum.
+        /// 4) Checks to see if a converter is registered for all objects (type of Object).
         /// </summary>
         /// <param name="dataMap">The current data map.</param>
         /// <returns>Returns an IConverter object or null if one does not exist.</returns>
@@ -256,10 +260,31 @@ namespace Marr.Data
                 // Column specific converter
                 return ConverterFactory.Create(dataMap.ColumnInfo.Converter);
             }
-            else if (TypeConverters.ContainsKey(dataMap.FieldType))
+            else
+            {
+                return GetConverter(dataMap.FieldType);
+            }
+        }
+
+        /// <summary>
+        /// Checks for a type converter (if one exists).
+        /// 1) Checks for a converter registered for the current columns data type.
+        /// 2) Checks to see if a converter is registered for all enums (type of Enum) if the current column is an enum.
+        /// 3) Checks to see if a converter is registered for all objects (type of Object).
+        /// </summary>
+        /// <param name="dataMap">The current data map.</param>
+        /// <returns>Returns an IConverter object or null if one does not exist.</returns>
+        internal IConverter GetConverter(Type dataType)
+        {
+            if (TypeConverters.ContainsKey(dataType))
             {
                 // User registered type converter
-                return TypeConverters[dataMap.FieldType];
+                return TypeConverters[dataType];
+            }
+            else if (TypeConverters.ContainsKey(typeof(Enum)) && dataType.IsEnum)
+            {
+                // A converter is registered to handled enums
+                return TypeConverters[typeof(Enum)];
             }
             else if (TypeConverters.ContainsKey(typeof(object)))
             {
