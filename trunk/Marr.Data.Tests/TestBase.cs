@@ -81,5 +81,19 @@ namespace Marr.Data.Tests
 
             return new DataMapper(dbFactory, "connString...");
         }
+
+        protected IDataMapper CreateDataMapper()
+        {
+            _command = MockRepository.GenerateMock<DbCommand>();
+
+            _connection = MockRepository.GenerateMock<DbConnection>();
+            _connection.Expect(c => c.CreateCommand()).Return(_command);
+
+            DbProviderFactory dbFactory = MockRepository.GenerateMock<DbProviderFactory>();
+            dbFactory.Expect(f => f.CreateConnection()).Return(_connection);
+
+            return new DataMapper(dbFactory, "connString...");
+        }
+
     }
 }

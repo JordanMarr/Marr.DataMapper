@@ -39,13 +39,15 @@ namespace Marr.Data.Parameters
             Parameter.ParameterName = parameterName;
 
             // Convert null to DBNull.Value
-            if (Parameter.Value == null) Parameter.Value = DBNull.Value;
+            if (value == null) 
+                value = DBNull.Value;
 
             // Check for a registered IConverter
+            Type valueType = value.GetType();
             var converters = MapRepository.Instance.TypeConverters;
-            if (converters.ContainsKey(value.GetType()))
+            if (converters.ContainsKey(valueType))
             {
-                IConverter converter = converters[value.GetType()];
+                IConverter converter = converters[valueType];
                 Parameter.Value = converter.ToDB(value);
             }
             else
