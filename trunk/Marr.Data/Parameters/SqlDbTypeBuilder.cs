@@ -67,10 +67,10 @@ namespace Marr.Data.Parameters
                 return SqlDbType.Variant;
         }
 
-        public void SetDbType(System.Data.IDbDataParameter param, ColumnMap column)
+        public void SetDbType(System.Data.IDbDataParameter param, Enum dbType)
         {
             var sqlDbParam = (SqlParameter)param;
-            sqlDbParam.SqlDbType = (SqlDbType)column.DBType;
+            sqlDbParam.SqlDbType = (SqlDbType)dbType;
         }
     }
 }

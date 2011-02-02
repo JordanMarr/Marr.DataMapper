@@ -48,6 +48,9 @@ namespace Marr.Data
 
         private readonly static MapRepository _instance = new MapRepository();
 
+        /// <summary>
+        /// Gets a reference to the singleton MapRepository.
+        /// </summary>
         public static MapRepository Instance
         {
             get
@@ -302,6 +305,11 @@ namespace Marr.Data
 
         #region - DbTypeBuilder -
 
+        /// <summary>
+        /// Gets or sets the IDBTypeBuilder that is responsible for converting parameter DbTypes based on the parameter value.
+        /// Defaults to use the DbTypeBuilder.  
+        /// You can replace this with a more specific builder if you want more control over the way the parameter types are set.
+        /// </summary>
         public IDbTypeBuilder DbTypeBuilder
         {
             get { return _dbTypeBuilder; }

@@ -16,6 +16,7 @@ using System.Runtime.InteropServices;
 
 // Share internals
 [assembly: InternalsVisibleTo("Marr.Data.Relationships")]
+[assembly: InternalsVisibleTo("Marr.Data.Tests")]
 
 
 // Setting ComVisible to false makes the types in this assembly not visible 

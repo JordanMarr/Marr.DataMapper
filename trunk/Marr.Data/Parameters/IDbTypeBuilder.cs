@@ -29,6 +29,6 @@ namespace Marr.Data.Parameters
     public interface IDbTypeBuilder
     {
         Enum GetDbType(Type type);
-        void SetDbType(IDbDataParameter param, ColumnMap column);
+        void SetDbType(IDbDataParameter param, Enum dbType);
     }
 }

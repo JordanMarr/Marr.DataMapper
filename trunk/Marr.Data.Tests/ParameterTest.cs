@@ -14,6 +14,16 @@ namespace Marr.Data.Tests
     [TestClass]
     public class ParameterTest : TestBase
     {
+        [TestInitialize]
+        public void Init()
+        {
+            // Reset MapRepository default values before each test
+            MapRepository.Instance.DbTypeBuilder = new DbTypeBuilder();
+            MapRepository.Instance.TypeConverters.Clear();
+        }
+
+        #region - AddParameter Tests -
+
         [TestMethod]
         public void AddParameter_Null_Should_Convert_To_DBNull_Value()
         {
@@ -67,7 +77,7 @@ namespace Marr.Data.Tests
         }
 
         [TestMethod]
-        public void AddParameter_When_No_IConverter_Is_Registerd_Should_Use_Assign_Straight_Value()
+        public void AddParameter_When_No_IConverter_Is_Registered_Should_Use_Assign_Straight_Value()
         {
             // Arrange
             IDataMapper db = CreateDataMapper();
@@ -97,7 +107,7 @@ namespace Marr.Data.Tests
         }
 
         [TestMethod]
-        public void AddParameter_When_Enum_Converter_Is_Registerd_Should_Use_For_Any_Enums()
+        public void AddParameter_When_Enum_Converter_Is_Registered_Should_Use_For_Any_Enums()
         {
             // Arrange
             IDataMapper db = CreateDataMapper();
@@ -123,5 +133,96 @@ namespace Marr.Data.Tests
             Assert.IsInstanceOfType(paramChain.Parameter.Value, typeof(string));
         }
 
+        #endregion
+
+        #region - AddParameter with default DbTypeBuilder -
+
+        [TestMethod]
+        public void AddParameter_DbType_Should_Be_String()
+        {
+            SqlParamChecker(DbType.String, "Value");
+        }
+
+        [TestMethod]
+        public void AddParameter_DbType_Should_Be_Decimal()
+        {
+            SqlParamChecker(DbType.Decimal, 1.1m);
+        }
+
+        [TestMethod]
+        public void AddParameter_DbType_Should_Be_Bit()
+        {
+            SqlParamChecker(DbType.Boolean, true);
+        }
+
+        [TestMethod]
+        public void AddParameter_DbType_Should_Be_Int()
+        {
+            SqlParamChecker(DbType.Int32, 1);
+        }
+
+        private void SqlParamChecker<T>(DbType expectedDbType, T inputValue)
+        {
+            // Arrange
+            IDataMapper db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=myServerAddress;Initial Catalog=myDataBase;User Id=myUsername;Password=myPassword;");
+
+            // Use the DbTypeBuilder (default)
+            //MapRepository.Instance.DbTypeBuilder = new DbTypeBuilder();
+
+            // Act
+            var dbParam = db.AddParameter("P1", inputValue).Parameter as System.Data.SqlClient.SqlParameter;
+
+            // Assert
+            Assert.IsNotNull(dbParam, "The param should be of type SqlParameter.");
+            Assert.IsNotNull(dbParam.DbType, "DataMappper should set the DbType property.");
+            Assert.AreEqual(expectedDbType, dbParam.DbType);
+        }
+
+        #endregion
+
+        #region - AddParameter with SqlDbTypeBuilder -
+
+        [TestMethod]
+        public void AddParameter_SqlDbType_Should_Be_Varchar()
+        {
+            SqlParamChecker(SqlDbType.VarChar, "Value");
+        }
+
+        [TestMethod]
+        public void AddParameter_SqlDbType_Should_Be_Decimal()
+        {
+            SqlParamChecker(SqlDbType.Decimal, 1.1m);
+        }
+
+        [TestMethod]
+        public void AddParameter_SqlDbType_Should_Be_Bit()
+        {
+            SqlParamChecker(SqlDbType.Bit, true);
+        }
+
+        [TestMethod]
+        public void AddParameter_SqlDbType_Should_Be_Int()
+        {
+            SqlParamChecker(SqlDbType.Int, 1);
+        }
+
+        private void SqlParamChecker<T>(SqlDbType expectedDbType, T inputValue)
+        {
+            // Arrange
+            IDataMapper db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=myServerAddress;Initial Catalog=myDataBase;User Id=myUsername;Password=myPassword;");
+            
+            // Specify that the SqlDbTypeBuilder is used
+            MapRepository.Instance.DbTypeBuilder = new SqlDbTypeBuilder();
+
+            // Act
+            var sqlParam = db.AddParameter("P1", inputValue).Parameter as System.Data.SqlClient.SqlParameter;
+
+            // Assert
+            Assert.IsNotNull(sqlParam, "The param should be of type SqlParameter.");
+            Assert.IsNotNull(sqlParam.SqlDbType, "DataMappper should set the SqlDbType property.");
+            Assert.AreEqual(expectedDbType, sqlParam.SqlDbType);
+        }
+
+        #endregion
     }
 }

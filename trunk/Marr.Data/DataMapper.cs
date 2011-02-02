@@ -757,18 +757,17 @@ namespace Marr.Data
 
                 param.Value = val == null ? DBNull.Value : val; // Convert nulls to DBNulls
 
-                Type fieldType = columnMap.FieldType;
-
                 var repos = MapRepository.Instance;
 
                 IConverter conversion = repos.GetConverter(columnMap);
                 if (conversion != null)
                 {
-                    fieldType = conversion.DbType;
                     param.Value = conversion.ToDB(param.Value);
                 }
 
-                repos.DbTypeBuilder.SetDbType(param, columnMap);
+                // Set the appropriate DbType property depending on the parameter type
+                // Note: the columnMap.DBType property was set when the ColumnMap was created
+                repos.DbTypeBuilder.SetDbType(param, columnMap.DBType);
 
                 Parameters.Add(param);
             }

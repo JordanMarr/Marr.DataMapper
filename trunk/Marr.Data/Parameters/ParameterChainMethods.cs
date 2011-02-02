@@ -42,9 +42,9 @@ namespace Marr.Data.Parameters
             if (value == null) 
                 value = DBNull.Value;
 
-            // Check for a registered IConverter
             Type valueType = value.GetType();
 
+            // Check for a registered IConverter
             IConverter converter = MapRepository.Instance.GetConverter(valueType);
             if (converter != null)
             {
@@ -54,6 +54,13 @@ namespace Marr.Data.Parameters
             {
                 Parameter.Value = value;
             }
+
+            // Determine the correct DbType based on the passed in value type
+            IDbTypeBuilder typeBuilder = MapRepository.Instance.DbTypeBuilder;
+            Enum dbType = typeBuilder.GetDbType(valueType);
+
+            // Set the appropriate DbType property depending on the parameter type
+            typeBuilder.SetDbType(Parameter, dbType);
 
             command.Parameters.Add(Parameter);
         }
@@ -101,13 +108,7 @@ namespace Marr.Data.Parameters
             Parameter.Scale = scale;
             return this;
         }
-
-        public ParameterChainMethods IsNullable(DbType dbType)
-        {
-            Parameter.DbType = dbType;
-            return this;
-        }
-
+        
         public ParameterChainMethods Name(string name)
         {
             Parameter.ParameterName = name;

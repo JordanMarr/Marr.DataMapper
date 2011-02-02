@@ -63,10 +63,10 @@ namespace Marr.Data.Parameters
                 return OleDbType.Variant;
         }
 
-        public void SetDbType(System.Data.IDbDataParameter param, ColumnMap column)
+        public void SetDbType(System.Data.IDbDataParameter param, Enum dbType)
         {
             var oleDbParam = (OleDbParameter)param;
-            oleDbParam.OleDbType = (OleDbType)column.DBType;
+            oleDbParam.OleDbType = (OleDbType)dbType;
         }
     }
 }
