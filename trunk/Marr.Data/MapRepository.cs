@@ -43,6 +43,11 @@ namespace Marr.Data
             _relationships = new Dictionary<Type, RelationshipCollection>();
             _reflector = new FastReflection.CachedReflector();
             TypeConverters = new Dictionary<Type, IConverter>();
+            
+            // Register a default type converter for Enums
+            TypeConverters.Add(typeof(Enum), new Converters.EnumStringConverter());
+
+            // Register a default IDbTypeBuilder
             _dbTypeBuilder = new Parameters.DbTypeBuilder();
         }
 
