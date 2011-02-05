@@ -38,7 +38,23 @@ namespace Marr.Data.QGen
             {
                 throw new NotImplementedException("An IQuery class has not yet been implemented for this database provider.");
             }
-
         }
+
+        public static IQuery CreateDeleteQuery(Mapping.ColumnMapCollection columns, DbParameterCollection parameters)
+        {
+            if (parameters.Count == 0)
+                throw new Exception("Must contain at least one parameter.");
+
+            string paramType = parameters[0].GetType().Name.ToLower();
+            if (paramType.Contains("sqlparameter"))
+            {
+                return new SqlServerDeleteQuery(columns, parameters);
+            }
+            else
+            {
+                throw new NotImplementedException("An IQuery class has not yet been implemented for this database provider.");
+            }
+        }
+
     }
 }

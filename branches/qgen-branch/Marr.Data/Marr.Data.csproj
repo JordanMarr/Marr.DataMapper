@@ -92,6 +92,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QGen\IQuery.cs" />
     <Compile Include="QGen\QueryFactory.cs" />
+    <Compile Include="QGen\SqlServerDeleteQuery.cs" />
     <Compile Include="QGen\SqlServerInsertQuery.cs" />
     <Compile Include="QGen\SqlServerUpdateQuery.cs" />
     <Compile Include="ReflectionHelper.cs" />

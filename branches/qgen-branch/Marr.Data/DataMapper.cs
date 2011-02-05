@@ -717,6 +717,40 @@ namespace Marr.Data
 
         #endregion
 
+        #region - Delete -
+
+        public int AutoDelete<T>(T entity, string schema, string target)
+        {
+            if (entity == null)
+                throw new ArgumentNullException("entity");
+
+            if (string.IsNullOrEmpty(target))
+                throw new ArgumentNullException("target");
+
+            var mappingHelper = new MappingHelper(Command);
+            ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
+            mappingHelper.CreateParameters<T>(entity, mappings, false, true);
+            IQuery query = QueryFactory.CreateDeleteQuery(mappings, Command.Parameters);
+            Command.CommandText = query.Generate(schema, target);
+
+            int rowsAffected = 0;
+
+            try
+            {
+                OpenConnection();
+                rowsAffected = Command.ExecuteNonQuery();
+                mappingHelper.SetOutputValues<T>(entity, mappings.OutputFields);
+            }
+            finally
+            {
+                CloseConnection();
+            }
+
+            return rowsAffected;
+        }
+
+        #endregion
+
         #region - Events -
 
         public event EventHandler<LoadEntityEventArgs> LoadEntity;
