@@ -100,10 +100,12 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="NuGet\NuGet.exe" />
+    <None Include="NuGet\NuGetDeleteFromRepo.bat" />
+    <None Include="NuGet\NuGetPushToRepo.bat" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>"$(SolutionDir)Marr.Data\NuGet\Tools\NuGet.exe" pack "marrdatamapper.nuspec"  /o "$(SolutionDir)"</PostBuildEvent>
+    <PostBuildEvent>"$(ProjectDir)NuGet\NuGet.exe" pack "$(ProjectDir)NuGet\marrdatamapper.nuspec" -b "$(ProjectDir)"  -o "$(ProjectDir)$(OutDir)"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>
