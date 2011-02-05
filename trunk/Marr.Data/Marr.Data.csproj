@@ -92,7 +92,25 @@
     <Compile Include="ReflectionHelper.cs" />
     <Compile Include="SqlModesEnum.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="NuGet\Tools\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="NuGet\marrdatamapper.nuspec" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="NuGet\NuGet.exe" />
+    <None Include="NuGet\NuGetDeleteFromRepo.bat" />
+    <None Include="NuGet\NuGetPushToRepo.bat" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>"$(ProjectDir)NuGet\NuGet.exe" pack "$(ProjectDir)NuGet\marrdatamapper.nuspec" -b "$(ProjectDir)"  -o "$(ProjectDir)$(OutDir)"</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
