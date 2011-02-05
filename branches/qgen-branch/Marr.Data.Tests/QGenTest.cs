@@ -33,7 +33,7 @@ namespace Marr.Data.Tests
 
             mappingHelper.CreateParameters<Person>(person, columns, false, true);
 
-            SqlServerUpdateQuery query = new SqlServerUpdateQuery(columns, command.Parameters);
+            IQuery query = new SqlServerUpdateQuery(columns, command.Parameters);
 
             // Act
             string queryText = query.Generate("dbo", "People");
@@ -46,6 +46,35 @@ namespace Marr.Data.Tests
             Assert.IsTrue(queryText.Contains("[IsHappy]"));
             Assert.IsTrue(queryText.Contains("[BirthDate]"));
             Assert.IsTrue(queryText.Contains("WHERE [ID]=@ID"));
+        }
+
+        [TestMethod]
+        public void SqlServerInsertQuery_ShouldGenQuery()
+        {
+            // Arrange
+            var command = new System.Data.SqlClient.SqlCommand();
+            ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
+            MappingHelper mappingHelper = new MappingHelper(command);
+
+            Person person = new Person();
+            person.ID = 1;
+            person.Name = "Jordan";
+            person.Age = 33;
+            person.IsHappy = true;
+            person.BirthDate = new DateTime(1977, 1, 22);
+
+            mappingHelper.CreateParameters<Person>(person, columns, false, true);
+
+            IQuery query = new SqlServerInsertQuery(columns, command.Parameters);
+
+            // Act
+            string queryText = query.Generate("dbo", "People");
+
+            // Assert
+            Assert.IsNotNull(queryText);
+            Assert.IsTrue(queryText.Contains("INSERT INTO [dbo].[People]"));
+            Assert.IsFalse(queryText.Contains("[ID]"), "Should not contain [ID] column since it is marked as AutoIncrement");
+            Assert.IsTrue(queryText.Contains("[Name]"), "Should contain the name column");
         }
     }
 }

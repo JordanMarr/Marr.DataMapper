@@ -602,7 +602,7 @@ namespace Marr.Data
             var mappingHelper = new MappingHelper(Command);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
-            IQuery query = new SqlServerUpdateQuery(mappings, Command.Parameters);
+            IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command.Parameters);
             Command.CommandText = query.Generate(schema, target);
 
             int rowsAffected = 0;
@@ -652,6 +652,37 @@ namespace Marr.Data
         #endregion
 
         #region - Insert -
+
+        public int AutoInsert<T>(T entity, string schema, string target)
+        {
+            if (entity == null)
+                throw new ArgumentNullException("entity");
+
+            if (string.IsNullOrEmpty(target))
+                throw new ArgumentNullException("target");
+
+            var mappingHelper = new MappingHelper(Command);
+            ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
+            mappingHelper.CreateParameters<T>(entity, mappings, false, true);
+            IQuery query = QueryFactory.CreateInsertQuery(mappings, Command.Parameters);
+            Command.CommandText = query.Generate(schema, target);
+
+            int rowsAffected = 0;
+
+            try
+            {
+                OpenConnection();
+                object returnValue = Command.ExecuteScalar();
+                mappingHelper.SetOutputValues<T>(entity, mappings.OutputFields);
+                mappingHelper.SetOutputValues<T>(entity, mappings.ReturnValues, returnValue);
+            }
+            finally
+            {
+                CloseConnection();
+            }
+
+            return rowsAffected;
+        }
 
         public int Insert<T>(T entity, string sql)
         {
