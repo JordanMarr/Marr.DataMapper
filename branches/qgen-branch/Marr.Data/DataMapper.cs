@@ -25,6 +25,7 @@ using System.Linq;
 using Marr.Data.Mapping;
 using Marr.Data.Converters;
 using Marr.Data.Parameters;
+using Marr.Data.QGen;
 
 namespace Marr.Data
 {
@@ -421,6 +422,8 @@ namespace Marr.Data
             try
             {
                 OpenConnection();
+                var mappingHelper = new MappingHelper(Command);
+
                 using (DbDataReader reader = Command.ExecuteReader())
                 {
                     if (reader.Read())
@@ -433,9 +436,9 @@ namespace Marr.Data
                         else
                         {
                             if (ent == null)
-                                ent = (T)CreateAndLoadEntity<T>(mappings, reader);
+                                ent = (T)mappingHelper.CreateAndLoadEntity<T>(mappings, reader);
                             else
-                                LoadExistingEntity(mappings, reader, ent);
+                                mappingHelper.LoadExistingEntity(mappings, reader, ent);
                         }
                     }
                 }
@@ -487,6 +490,7 @@ namespace Marr.Data
             if (string.IsNullOrEmpty(sql))
                 throw new ArgumentNullException("A stored procedure name has not been specified for 'Query'.");
 
+            var mappingHelper = new MappingHelper(Command);
             Type entityType = typeof(T);
             Command.CommandText = sql;
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(entityType);
@@ -509,7 +513,7 @@ namespace Marr.Data
                         else
                         {
                             // Create new entity
-                            object ent = CreateAndLoadEntity<T>(mappings, reader);
+                            object ent = mappingHelper.CreateAndLoadEntity<T>(mappings, reader);
 
                             // Add entity to return list
                             entityList.Add((T)ent);
@@ -549,6 +553,7 @@ namespace Marr.Data
             if (string.IsNullOrEmpty(sql))
                 throw new ArgumentNullException("A stored procedure name has not been specified for 'Query'.");
 
+            var mappingHelper = new MappingHelper(Command);
             Type parentType = typeof(T);
             Command.CommandText = sql;
 
@@ -568,7 +573,7 @@ namespace Marr.Data
                             if (entity.IsNewGroup(reader))
                             {
                                 // Add entity to the appropriate place in the object graph
-                                entity.AddEntity(CreateAndLoadEntity(entity.EntityType, entity.Columns, reader));
+                                entity.AddEntity(mappingHelper.CreateAndLoadEntity(entity.EntityType, entity.Columns, reader));
                             }
                         }
                     }
@@ -586,6 +591,36 @@ namespace Marr.Data
 
         #region - Update -
 
+        public int AutoUpdate<T>(T entity, string schema, string target)
+        {
+            if (entity == null)
+                throw new ArgumentNullException("entity");
+
+            if (string.IsNullOrEmpty(target))
+                throw new ArgumentNullException("target");
+
+            var mappingHelper = new MappingHelper(Command);
+            ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
+            mappingHelper.CreateParameters<T>(entity, mappings, false, true);
+            IQuery query = new SqlServerUpdateQuery(mappings, Command.Parameters);
+            Command.CommandText = query.Generate(schema, target);
+
+            int rowsAffected = 0;
+
+            try
+            {
+                OpenConnection();
+                rowsAffected = Command.ExecuteNonQuery();
+                mappingHelper.SetOutputValues<T>(entity, mappings.OutputFields);
+            }
+            finally
+            {
+                CloseConnection();
+            }
+
+            return rowsAffected;
+        }
+
         public int Update<T>(T entity, string sql)
         {
             if (entity == null)
@@ -594,16 +629,17 @@ namespace Marr.Data
             if (string.IsNullOrEmpty(sql))
                 throw new ArgumentNullException("A stored procedure name has not been specified for 'Update'.");
 
+            var mappingHelper = new MappingHelper(Command);
             Command.CommandText = sql;
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
-            CreateParameters<T>(entity, mappings, false);
+            mappingHelper.CreateParameters<T>(entity, mappings, false, false);
             int rowsAffected = 0;
 
             try
             {
                 OpenConnection();
                 rowsAffected = Command.ExecuteNonQuery();
-                SetOutputValues<T>(entity, mappings.OutputFields);
+                mappingHelper.SetOutputValues<T>(entity, mappings.OutputFields);
             }
             finally
             {
@@ -625,10 +661,11 @@ namespace Marr.Data
             if (string.IsNullOrEmpty(sql))
                 throw new ArgumentNullException("A stored procedure name has not been specified for 'Insert'.");
 
+            var mappingHelper = new MappingHelper(Command);
             Command.CommandText = sql;
             Type entityType = typeof(T);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(entityType);
-            CreateParameters<T>(entity, mappings.NonReturnValues, true);
+            mappingHelper.CreateParameters<T>(entity, mappings.NonReturnValues, true, false);
 
             int rowsAffected = 0;
 
@@ -636,8 +673,8 @@ namespace Marr.Data
             {
                 OpenConnection();
                 object returnValue = Command.ExecuteScalar();
-                SetOutputValues<T>(entity, mappings.OutputFields);
-                SetOutputValues<T>(entity, mappings.ReturnValues, returnValue);
+                mappingHelper.SetOutputValues<T>(entity, mappings.OutputFields);
+                mappingHelper.SetOutputValues<T>(entity, mappings.ReturnValues, returnValue);
             }
             finally
             {
@@ -655,147 +692,6 @@ namespace Marr.Data
 
         public event EventHandler OpeningConnection;
 
-        #endregion
-
-        #region - Mapping Helpers -
-
-        /// <summary>
-        /// Instantiates an entity and loads its mapped fields with the data from the reader.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="mappings"></param>
-        /// <param name="reader"></param>
-        /// <returns></returns>
-        private object CreateAndLoadEntity<T>(ColumnMapCollection mappings, DbDataReader reader)
-        {
-            return CreateAndLoadEntity(typeof(T), mappings, reader);
-        }
-
-        /// <summary>
-        /// Instantiates an entity and loads its mapped fields with the data from the reader.
-        /// </summary>
-        /// <param name="entityType">The entity being created and loaded.</param>
-        /// <param name="mappings">The field mappings for the passed in entity.</param>
-        /// <param name="reader">The open data reader.</param>
-        /// <returns>Returns an entity loaded with data.</returns>
-        protected object CreateAndLoadEntity(Type entityType, ColumnMapCollection mappings, DbDataReader reader)
-        {
-            // Create new entity
-            object ent = ReflectionHelper.CreateInstance(entityType);
-            return LoadExistingEntity(mappings, reader, ent);
-        }
-
-        protected object LoadExistingEntity(ColumnMapCollection mappings, DbDataReader reader, object ent)
-        {
-            List<ColumnMap> mappingsToRemove = new List<ColumnMap>();
-
-            MapRepository repository = MapRepository.Instance;
-
-            // Populate entity fields from data reader
-            foreach (ColumnMap dataMap in mappings)
-            {
-                try
-                {
-                    int ordinal = reader.GetOrdinal(dataMap.ColumnInfo.Name);
-                    object dbValue = reader.GetValue(ordinal);
-
-                    // Handle conversions
-                    IConverter conversion = repository.GetConverter(dataMap);
-                    if (conversion != null)
-                    {
-                        dbValue = conversion.FromDB(dataMap, dbValue);
-                    }
-
-                    ReflectionHelper.SetFieldValue(ent, dataMap.FieldName, dbValue);
-                }
-                catch (Exception ex)
-                {
-                    if (dataMap.ColumnInfo is OptionalColumn)
-                    {
-                        // Mark the missing mapping for removal and continue
-                        mappingsToRemove.Add(dataMap);
-                        continue;
-                    }
-                    else
-                    {
-                        string msg = string.Format("The DataMapper was unable to load the following field: '{0}'.",
-                            dataMap.ColumnInfo.Name);
-                        throw new Exception(msg, ex);
-                    }
-                }
-            }
-
-            // Modify cache to remove optional mappings that were not found
-            foreach (ColumnMap missingMap in mappingsToRemove)
-            {
-                mappings.Remove(missingMap);
-            }
-
-            return ent;
-        }
-
-        /// <summary>
-        /// Creates all parameters for a SP based on the mappings of the entity,
-        /// and assigns them values based on the field values of the entity.
-        /// </summary>
-        private void CreateParameters<T>(T entity, ColumnMapCollection columnMapCollection, bool isInsert)
-        {
-            // Order columns (applies to Oracle and OleDb only)
-            ColumnMapCollection mappings = columnMapCollection.OrderParameters(Command);
-
-            foreach (ColumnMap columnMap in mappings)
-            {
-                if (isInsert && columnMap.ColumnInfo.IsAutoIncrement)
-                    continue;
-
-                var param = Command.CreateParameter();
-                param.ParameterName = columnMap.ColumnInfo.Name;
-                param.Size = columnMap.ColumnInfo.Size;
-                param.Direction = columnMap.ColumnInfo.ParamDirection;
-
-                object val = ReflectionHelper.GetFieldValue(entity, columnMap.FieldName);
-
-                param.Value = val == null ? DBNull.Value : val; // Convert nulls to DBNulls
-
-                var repos = MapRepository.Instance;
-
-                IConverter conversion = repos.GetConverter(columnMap);
-                if (conversion != null)
-                {
-                    param.Value = conversion.ToDB(param.Value);
-                }
-
-                // Set the appropriate DbType property depending on the parameter type
-                // Note: the columnMap.DBType property was set when the ColumnMap was created
-                repos.DbTypeBuilder.SetDbType(param, columnMap.DBType);
-
-                Parameters.Add(param);
-            }
-        }
-
-        /// <summary>
-        /// Assigns the SP result columns to the passed in 'mappings' fields.
-        /// </summary>
-        private void SetOutputValues<T>(T entity, IEnumerable<ColumnMap> mappings)
-        {
-            foreach (ColumnMap dataMap in mappings)
-            {
-                object output = Parameters[dataMap.ColumnInfo.Name].Value;
-                ReflectionHelper.SetFieldValue(entity, dataMap.FieldName, output);
-            }
-        }
-
-        /// <summary>
-        /// Assigns the passed in 'value' to the passed in 'mappings' fields.
-        /// </summary>
-        private void SetOutputValues<T>(T entity, IEnumerable<ColumnMap> mappings, object value)
-        {
-            foreach (ColumnMap dataMap in mappings)
-            {
-                ReflectionHelper.SetFieldValue(entity, dataMap.FieldName, value);
-            }
-        }
-        
         #endregion
 
         #region - Connections / Transactions -

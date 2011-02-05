@@ -25,6 +25,7 @@ namespace Marr.Data
     {
         ParameterChainMethods AddParameter(string name, object value);
         IDbDataParameter AddParameter(IDbDataParameter parameter);
+        int AutoUpdate<T>(T entity, string schema, string target);
         void BeginTransaction();
         DbCommand Command { get; }
         void Commit();
