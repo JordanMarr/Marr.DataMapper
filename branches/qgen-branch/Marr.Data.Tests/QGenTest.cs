@@ -120,7 +120,10 @@ namespace Marr.Data.Tests
             person.IsHappy = true;
             person.BirthDate = new DateTime(1977, 1, 22);
 
-            var where = new WhereCondition<Person>(command, p => p.Name == "John", p => p.Age > 15);
+            List<Person> list = new List<Person>();
+
+            //var where = new WhereCondition<Person>(command, p => p.Name == "John", p => p.Age > 15);
+            var where = new WhereCondition<Person>(command, p => p.Name == "John" && p.Age > 15 || p.Age < 5 && p.Age > 1);
             IQuery query = new SqlServerSelectQuery(columns, command.Parameters, "dbo", "People", where.ToString());
 
             // Act
@@ -128,8 +131,12 @@ namespace Marr.Data.Tests
 
             // Assert
             Assert.IsNotNull(queryText);
-            Assert.AreEqual(command.Parameters["Name"].Value, "John");
-            Assert.IsTrue(queryText.Contains("WHERE ([Name] = @Name AND [Age] > @Age)"));
+            Assert.AreEqual(command.Parameters["@P0"].Value, "John");
+            Assert.AreEqual(command.Parameters["@P1"].Value, 15);
+            Assert.AreEqual(command.Parameters["@P2"].Value, 5);
+            Assert.AreEqual(command.Parameters["@P3"].Value, 1);
+            Assert.IsTrue(queryText.Contains("[Name] = @P0 AND [Age] > @P1)"));
+            Assert.IsTrue(queryText.Contains("[Age] < @P2 AND [Age] > @P3)"));
         }
 
     }

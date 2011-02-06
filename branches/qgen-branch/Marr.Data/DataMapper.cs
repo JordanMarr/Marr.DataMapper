@@ -456,22 +456,15 @@ namespace Marr.Data
 
         #region - Query -
         
-        public List<T> AutoQuery<T>(string schema, string target, params Expression<Func<T, bool>>[] filters)
+        public List<T> AutoQuery<T>(string schema, string target, Expression<Func<T, bool>> filter)
         {
-            var where = new WhereCondition<T>(Command, ConditionType.AND, filters);
+            // Generate a parameterized where clause
+            var where = new WhereCondition<T>(Command, filter);
             var columns = MapRepository.Instance.GetColumns(typeof(T));
             IQuery query = QueryFactory.CreateSelectQuery(columns, Command.Parameters, schema, target, where.ToString());
             return Query<T>(query.Generate());
         }
-
-        public List<T> AutoQuery<T>(string schema, string target, ConditionType conditionType, params Expression<Func<T, bool>>[] filters)
-        {
-            var where = new WhereCondition<T>(Command, conditionType, filters);
-            var columns = MapRepository.Instance.GetColumns(typeof(T));
-            IQuery query = QueryFactory.CreateSelectQuery(columns, Command.Parameters, schema, target, where.ToString());
-            return Query<T>(query.Generate());
-        }
-
+        
         /// <summary>
         /// Runs a query.  Use this overload when you want to manage instantiating and adding 
         /// each entity instance to a collection using the LoadEntity event.

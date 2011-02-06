@@ -11,60 +11,78 @@ namespace Marr.Data.QGen
 {
     public class WhereCondition<T>
     {
-        private ConditionType _conditionType;
         private DbCommand _command;
         private StringBuilder _sb;
+        private string _paramPrefix;
 
-        public WhereCondition(DbCommand command, params Expression<Func<T, bool>>[] filters)
-            : this(command, ConditionType.AND, filters)
-        { }
-
-        public WhereCondition(DbCommand command, ConditionType conditionType, params Expression<Func<T, bool>>[] filters)
+        public WhereCondition(DbCommand command, Expression<Func<T, bool>> filter)
         {
-            string paramPrefix = null;
             string commandType = command.GetType().Name.ToLower();
             if (commandType.Contains("oracle"))
-                paramPrefix = ":";
+                _paramPrefix = ":";
             else
-                paramPrefix = "@";
+                _paramPrefix = "@";
 
-            _conditionType = conditionType;
             _command = command;
             _sb = new StringBuilder("WHERE (");
 
-            int startIndex = _sb.Length;
-
-            foreach (var filter in filters)
-            {
-                // Add AND/OR between filters
-                if (_sb.Length > startIndex)
-                    _sb.AppendFormat(" {0} ", _conditionType.ToString());
-
-                var body = (BinaryExpression)filter.Body;
-                var left = (MemberExpression)body.Left;
-                var right = (ConstantExpression)body.Right;
-
-                string statement = string.Format("{0} {1} {2}", left.Member.Name, body.NodeType, right.Value);
-
-                // Initialize column name as member name
-                string columnName = left.Member.Name;
-
-                // If column name is overridden at ColumnAttribute level, use that name instead
-                object[] attributes = left.Member.GetCustomAttributes(typeof(ColumnAttribute), false);
-                if (attributes.Length > 0)
-                {
-                    ColumnAttribute column = (attributes[0] as ColumnAttribute);
-                    if (!string.IsNullOrEmpty(column.Name))
-                        columnName = (attributes[0] as ColumnAttribute).Name;
-                }
-
-                // Add parameter to Command.Parameters
-                var parameter = new ParameterChainMethods(command, columnName, right.Value).Parameter;
-
-                _sb.AppendFormat("[{0}] {1} {2}{3}", columnName, Decode(body.NodeType), paramPrefix, parameter.ParameterName);
-            }
+            ParseExpression((BinaryExpression)filter.Body);
 
             _sb.Append(")");
+        }
+
+        /// <summary>
+        /// Iterates through a BinaryExpression tree and simplifies nested BinaryExpressions 
+        /// until they can be converted into a parameterized SQL where clause.
+        /// </summary>
+        /// <param name="body">The current expression node.</param>
+        private void ParseExpression(BinaryExpression body)
+        {
+            if (body.Left is BinaryExpression)
+            {
+                _sb.Append("(");
+                ParseExpression(body.Left as BinaryExpression);
+                _sb.AppendFormat(" {0} ", Decode(body.NodeType));
+                ParseExpression(body.Right as BinaryExpression);
+                _sb.Append(")");
+            }
+            else
+            {
+                // Write to sb
+                WriteExpression(body);
+            }
+        }
+
+        /// <summary>
+        /// 1) Converts a binary expression into a where clause
+        /// 2) Examines the property to see if it has a ColumnAttribute, and if so, substitutes the overriden column name, if one exists
+        /// 3) Adds the parameters to the DbCommand
+        /// </summary>
+        /// <param name="body">A binary expression that consists of a MemberExpression and a ConstantExpression.</param>
+        private void WriteExpression(BinaryExpression body)
+        {
+            var left = body.Left as MemberExpression;
+            var right = body.Right as ConstantExpression;
+
+            string statement = string.Format("{0} {1} {2}", left.Member.Name, body.NodeType, right.Value);
+
+            // Initialize column name as member name
+            string columnName = left.Member.Name;
+
+            // If column name is overridden at ColumnAttribute level, use that name instead
+            object[] attributes = left.Member.GetCustomAttributes(typeof(ColumnAttribute), false);
+            if (attributes.Length > 0)
+            {
+                ColumnAttribute column = (attributes[0] as ColumnAttribute);
+                if (!string.IsNullOrEmpty(column.Name))
+                    columnName = (attributes[0] as ColumnAttribute).Name;
+            }
+
+            // Add parameter to Command.Parameters
+            string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
+            var parameter = new ParameterChainMethods(_command, paramName, right.Value).Parameter;
+
+            _sb.AppendFormat("[{0}] {1} {2}", columnName, Decode(body.NodeType), paramName);
         }
 
         private string Decode(ExpressionType expType)
