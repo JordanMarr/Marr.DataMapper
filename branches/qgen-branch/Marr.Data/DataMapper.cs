@@ -455,13 +455,18 @@ namespace Marr.Data
         #endregion
 
         #region - Query -
-        
+
+        public List<T> AutoQuery<T>(string target)
+        {
+            return AutoQuery<T>(target, null);
+        }
+
         public List<T> AutoQuery<T>(string target, Expression<Func<T, bool>> filter)
         {
             // Generate a parameterized where clause
             var where = new WhereCondition<T>(Command, filter);
             var columns = MapRepository.Instance.GetColumns(typeof(T));
-            IQuery query = QueryFactory.CreateSelectQuery(columns, Command.Parameters, target, where.ToString());
+            IQuery query = QueryFactory.CreateSelectQuery(columns, Command, target, where.ToString());
             return Query<T>(query.Generate());
         }
         

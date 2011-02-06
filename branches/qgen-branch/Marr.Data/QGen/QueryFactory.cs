@@ -56,15 +56,12 @@ namespace Marr.Data.QGen
             }
         }
 
-        public static IQuery CreateSelectQuery(Mapping.ColumnMapCollection columns, DbParameterCollection parameters, string target, string where)
+        public static IQuery CreateSelectQuery(Mapping.ColumnMapCollection columns, DbCommand command, string target, string where)
         {
-            if (parameters.Count == 0)
-                throw new Exception("Must contain at least one parameter.");
-
-            string paramType = parameters[0].GetType().Name.ToLower();
-            if (paramType.Contains("sqlparameter"))
+            string commandType = command.GetType().Name.ToLower();
+            if (commandType.Contains("sqlcommand"))
             {
-                return new SqlServerSelectQuery(columns, parameters, target, where);
+                return new SqlServerSelectQuery(columns, target, where);
             }
             else
             {

@@ -11,16 +11,13 @@ namespace Marr.Data.QGen
     {
         private string _target;
         private string _whereClause;
-        private const string _paramPrefix = "@";
         private ColumnMapCollection _columns;
-        private DbParameterCollection _parameters;
 
-        public SqlServerSelectQuery(ColumnMapCollection columns, DbParameterCollection parameters, string target, string whereClause)
+        public SqlServerSelectQuery(ColumnMapCollection columns, string target, string whereClause)
         {
             _target = target;
             _whereClause = whereClause;
             _columns = columns;
-            _parameters = parameters;
         }
 
         public string Generate()

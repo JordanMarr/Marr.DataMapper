@@ -123,7 +123,7 @@ namespace Marr.Data.Tests
             List<Person> list = new List<Person>();
 
             var where = new WhereCondition<Person>(command, p => p.Name == "John" && p.Age > 15 || p.Age < 5 && p.Age > 1);
-            IQuery query = new SqlServerSelectQuery(columns, command.Parameters, "dbo.People", where.ToString());
+            IQuery query = new SqlServerSelectQuery(columns, "dbo.People", where.ToString());
 
             // Act
             string queryText = query.Generate();

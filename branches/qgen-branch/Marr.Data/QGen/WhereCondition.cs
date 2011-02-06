@@ -24,11 +24,15 @@ namespace Marr.Data.QGen
                 _paramPrefix = "@";
 
             _command = command;
-            _sb = new StringBuilder("WHERE (");
 
-            ParseExpression((BinaryExpression)filter.Body);
+            _sb = new StringBuilder();
 
-            _sb.Append(")");
+            if (filter != null)
+            {
+                _sb.Append("WHERE (");
+                ParseExpression((BinaryExpression)filter.Body);
+                _sb.Append(")");
+            }            
         }
 
         /// <summary>
