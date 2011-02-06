@@ -31,9 +31,8 @@ namespace Marr.Data.QGen
 
             int startIndex = sql.Length;
 
-            for (int i = 0; i < _parameters.Count; i++)
+            for (int i = 0; i < _columns.Count; i++)
             {
-                var p = _parameters[i];
                 var c = _columns[i];
 
                 if (sql.Length > startIndex)

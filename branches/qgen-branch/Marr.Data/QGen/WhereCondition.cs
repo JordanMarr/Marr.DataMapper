@@ -21,6 +21,13 @@ namespace Marr.Data.QGen
 
         public WhereCondition(DbCommand command, ConditionType conditionType, params Expression<Func<T, bool>>[] filters)
         {
+            string paramPrefix = null;
+            string commandType = command.GetType().Name.ToLower();
+            if (commandType.Contains("oracle"))
+                paramPrefix = ":";
+            else
+                paramPrefix = "@";
+
             _conditionType = conditionType;
             _command = command;
             _sb = new StringBuilder("WHERE (");
@@ -54,7 +61,7 @@ namespace Marr.Data.QGen
                 // Add parameter to Command.Parameters
                 var parameter = new ParameterChainMethods(command, columnName, right.Value).Parameter;
 
-                _sb.AppendFormat("[{0}] {1} {2}", columnName, Decode(body.NodeType), parameter.ParameterName);
+                _sb.AppendFormat("[{0}] {1} {2}{3}", columnName, Decode(body.NodeType), paramPrefix, parameter.ParameterName);
             }
 
             _sb.Append(")");

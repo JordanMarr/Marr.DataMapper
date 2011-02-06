@@ -129,7 +129,7 @@ namespace Marr.Data.Tests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.AreEqual(command.Parameters["Name"].Value, "John");
-            Assert.IsTrue(queryText.Contains("WHERE ([Name] = Name AND [Age] > Age)"));
+            Assert.IsTrue(queryText.Contains("WHERE ([Name] = @Name AND [Age] > @Age)"));
         }
 
     }

@@ -455,6 +455,14 @@ namespace Marr.Data
         #endregion
 
         #region - Query -
+        
+        public List<T> AutoQuery<T>(string schema, string target, params Expression<Func<T, bool>>[] filters)
+        {
+            var where = new WhereCondition<T>(Command, ConditionType.AND, filters);
+            var columns = MapRepository.Instance.GetColumns(typeof(T));
+            IQuery query = QueryFactory.CreateSelectQuery(columns, Command.Parameters, schema, target, where.ToString());
+            return Query<T>(query.Generate());
+        }
 
         public List<T> AutoQuery<T>(string schema, string target, ConditionType conditionType, params Expression<Func<T, bool>>[] filters)
         {
