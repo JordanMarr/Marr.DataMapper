@@ -154,7 +154,7 @@ namespace Marr.Data.Mapping
         {
             foreach (ColumnMap dataMap in mappings)
             {
-                ReflectionHelper.SetFieldValue(entity, dataMap.FieldName, value);
+                ReflectionHelper.SetFieldValue(entity, dataMap.FieldName, Convert.ChangeType(value, dataMap.FieldType));
             }
         }
 

@@ -52,9 +52,14 @@ namespace Marr.Data.QGen
                 }
             }
 
-            values.Append(")");
+            values.Append(");");
 
             sql.Append(values);
+
+            if (_columns.ReturnValues.Count() > 0)
+            {
+                sql.Append("SELECT SCOPE_IDENTITY();");
+            }
 
             return sql.ToString();
         }
