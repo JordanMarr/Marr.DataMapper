@@ -94,7 +94,9 @@
     <Compile Include="QGen\QueryFactory.cs" />
     <Compile Include="QGen\SqlServerDeleteQuery.cs" />
     <Compile Include="QGen\SqlServerInsertQuery.cs" />
+    <Compile Include="QGen\SqlServerSelectQuery.cs" />
     <Compile Include="QGen\SqlServerUpdateQuery.cs" />
+    <Compile Include="QGen\WhereCondition.cs" />
     <Compile Include="ReflectionHelper.cs" />
     <Compile Include="SqlModesEnum.cs" />
   </ItemGroup>

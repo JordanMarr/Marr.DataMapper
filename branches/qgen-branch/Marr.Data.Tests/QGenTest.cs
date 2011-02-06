@@ -33,10 +33,10 @@ namespace Marr.Data.Tests
 
             mappingHelper.CreateParameters<Person>(person, columns, false, true);
 
-            IQuery query = new SqlServerUpdateQuery(columns, command.Parameters);
+            IQuery query = new SqlServerUpdateQuery(columns, command.Parameters, "dbo", "People");
 
             // Act
-            string queryText = query.Generate("dbo", "People");
+            string queryText = query.Generate();
 
             // Assert
             Assert.IsNotNull(queryText);
@@ -65,10 +65,10 @@ namespace Marr.Data.Tests
 
             mappingHelper.CreateParameters<Person>(person, columns, false, true);
 
-            IQuery query = new SqlServerInsertQuery(columns, command.Parameters);
+            IQuery query = new SqlServerInsertQuery(columns, command.Parameters, "dbo", "People");
 
             // Act
-            string queryText = query.Generate("dbo", "People");
+            string queryText = query.Generate();
 
             // Assert
             Assert.IsNotNull(queryText);
@@ -94,15 +94,43 @@ namespace Marr.Data.Tests
 
             mappingHelper.CreateParameters<Person>(person, columns, false, true);
 
-            IQuery query = new SqlServerDeleteQuery(columns, command.Parameters);
+            IQuery query = new SqlServerDeleteQuery(columns, command.Parameters, "dbo", "People");
 
             // Act
-            string queryText = query.Generate("dbo", "People");
+            string queryText = query.Generate();
 
             // Assert
             Assert.IsNotNull(queryText);
             Assert.IsTrue(queryText.Contains("DELETE FROM [dbo].[People]"));
             Assert.IsTrue(queryText.Contains("WHERE [ID]="), "Should contain [ID] column since it is marked as AutoIncrement");
         }
+
+        [TestMethod]
+        public void SqlServerSelectQuery_ShouldGenQuery()
+        {
+            // Arrange
+            var command = new System.Data.SqlClient.SqlCommand();
+            ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
+            MappingHelper mappingHelper = new MappingHelper(command);
+
+            Person person = new Person();
+            person.ID = 1;
+            person.Name = "Jordan";
+            person.Age = 33;
+            person.IsHappy = true;
+            person.BirthDate = new DateTime(1977, 1, 22);
+
+            var where = new WhereCondition<Person>(command, p => p.Name == "John", p => p.Age > 15);
+            IQuery query = new SqlServerSelectQuery(columns, command.Parameters, "dbo", "People", where.ToString());
+
+            // Act
+            string queryText = query.Generate();
+
+            // Assert
+            Assert.IsNotNull(queryText);
+            Assert.AreEqual(command.Parameters["Name"].Value, "John");
+            Assert.IsTrue(queryText.Contains("WHERE ([Name] = Name AND [Age] > Age)"));
+        }
+
     }
 }

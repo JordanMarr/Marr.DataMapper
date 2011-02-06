@@ -26,6 +26,7 @@ using Marr.Data.Mapping;
 using Marr.Data.Converters;
 using Marr.Data.Parameters;
 using Marr.Data.QGen;
+using System.Linq.Expressions;
 
 namespace Marr.Data
 {
@@ -455,6 +456,14 @@ namespace Marr.Data
 
         #region - Query -
 
+        public List<T> AutoQuery<T>(string schema, string target, ConditionType conditionType, params Expression<Func<T, bool>>[] filters)
+        {
+            var where = new WhereCondition<T>(Command, conditionType, filters);
+            var columns = MapRepository.Instance.GetColumns(typeof(T));
+            IQuery query = QueryFactory.CreateSelectQuery(columns, Command.Parameters, schema, target, where.ToString());
+            return Query<T>(query.Generate());
+        }
+
         /// <summary>
         /// Runs a query.  Use this overload when you want to manage instantiating and adding 
         /// each entity instance to a collection using the LoadEntity event.
@@ -602,8 +611,8 @@ namespace Marr.Data
             var mappingHelper = new MappingHelper(Command);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
-            IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command.Parameters);
-            Command.CommandText = query.Generate(schema, target);
+            IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command.Parameters, schema, target);
+            Command.CommandText = query.Generate();
 
             int rowsAffected = 0;
 
@@ -664,8 +673,8 @@ namespace Marr.Data
             var mappingHelper = new MappingHelper(Command);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
-            IQuery query = QueryFactory.CreateInsertQuery(mappings, Command.Parameters);
-            Command.CommandText = query.Generate(schema, target);
+            IQuery query = QueryFactory.CreateInsertQuery(mappings, Command.Parameters, schema, target);
+            Command.CommandText = query.Generate();
 
             int rowsAffected = 0;
 
@@ -730,8 +739,8 @@ namespace Marr.Data
             var mappingHelper = new MappingHelper(Command);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
-            IQuery query = QueryFactory.CreateDeleteQuery(mappings, Command.Parameters);
-            Command.CommandText = query.Generate(schema, target);
+            IQuery query = QueryFactory.CreateDeleteQuery(mappings, Command.Parameters, schema, target);
+            Command.CommandText = query.Generate();
 
             int rowsAffected = 0;
 

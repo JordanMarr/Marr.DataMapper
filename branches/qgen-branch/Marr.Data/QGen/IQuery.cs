@@ -11,6 +11,6 @@ namespace Marr.Data.QGen
         /// Generates a SQL query for a given entity.
         /// </summary>
         /// <returns></returns>
-        string Generate(string schema, string target);
+        string Generate();
     }
 }
