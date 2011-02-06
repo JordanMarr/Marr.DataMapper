@@ -9,16 +9,14 @@ namespace Marr.Data.QGen
 {
     public class SqlServerSelectQuery : IQuery
     {
-        private string _schema;
         private string _target;
         private string _whereClause;
         private const string _paramPrefix = "@";
         private ColumnMapCollection _columns;
         private DbParameterCollection _parameters;
 
-        public SqlServerSelectQuery(ColumnMapCollection columns, DbParameterCollection parameters, string schema, string target, string whereClause)
+        public SqlServerSelectQuery(ColumnMapCollection columns, DbParameterCollection parameters, string target, string whereClause)
         {
-            _schema = schema;
             _target = target;
             _whereClause = whereClause;
             _columns = columns;
@@ -41,7 +39,7 @@ namespace Marr.Data.QGen
                 sql.AppendFormat("[{0}]", c.ColumnInfo.Name);
             }
 
-            sql.AppendFormat(" FROM [{0}].[{1}] ", _schema, _target);
+            sql.AppendFormat(" FROM {0} ", _target);
 
             sql.Append(_whereClause);
 

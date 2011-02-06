@@ -456,12 +456,12 @@ namespace Marr.Data
 
         #region - Query -
         
-        public List<T> AutoQuery<T>(string schema, string target, Expression<Func<T, bool>> filter)
+        public List<T> AutoQuery<T>(string target, Expression<Func<T, bool>> filter)
         {
             // Generate a parameterized where clause
             var where = new WhereCondition<T>(Command, filter);
             var columns = MapRepository.Instance.GetColumns(typeof(T));
-            IQuery query = QueryFactory.CreateSelectQuery(columns, Command.Parameters, schema, target, where.ToString());
+            IQuery query = QueryFactory.CreateSelectQuery(columns, Command.Parameters, target, where.ToString());
             return Query<T>(query.Generate());
         }
         
@@ -601,7 +601,7 @@ namespace Marr.Data
 
         #region - Update -
 
-        public int AutoUpdate<T>(T entity, string schema, string target)
+        public int AutoUpdate<T>(T entity, string target)
         {
             if (entity == null)
                 throw new ArgumentNullException("entity");
@@ -612,7 +612,7 @@ namespace Marr.Data
             var mappingHelper = new MappingHelper(Command);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
-            IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command.Parameters, schema, target);
+            IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command.Parameters, target);
             Command.CommandText = query.Generate();
 
             int rowsAffected = 0;
@@ -663,7 +663,7 @@ namespace Marr.Data
 
         #region - Insert -
 
-        public int AutoInsert<T>(T entity, string schema, string target)
+        public int AutoInsert<T>(T entity, string target)
         {
             if (entity == null)
                 throw new ArgumentNullException("entity");
@@ -674,7 +674,7 @@ namespace Marr.Data
             var mappingHelper = new MappingHelper(Command);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
-            IQuery query = QueryFactory.CreateInsertQuery(mappings, Command.Parameters, schema, target);
+            IQuery query = QueryFactory.CreateInsertQuery(mappings, Command.Parameters, target);
             Command.CommandText = query.Generate();
 
             int rowsAffected = 0;
@@ -729,7 +729,7 @@ namespace Marr.Data
 
         #region - Delete -
 
-        public int AutoDelete<T>(T entity, string schema, string target)
+        public int AutoDelete<T>(T entity, string target)
         {
             if (entity == null)
                 throw new ArgumentNullException("entity");
@@ -740,7 +740,7 @@ namespace Marr.Data
             var mappingHelper = new MappingHelper(Command);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
-            IQuery query = QueryFactory.CreateDeleteQuery(mappings, Command.Parameters, schema, target);
+            IQuery query = QueryFactory.CreateDeleteQuery(mappings, Command.Parameters, target);
             Command.CommandText = query.Generate();
 
             int rowsAffected = 0;

@@ -33,14 +33,14 @@ namespace Marr.Data.Tests
 
             mappingHelper.CreateParameters<Person>(person, columns, false, true);
 
-            IQuery query = new SqlServerUpdateQuery(columns, command.Parameters, "dbo", "People");
+            IQuery query = new SqlServerUpdateQuery(columns, command.Parameters, "dbo.People");
 
             // Act
             string queryText = query.Generate();
 
             // Assert
             Assert.IsNotNull(queryText);
-            Assert.IsTrue(queryText.Contains("UPDATE [dbo].[People]"));
+            Assert.IsTrue(queryText.Contains("UPDATE dbo.People"));
             Assert.IsTrue(queryText.Contains("[Name]"));
             Assert.IsTrue(queryText.Contains("[Age]"));
             Assert.IsTrue(queryText.Contains("[IsHappy]"));
@@ -65,14 +65,14 @@ namespace Marr.Data.Tests
 
             mappingHelper.CreateParameters<Person>(person, columns, false, true);
 
-            IQuery query = new SqlServerInsertQuery(columns, command.Parameters, "dbo", "People");
+            IQuery query = new SqlServerInsertQuery(columns, command.Parameters, "dbo.People");
 
             // Act
             string queryText = query.Generate();
 
             // Assert
             Assert.IsNotNull(queryText);
-            Assert.IsTrue(queryText.Contains("INSERT INTO [dbo].[People]"));
+            Assert.IsTrue(queryText.Contains("INSERT INTO dbo.People"));
             Assert.IsFalse(queryText.Contains("[ID]"), "Should not contain [ID] column since it is marked as AutoIncrement");
             Assert.IsTrue(queryText.Contains("[Name]"), "Should contain the name column");
         }
@@ -94,14 +94,14 @@ namespace Marr.Data.Tests
 
             mappingHelper.CreateParameters<Person>(person, columns, false, true);
 
-            IQuery query = new SqlServerDeleteQuery(columns, command.Parameters, "dbo", "People");
+            IQuery query = new SqlServerDeleteQuery(columns, command.Parameters, "dbo.People");
 
             // Act
             string queryText = query.Generate();
 
             // Assert
             Assert.IsNotNull(queryText);
-            Assert.IsTrue(queryText.Contains("DELETE FROM [dbo].[People]"));
+            Assert.IsTrue(queryText.Contains("DELETE FROM dbo.People"));
             Assert.IsTrue(queryText.Contains("WHERE [ID]="), "Should contain [ID] column since it is marked as AutoIncrement");
         }
 
@@ -122,9 +122,8 @@ namespace Marr.Data.Tests
 
             List<Person> list = new List<Person>();
 
-            //var where = new WhereCondition<Person>(command, p => p.Name == "John", p => p.Age > 15);
             var where = new WhereCondition<Person>(command, p => p.Name == "John" && p.Age > 15 || p.Age < 5 && p.Age > 1);
-            IQuery query = new SqlServerSelectQuery(columns, command.Parameters, "dbo", "People", where.ToString());
+            IQuery query = new SqlServerSelectQuery(columns, command.Parameters, "dbo.People", where.ToString());
 
             // Act
             string queryText = query.Generate();

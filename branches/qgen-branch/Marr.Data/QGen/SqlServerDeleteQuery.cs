@@ -9,15 +9,13 @@ namespace Marr.Data.QGen
 {
     public class SqlServerDeleteQuery : IQuery
     {
-        private string _schema;
         private string _target;
         private const string _paramPrefix = "@";
         private ColumnMapCollection _columns;
         private DbParameterCollection _parameters;
 
-        public SqlServerDeleteQuery(ColumnMapCollection columns, DbParameterCollection parameters, string schema, string target)
+        public SqlServerDeleteQuery(ColumnMapCollection columns, DbParameterCollection parameters, string target)
         {
-            _schema = schema;
             _target = target;
             _columns = columns;
             _parameters = parameters;
@@ -32,7 +30,7 @@ namespace Marr.Data.QGen
 
             StringBuilder sql = new StringBuilder();
 
-            sql.AppendFormat("DELETE FROM [{0}].[{1}] WHERE ", _schema, _target);
+            sql.AppendFormat("DELETE FROM {0} WHERE ", _target);
 
             int startIndex = sql.Length;
 

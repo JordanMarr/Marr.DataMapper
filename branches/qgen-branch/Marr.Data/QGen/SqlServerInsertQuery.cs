@@ -9,15 +9,13 @@ namespace Marr.Data.QGen
 {
     public class SqlServerInsertQuery : IQuery
     {
-        private string _schema;
         private string _target;
         private const string _paramPrefix = "@";
         private ColumnMapCollection _columns;
         private DbParameterCollection _parameters;
 
-        public SqlServerInsertQuery(ColumnMapCollection columns, DbParameterCollection parameters, string schema, string target)
+        public SqlServerInsertQuery(ColumnMapCollection columns, DbParameterCollection parameters, string target)
         {
-            _schema = schema;
             _target = target;
             _columns = columns;
             _parameters = parameters;
@@ -33,7 +31,7 @@ namespace Marr.Data.QGen
             StringBuilder sql = new StringBuilder();
             StringBuilder values = new StringBuilder(") VALUES (");
 
-            sql.AppendFormat("INSERT INTO [{0}].[{1}] (", _schema, _target);
+            sql.AppendFormat("INSERT INTO {0} (", _target);
 
             int sqlStartIndex = sql.Length;
             int valuesStartIndex = values.Length;
