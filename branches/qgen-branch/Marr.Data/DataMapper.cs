@@ -608,6 +608,11 @@ namespace Marr.Data
 
         public int AutoUpdate<T>(T entity, string target)
         {
+            return AutoUpdate<T>(entity, target, null);
+        }
+
+        public int AutoUpdate<T>(T entity, string target, Expression<Func<T, bool>> filter)
+        {
             if (entity == null)
                 throw new ArgumentNullException("entity");
 
@@ -615,9 +620,10 @@ namespace Marr.Data
                 throw new ArgumentNullException("target");
 
             var mappingHelper = new MappingHelper(Command);
+            var where = new WhereCondition<T>(Command, filter);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
-            IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command.Parameters, target);
+            IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command.Parameters, target, where.ToString());
             Command.CommandText = query.Generate();
 
             int rowsAffected = 0;
@@ -736,6 +742,11 @@ namespace Marr.Data
 
         public int AutoDelete<T>(T entity, string target)
         {
+            return AutoDelete<T>(entity, target, null);
+        }
+
+        public int AutoDelete<T>(T entity, string target, Expression<Func<T, bool>> filter)
+        {
             if (entity == null)
                 throw new ArgumentNullException("entity");
 
@@ -743,9 +754,8 @@ namespace Marr.Data
                 throw new ArgumentNullException("target");
 
             var mappingHelper = new MappingHelper(Command);
-            ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
-            mappingHelper.CreateParameters<T>(entity, mappings, false, true);
-            IQuery query = QueryFactory.CreateDeleteQuery(mappings, Command.Parameters, target);
+            var where = new WhereCondition<T>(Command, filter);
+            IQuery query = QueryFactory.CreateDeleteQuery(Command, target, where.ToString());
             Command.CommandText = query.Generate();
 
             int rowsAffected = 0;
@@ -754,7 +764,6 @@ namespace Marr.Data
             {
                 OpenConnection();
                 rowsAffected = Command.ExecuteNonQuery();
-                mappingHelper.SetOutputValues<T>(entity, mappings.OutputFields);
             }
             finally
             {

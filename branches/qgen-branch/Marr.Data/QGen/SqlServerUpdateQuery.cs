@@ -13,29 +13,25 @@ namespace Marr.Data.QGen
         private const string _paramPrefix = "@";
         private ColumnMapCollection _columns;
         private DbParameterCollection _parameters;
+        private string _whereClause;
 
-        public SqlServerUpdateQuery(ColumnMapCollection columns, DbParameterCollection parameters, string target)
+        public SqlServerUpdateQuery(ColumnMapCollection columns, DbParameterCollection parameters, string target, string whereClause)
         {
             _target = target;
             _columns = columns;
             _parameters = parameters;
+            _whereClause = whereClause;
         }
 
         public string Generate()
         {
-            if (_columns.PrimaryKeys.Count == 0)
-            {
-                throw new Exception("No primary keys have been specified for this entity.");
-            }
-
             StringBuilder sql = new StringBuilder();
-            StringBuilder where = new StringBuilder(" WHERE ");
 
             sql.AppendFormat("UPDATE {0} SET", _target);
 
             int startIndex = sql.Length;
 
-            for (int i = 0; i < _parameters.Count; i++)
+            for (int i = 0; i < _columns.Count; i++)
             {
                 var p = _parameters[i];
                 var c = _columns[i];
@@ -47,14 +43,9 @@ namespace Marr.Data.QGen
                 {
                     sql.AppendFormat("[{0}]={1}{2}", c.ColumnInfo.Name, _paramPrefix, p.ParameterName);
                 }
-
-                if (c.ColumnInfo.IsPrimaryKey)
-                {
-                    where.AppendFormat("[{0}]={1}{2}", c.ColumnInfo.Name, _paramPrefix, p.ParameterName);
-                }
             }
 
-            sql.Append(where);
+            sql.AppendFormat(" {0}", _whereClause);
 
             return sql.ToString();
         }

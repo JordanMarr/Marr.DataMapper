@@ -8,7 +8,7 @@ namespace Marr.Data.QGen
 {
     internal class QueryFactory
     {
-        public static IQuery CreateUpdateQuery(Mapping.ColumnMapCollection columns, DbParameterCollection parameters, string target)
+        public static IQuery CreateUpdateQuery(Mapping.ColumnMapCollection columns, DbParameterCollection parameters, string target, string whereClause)
         {
             if (parameters.Count == 0)
                 throw new Exception("Must contain at least one parameter.");
@@ -16,7 +16,7 @@ namespace Marr.Data.QGen
             string paramType = parameters[0].GetType().Name.ToLower();
             if (paramType.Contains("sqlparameter"))
             {
-                return new SqlServerUpdateQuery(columns, parameters, target);
+                return new SqlServerUpdateQuery(columns, parameters, target, whereClause);
             }
             else
             {
@@ -40,15 +40,12 @@ namespace Marr.Data.QGen
             }
         }
 
-        public static IQuery CreateDeleteQuery(Mapping.ColumnMapCollection columns, DbParameterCollection parameters, string target)
+        public static IQuery CreateDeleteQuery(DbCommand command, string target, string whereClause)
         {
-            if (parameters.Count == 0)
-                throw new Exception("Must contain at least one parameter.");
-
-            string paramType = parameters[0].GetType().Name.ToLower();
-            if (paramType.Contains("sqlparameter"))
+            string commandType = command.GetType().Name.ToLower();
+            if (commandType.Contains("sqlcommand"))
             {
-                return new SqlServerDeleteQuery(columns, parameters, target);
+                return new SqlServerDeleteQuery(target, whereClause);
             }
             else
             {

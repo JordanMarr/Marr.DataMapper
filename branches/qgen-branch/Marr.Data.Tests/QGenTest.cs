@@ -33,7 +33,9 @@ namespace Marr.Data.Tests
 
             mappingHelper.CreateParameters<Person>(person, columns, false, true);
 
-            IQuery query = new SqlServerUpdateQuery(columns, command.Parameters, "dbo.People");
+            var where = new WhereCondition<Person>(command, p => p.ID == 5);
+
+            IQuery query = new SqlServerUpdateQuery(columns, command.Parameters, "dbo.People", where.ToString());
 
             // Act
             string queryText = query.Generate();
@@ -45,7 +47,8 @@ namespace Marr.Data.Tests
             Assert.IsTrue(queryText.Contains("[Age]"));
             Assert.IsTrue(queryText.Contains("[IsHappy]"));
             Assert.IsTrue(queryText.Contains("[BirthDate]"));
-            Assert.IsTrue(queryText.Contains("WHERE [ID]=@ID"));
+            Assert.IsTrue(queryText.Contains("WHERE ([ID] = @P5)"));
+            Assert.AreEqual(command.Parameters["@P5"].Value, 5);
         }
 
         [TestMethod]
@@ -82,19 +85,8 @@ namespace Marr.Data.Tests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
-            ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
-            MappingHelper mappingHelper = new MappingHelper(command);
-
-            Person person = new Person();
-            person.ID = 1;
-            person.Name = "Jordan";
-            person.Age = 33;
-            person.IsHappy = true;
-            person.BirthDate = new DateTime(1977, 1, 22);
-
-            mappingHelper.CreateParameters<Person>(person, columns, false, true);
-
-            IQuery query = new SqlServerDeleteQuery(columns, command.Parameters, "dbo.People");
+            var where = new WhereCondition<Person>(command, p => p.ID == 5);
+            IQuery query = new SqlServerDeleteQuery("dbo.People", where.ToString());
 
             // Act
             string queryText = query.Generate();
@@ -102,7 +94,8 @@ namespace Marr.Data.Tests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.IsTrue(queryText.Contains("DELETE FROM dbo.People"));
-            Assert.IsTrue(queryText.Contains("WHERE [ID]="), "Should contain [ID] column since it is marked as AutoIncrement");
+            Assert.IsTrue(queryText.Contains("WHERE ([ID] = @P0)"));
+            Assert.AreEqual(command.Parameters["@P0"].Value, 5);
         }
 
         [TestMethod]
