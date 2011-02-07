@@ -66,9 +66,10 @@ namespace Marr.Data.QGen
         private void WriteExpression(BinaryExpression body)
         {
             var left = body.Left as MemberExpression;
-            var right = body.Right as ConstantExpression;
 
-            string statement = string.Format("{0} {1} {2}", left.Member.Name, body.NodeType, right.Value);
+            var rightValue = GetRightValue(body.Right);
+
+            string statement = string.Format("{0} {1} {2}", left.Member.Name, body.NodeType, rightValue);
 
             // Initialize column name as member name
             string columnName = left.Member.Name;
@@ -84,9 +85,39 @@ namespace Marr.Data.QGen
 
             // Add parameter to Command.Parameters
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
-            var parameter = new ParameterChainMethods(_command, paramName, right.Value).Parameter;
+            var parameter = new ParameterChainMethods(_command, paramName, rightValue).Parameter;
 
             _sb.AppendFormat("[{0}] {1} {2}", columnName, Decode(body.NodeType), paramName);
+        }
+
+        private object GetRightValue(Expression rightExpression)
+        {
+            object rightValue = null;
+
+            var right = rightExpression as ConstantExpression;
+            if (right == null) // Value is not directly passed in as a constant
+            {
+                var rightMemberExp = (rightExpression as MemberExpression);
+                var parentMemberExpression = rightMemberExp.Expression as MemberExpression;
+                if (parentMemberExpression != null) // Value is passed in as a property on a parent entity
+                {
+                    string entityName = (rightMemberExp.Expression as MemberExpression).Member.Name;
+                    var container = ((rightMemberExp.Expression as MemberExpression).Expression as ConstantExpression).Value;
+                    var entity = ReflectionHelper.GetFieldValue(container, entityName);
+                    rightValue = ReflectionHelper.GetFieldValue(entity, rightMemberExp.Member.Name);
+                }
+                else // Value is passed in as a variable
+                {
+                    var parent = (rightMemberExp.Expression as ConstantExpression).Value;
+                    rightValue = ReflectionHelper.GetFieldValue(parent, rightMemberExp.Member.Name);
+                }
+            }
+            else // Value is passed in directly as a constant
+            {
+                rightValue = right.Value;
+            }
+
+            return rightValue;
         }
 
         private string Decode(ExpressionType expType)
@@ -110,10 +141,4 @@ namespace Marr.Data.QGen
             return _sb.ToString();
         }
     } 
-    
-    public enum ConditionType
-    {
-        AND,
-        OR
-    }
 }

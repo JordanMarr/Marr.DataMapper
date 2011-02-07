@@ -33,7 +33,8 @@ namespace Marr.Data.Tests
 
             mappingHelper.CreateParameters<Person>(person, columns, false, true);
 
-            var where = new WhereCondition<Person>(command, p => p.ID == 5);
+            int idValue = 7;
+            var where = new WhereCondition<Person>(command, p => p.ID == person.ID || p.ID == idValue || p.Name == person.Name && p.Name == "Bob");
 
             IQuery query = new SqlServerUpdateQuery(columns, command.Parameters, "dbo.People", where.ToString());
 
@@ -47,8 +48,14 @@ namespace Marr.Data.Tests
             Assert.IsTrue(queryText.Contains("[Age]"));
             Assert.IsTrue(queryText.Contains("[IsHappy]"));
             Assert.IsTrue(queryText.Contains("[BirthDate]"));
-            Assert.IsTrue(queryText.Contains("WHERE ([ID] = @P5)"));
-            Assert.AreEqual(command.Parameters["@P5"].Value, 5);
+            Assert.IsTrue(queryText.Contains("[ID] = @P5"));
+            Assert.IsTrue(queryText.Contains("[ID] = @P6"));
+            Assert.IsTrue(queryText.Contains("[Name] = @P7"));
+            Assert.IsTrue(queryText.Contains("[Name] = @P8"));
+            Assert.AreEqual(command.Parameters["@P5"].Value, 1);
+            Assert.AreEqual(command.Parameters["@P6"].Value, 7);
+            Assert.AreEqual(command.Parameters["@P7"].Value, "Jordan");
+            Assert.AreEqual(command.Parameters["@P8"].Value, "Bob");
         }
 
         [TestMethod]
