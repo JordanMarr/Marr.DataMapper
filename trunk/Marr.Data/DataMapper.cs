@@ -463,11 +463,20 @@ namespace Marr.Data
 
         public List<T> AutoQuery<T>(string target, Expression<Func<T, bool>> filter)
         {
+            // Remember sql mode
+            var previousSqlMode = this.SqlMode;
+            SqlMode = SqlModes.Text;
+
             // Generate a parameterized where clause
             var where = new WhereCondition<T>(Command, filter);
             var columns = MapRepository.Instance.GetColumns(typeof(T));
             IQuery query = QueryFactory.CreateSelectQuery(columns, target, where.ToString());
-            return Query<T>(query.Generate());
+            var results = Query<T>(query.Generate());
+
+            // Return to previous sql mode
+            SqlMode = previousSqlMode;
+
+            return results;
         }
         
         /// <summary>
@@ -619,6 +628,10 @@ namespace Marr.Data
             if (string.IsNullOrEmpty(target))
                 throw new ArgumentNullException("target");
 
+            // Remember sql mode
+            var previousSqlMode = this.SqlMode;
+            SqlMode = SqlModes.Text;
+
             var mappingHelper = new MappingHelper(Command);
             var where = new WhereCondition<T>(Command, filter);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
@@ -638,6 +651,9 @@ namespace Marr.Data
             {
                 CloseConnection();
             }
+
+            // Return to previous sql mode
+            SqlMode = previousSqlMode;
 
             return rowsAffected;
         }
@@ -682,6 +698,10 @@ namespace Marr.Data
             if (string.IsNullOrEmpty(target))
                 throw new ArgumentNullException("target");
 
+            // Remember sql mode
+            var previousSqlMode = this.SqlMode;
+            SqlMode = SqlModes.Text;
+
             var mappingHelper = new MappingHelper(Command);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
@@ -701,6 +721,9 @@ namespace Marr.Data
             {
                 CloseConnection();
             }
+
+            // Return to previous sql mode
+            SqlMode = previousSqlMode;
 
             return rowsAffected;
         }
@@ -753,6 +776,10 @@ namespace Marr.Data
             if (string.IsNullOrEmpty(target))
                 throw new ArgumentNullException("target");
 
+            // Remember sql mode
+            var previousSqlMode = this.SqlMode;
+            SqlMode = SqlModes.Text;
+
             var mappingHelper = new MappingHelper(Command);
             var where = new WhereCondition<T>(Command, filter);
             IQuery query = QueryFactory.CreateDeleteQuery(target, where.ToString());
@@ -769,6 +796,9 @@ namespace Marr.Data
             {
                 CloseConnection();
             }
+
+            // Return to previous sql mode
+            SqlMode = previousSqlMode;
 
             return rowsAffected;
         }
