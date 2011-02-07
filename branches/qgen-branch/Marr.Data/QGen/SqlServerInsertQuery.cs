@@ -23,11 +23,6 @@ namespace Marr.Data.QGen
 
         public string Generate()
         {
-            if (_columns.PrimaryKeys.Count == 0)
-            {
-                throw new Exception("No primary keys have been specified for this entity.");
-            }
-
             StringBuilder sql = new StringBuilder();
             StringBuilder values = new StringBuilder(") VALUES (");
 
