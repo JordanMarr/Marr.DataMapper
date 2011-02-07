@@ -18,6 +18,7 @@ using System.Data;
 using System.Data.Common;
 using System.Collections.Generic;
 using Marr.Data.Parameters;
+using System.Linq.Expressions;
 
 namespace Marr.Data
 {
@@ -25,6 +26,13 @@ namespace Marr.Data
     {
         ParameterChainMethods AddParameter(string name, object value);
         IDbDataParameter AddParameter(IDbDataParameter parameter);
+        int AutoUpdate<T>(T entity, string target);
+        int AutoUpdate<T>(T entity, string target, Expression<Func<T, bool>> filter);
+        int AutoInsert<T>(T entity, string target);
+        int AutoDelete<T>(T entity, string target);
+        int AutoDelete<T>(T entity, string target, Expression<Func<T, bool>> filter);
+        List<T> AutoQuery<T>(string target);
+        List<T> AutoQuery<T>(string target, Expression<Func<T, bool>> filter);
         void BeginTransaction();
         DbCommand Command { get; }
         void Commit();

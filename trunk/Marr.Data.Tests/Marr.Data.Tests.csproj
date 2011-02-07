@@ -61,6 +61,7 @@
     <Compile Include="ParameterTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DataMapperTest.cs" />
+    <Compile Include="QGenTest.cs" />
     <Compile Include="StubDataReader\StubDataReader.cs" />
     <Compile Include="StubDataReader\StubResultSet.cs" />
     <Compile Include="StubDataReader\StubRow.cs" />
