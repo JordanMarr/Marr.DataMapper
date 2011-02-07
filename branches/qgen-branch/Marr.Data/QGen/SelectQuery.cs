@@ -7,17 +7,17 @@ using System.Data.Common;
 
 namespace Marr.Data.QGen
 {
-    public class SqlServerSelectQuery : IQuery
+    public class SelectQuery : IQuery
     {
-        private string _target;
-        private string _whereClause;
-        private ColumnMapCollection _columns;
+        protected string Target { get; set; }
+        protected string WhereClause { get; set; }
+        protected ColumnMapCollection Columns { get; set; }
 
-        public SqlServerSelectQuery(ColumnMapCollection columns, string target, string whereClause)
+        public SelectQuery(ColumnMapCollection columns, string target, string whereClause)
         {
-            _target = target;
-            _whereClause = whereClause;
-            _columns = columns;
+            Target = target;
+            WhereClause = whereClause;
+            Columns = columns;
         }
 
         public string Generate()
@@ -26,9 +26,9 @@ namespace Marr.Data.QGen
 
             int startIndex = sql.Length;
 
-            for (int i = 0; i < _columns.Count; i++)
+            for (int i = 0; i < Columns.Count; i++)
             {
-                var c = _columns[i];
+                var c = Columns[i];
 
                 if (sql.Length > startIndex)
                     sql.Append(",");
@@ -36,9 +36,9 @@ namespace Marr.Data.QGen
                 sql.AppendFormat("[{0}]", c.ColumnInfo.Name);
             }
 
-            sql.AppendFormat(" FROM {0} ", _target);
+            sql.AppendFormat(" FROM {0} ", Target);
 
-            sql.Append(_whereClause);
+            sql.Append(WhereClause);
 
             return sql.ToString();
         }

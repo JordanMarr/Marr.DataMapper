@@ -8,62 +8,31 @@ namespace Marr.Data.QGen
 {
     internal class QueryFactory
     {
-        public static IQuery CreateUpdateQuery(Mapping.ColumnMapCollection columns, DbParameterCollection parameters, string target, string whereClause)
+        public static IQuery CreateUpdateQuery(Mapping.ColumnMapCollection columns, DbCommand command, string target, string whereClause)
         {
-            if (parameters.Count == 0)
-                throw new Exception("Must contain at least one parameter.");
+            return new UpdateQuery(columns, command, target, whereClause);
+        }
 
-            string paramType = parameters[0].GetType().Name.ToLower();
-            if (paramType.Contains("sqlparameter"))
+        public static IQuery CreateInsertQuery(Mapping.ColumnMapCollection columns, DbCommand command, string target)
+        {
+            if (command is System.Data.SqlClient.SqlCommand)
             {
-                return new SqlServerUpdateQuery(columns, parameters, target, whereClause);
+                return new SqlServerInsertQuery(columns, command, target);
             }
             else
             {
-                throw new NotImplementedException("An IQuery class has not yet been implemented for this database provider.");
+                return new InsertQuery(columns, command, target);
             }
         }
 
-        public static IQuery CreateInsertQuery(Mapping.ColumnMapCollection columns, DbParameterCollection parameters, string target)
+        public static IQuery CreateDeleteQuery(string target, string whereClause)
         {
-            if (parameters.Count == 0)
-                throw new Exception("Must contain at least one parameter.");
-
-            string paramType = parameters[0].GetType().Name.ToLower();
-            if (paramType.Contains("sqlparameter"))
-            {
-                return new SqlServerInsertQuery(columns, parameters, target);
-            }
-            else
-            {
-                throw new NotImplementedException("An IQuery class has not yet been implemented for this database provider.");
-            }
+            return new DeleteQuery(target, whereClause);
         }
 
-        public static IQuery CreateDeleteQuery(DbCommand command, string target, string whereClause)
+        public static IQuery CreateSelectQuery(Mapping.ColumnMapCollection columns, string target, string where)
         {
-            string commandType = command.GetType().Name.ToLower();
-            if (commandType.Contains("sqlcommand"))
-            {
-                return new SqlServerDeleteQuery(target, whereClause);
-            }
-            else
-            {
-                throw new NotImplementedException("An IQuery class has not yet been implemented for this database provider.");
-            }
-        }
-
-        public static IQuery CreateSelectQuery(Mapping.ColumnMapCollection columns, DbCommand command, string target, string where)
-        {
-            string commandType = command.GetType().Name.ToLower();
-            if (commandType.Contains("sqlcommand"))
-            {
-                return new SqlServerSelectQuery(columns, target, where);
-            }
-            else
-            {
-                throw new NotImplementedException("An IQuery class has not yet been implemented for this database provider.");
-            }
+            return new SelectQuery(columns, target, where);
         }
     }
 }

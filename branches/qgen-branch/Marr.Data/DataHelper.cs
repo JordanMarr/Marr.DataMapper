@@ -31,7 +31,12 @@ namespace Marr.Data
                     return true; 
             } 
             return false; 
-        } 
+        }
 
+        public static string ParameterPrefix(this IDbCommand command)
+        {
+            string commandType = command.GetType().Name.ToLower();
+            return commandType.Contains("oracle") ? ":" : "@";
+        }
     }
 }

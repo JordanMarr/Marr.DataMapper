@@ -466,7 +466,7 @@ namespace Marr.Data
             // Generate a parameterized where clause
             var where = new WhereCondition<T>(Command, filter);
             var columns = MapRepository.Instance.GetColumns(typeof(T));
-            IQuery query = QueryFactory.CreateSelectQuery(columns, Command, target, where.ToString());
+            IQuery query = QueryFactory.CreateSelectQuery(columns, target, where.ToString());
             return Query<T>(query.Generate());
         }
         
@@ -623,7 +623,7 @@ namespace Marr.Data
             var where = new WhereCondition<T>(Command, filter);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
-            IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command.Parameters, target, where.ToString());
+            IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command, target, where.ToString());
             Command.CommandText = query.Generate();
 
             int rowsAffected = 0;
@@ -685,7 +685,7 @@ namespace Marr.Data
             var mappingHelper = new MappingHelper(Command);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
-            IQuery query = QueryFactory.CreateInsertQuery(mappings, Command.Parameters, target);
+            IQuery query = QueryFactory.CreateInsertQuery(mappings, Command, target);
             Command.CommandText = query.Generate();
 
             int rowsAffected = 0;
@@ -755,7 +755,7 @@ namespace Marr.Data
 
             var mappingHelper = new MappingHelper(Command);
             var where = new WhereCondition<T>(Command, filter);
-            IQuery query = QueryFactory.CreateDeleteQuery(Command, target, where.ToString());
+            IQuery query = QueryFactory.CreateDeleteQuery(target, where.ToString());
             Command.CommandText = query.Generate();
 
             int rowsAffected = 0;

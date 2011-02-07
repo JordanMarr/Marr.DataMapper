@@ -36,7 +36,7 @@ namespace Marr.Data.Tests
             int idValue = 7;
             var where = new WhereCondition<Person>(command, p => p.ID == person.ID || p.ID == idValue || p.Name == person.Name && p.Name == "Bob");
 
-            IQuery query = new SqlServerUpdateQuery(columns, command.Parameters, "dbo.People", where.ToString());
+            IQuery query = new UpdateQuery(columns, command, "dbo.People", where.ToString());
 
             // Act
             string queryText = query.Generate();
@@ -75,7 +75,7 @@ namespace Marr.Data.Tests
 
             mappingHelper.CreateParameters<Person>(person, columns, false, true);
 
-            IQuery query = new SqlServerInsertQuery(columns, command.Parameters, "dbo.People");
+            IQuery query = new SqlServerInsertQuery(columns, command, "dbo.People");
 
             // Act
             string queryText = query.Generate();
@@ -93,7 +93,7 @@ namespace Marr.Data.Tests
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
             var where = new WhereCondition<Person>(command, p => p.ID == 5);
-            IQuery query = new SqlServerDeleteQuery("dbo.People", where.ToString());
+            IQuery query = new DeleteQuery("dbo.People", where.ToString());
 
             // Act
             string queryText = query.Generate();
@@ -123,7 +123,7 @@ namespace Marr.Data.Tests
             List<Person> list = new List<Person>();
 
             var where = new WhereCondition<Person>(command, p => p.Name == "John" && p.Age > 15 || p.Age < 5 && p.Age > 1);
-            IQuery query = new SqlServerSelectQuery(columns, "dbo.People", where.ToString());
+            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString());
 
             // Act
             string queryText = query.Generate();
