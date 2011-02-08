@@ -53,14 +53,14 @@ namespace Marr.Data.Parameters
             else
             {
                 Parameter.Value = value;
-            }
+            } 
 
-            // Determine the correct DbType based on the passed in value type
-            IDbTypeBuilder typeBuilder = MapRepository.Instance.DbTypeBuilder;
-            Enum dbType = typeBuilder.GetDbType(valueType);
+            //// Determine the correct DbType based on the passed in value type
+            //IDbTypeBuilder typeBuilder = MapRepository.Instance.DbTypeBuilder;
+            //Enum dbType = typeBuilder.GetDbType(valueType);
 
-            // Set the appropriate DbType property depending on the parameter type
-            typeBuilder.SetDbType(Parameter, dbType);
+            //// Set the appropriate DbType property depending on the parameter type
+            //typeBuilder.SetDbType(Parameter, dbType);
 
             command.Parameters.Add(Parameter);
         }
@@ -88,6 +88,12 @@ namespace Marr.Data.Parameters
         public ParameterChainMethods Output()
         {
             Parameter.Direction = ParameterDirection.Output;
+            return this;
+        }
+
+        public ParameterChainMethods DBType(DbType dbType)
+        {
+            Parameter.DbType = dbType;
             return this;
         }
 
