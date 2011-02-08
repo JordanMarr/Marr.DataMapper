@@ -110,8 +110,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="NuGet\NuGet.exe" />
-    <None Include="NuGet\NuGetDeleteFromRepo.bat" />
-    <None Include="NuGet\NuGetPushToRepo.bat" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
