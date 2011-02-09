@@ -312,7 +312,7 @@ namespace Marr.Data
             foreach (ColumnMap pkColumn in columns)
             {
                 // A primary key should not have a null value
-                pkValues.Append(reader[pkColumn.ColumnInfo.Name].ToString());
+                pkValues.Append(reader[pkColumn.ColumnInfo.AltName].ToString());
             }
             return pkValues.ToString();
         }

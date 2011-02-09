@@ -20,7 +20,7 @@ namespace Marr.Data.Tests.Entities
 
     public class OrderItem
     {
-        [Column("OrderItemID", IsPrimaryKey = true)]
+        [Column("ID", AltName = "OrderItemID", IsPrimaryKey = true)]
         public int ID { get; set; }
 
         [Column]
@@ -35,6 +35,7 @@ namespace Marr.Data.Tests.Entities
 
     public class Receipt
     {
+        [Column]
         public decimal? AmountPaid { get; set; }
     }
 

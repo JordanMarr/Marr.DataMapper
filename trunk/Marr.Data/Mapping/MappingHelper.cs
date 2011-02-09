@@ -19,13 +19,9 @@ namespace Marr.Data.Mapping
         /// <summary>
         /// Instantiates an entity and loads its mapped fields with the data from the reader.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="mappings"></param>
-        /// <param name="reader"></param>
-        /// <returns></returns>
-        public object CreateAndLoadEntity<T>(ColumnMapCollection mappings, DbDataReader reader)
+        public object CreateAndLoadEntity<T>(ColumnMapCollection mappings, DbDataReader reader, bool useAltName)
         {
-            return CreateAndLoadEntity(typeof(T), mappings, reader);
+            return CreateAndLoadEntity(typeof(T), mappings, reader, useAltName);
         }
 
         /// <summary>
@@ -34,18 +30,17 @@ namespace Marr.Data.Mapping
         /// <param name="entityType">The entity being created and loaded.</param>
         /// <param name="mappings">The field mappings for the passed in entity.</param>
         /// <param name="reader">The open data reader.</param>
+        /// <param name="useAltNames">Determines if the column AltName should be used.</param>
         /// <returns>Returns an entity loaded with data.</returns>
-        public object CreateAndLoadEntity(Type entityType, ColumnMapCollection mappings, DbDataReader reader)
+        public object CreateAndLoadEntity(Type entityType, ColumnMapCollection mappings, DbDataReader reader, bool useAltName)
         {
             // Create new entity
             object ent = ReflectionHelper.CreateInstance(entityType);
-            return LoadExistingEntity(mappings, reader, ent);
+            return LoadExistingEntity(mappings, reader, ent, useAltName);
         }
 
-        public object LoadExistingEntity(ColumnMapCollection mappings, DbDataReader reader, object ent)
+        public object LoadExistingEntity(ColumnMapCollection mappings, DbDataReader reader, object ent, bool useAltName)
         {
-            List<ColumnMap> mappingsToRemove = new List<ColumnMap>();
-
             MapRepository repository = MapRepository.Instance;
 
             // Populate entity fields from data reader
@@ -53,7 +48,13 @@ namespace Marr.Data.Mapping
             {
                 try
                 {
-                    int ordinal = reader.GetOrdinal(dataMap.ColumnInfo.Name);
+                    string colName = null;
+                    if (useAltName && !string.IsNullOrEmpty(dataMap.ColumnInfo.AltName))
+                        colName = dataMap.ColumnInfo.AltName;
+                    else
+                        colName = dataMap.ColumnInfo.Name;
+
+                    int ordinal = reader.GetOrdinal(colName);
                     object dbValue = reader.GetValue(ordinal);
 
                     // Handle conversions
@@ -67,27 +68,12 @@ namespace Marr.Data.Mapping
                 }
                 catch (Exception ex)
                 {
-                    if (dataMap.ColumnInfo is OptionalColumn)
-                    {
-                        // Mark the missing mapping for removal and continue
-                        mappingsToRemove.Add(dataMap);
-                        continue;
-                    }
-                    else
-                    {
-                        string msg = string.Format("The DataMapper was unable to load the following field: '{0}'.",
-                            dataMap.ColumnInfo.Name);
-                        throw new Exception(msg, ex);
-                    }
+                    string msg = string.Format("The DataMapper was unable to load the following field: '{0}'.",
+                        dataMap.ColumnInfo.Name);
+                    throw new Exception(msg, ex);
                 }
             }
-
-            // Modify cache to remove optional mappings that were not found
-            foreach (ColumnMap missingMap in mappingsToRemove)
-            {
-                mappings.Remove(missingMap);
-            }
-
+            
             return ent;
         }
 

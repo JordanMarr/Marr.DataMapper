@@ -26,6 +26,7 @@ namespace Marr.Data.Mapping
     public class ColumnAttribute : Attribute, IColumnInfo
     {
         private string _name;
+        private string _altName;
         private ConverterType _converter = ConverterType.None;
 
         private int _size = 0;
@@ -50,6 +51,27 @@ namespace Marr.Data.Mapping
         {
             get { return _name; }
             set { _name = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets an alternate name that is used to define this column in views.
+        /// If an AltName is present, it is used in the QueryViewToObjectGraph method.
+        /// If an AltName is not present, it will return the Name property value.
+        /// </summary>
+        public string AltName
+        {
+            get 
+            {
+                if (!string.IsNullOrEmpty(_altName))
+                {
+                    return _altName;
+                }
+                else
+                {
+                    return _name;
+                }
+            }
+            set { _altName = value; }
         }
 
         /// <summary>

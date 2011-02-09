@@ -25,6 +25,7 @@ namespace Marr.Data.Mapping
     public interface IColumnInfo
     {
         string Name { get; }
+        string AltName { get; }
         int Size { get; }
         bool IsPrimaryKey { get; }
         bool IsAutoIncrement { get; }

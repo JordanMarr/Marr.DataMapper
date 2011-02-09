@@ -185,7 +185,7 @@ namespace Marr.Data.Tests
         [TestMethod]
         public void AddParameter_SqlDbType_Should_Be_Varchar()
         {
-            SqlParamChecker(SqlDbType.VarChar, "Value");
+            SqlParamChecker(SqlDbType.NVarChar, "Value");
         }
 
         [TestMethod]

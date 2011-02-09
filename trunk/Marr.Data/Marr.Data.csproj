@@ -80,7 +80,6 @@
     <Compile Include="Mapping\IColumnInfo.cs" />
     <Compile Include="Mapping\IRelationshipInfo.cs" />
     <Compile Include="Mapping\MappingHelper.cs" />
-    <Compile Include="Mapping\OptionalColumn.cs" />
     <Compile Include="Mapping\Relationship.cs" />
     <Compile Include="Mapping\RelationshipAttribute.cs" />
     <Compile Include="Mapping\RelationshipCollection.cs" />

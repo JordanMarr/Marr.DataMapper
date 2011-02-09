@@ -437,9 +437,9 @@ namespace Marr.Data
                         else
                         {
                             if (ent == null)
-                                ent = (T)mappingHelper.CreateAndLoadEntity<T>(mappings, reader);
+                                ent = (T)mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false);
                             else
-                                mappingHelper.LoadExistingEntity(mappings, reader, ent);
+                                mappingHelper.LoadExistingEntity(mappings, reader, ent, false);
                         }
                     }
                 }
@@ -537,7 +537,7 @@ namespace Marr.Data
                         else
                         {
                             // Create new entity
-                            object ent = mappingHelper.CreateAndLoadEntity<T>(mappings, reader);
+                            object ent = mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false);
 
                             // Add entity to return list
                             entityList.Add((T)ent);
@@ -572,10 +572,10 @@ namespace Marr.Data
         public ICollection<T> QueryViewToObjectGraph<T>(string sql, ICollection<T> entityList)
         {
             if (entityList == null)
-                throw new ArgumentNullException("ICollection instance cannot be null.");
+                throw new ArgumentNullException("entityList");
 
             if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("A stored procedure name has not been specified for 'Query'.");
+                throw new ArgumentNullException("sql");
 
             var mappingHelper = new MappingHelper(Command);
             Type parentType = typeof(T);
@@ -584,7 +584,7 @@ namespace Marr.Data
             try
             {
                 EntityGraph entityGraph = new EntityGraph(parentType, (IList)entityList);
-
+                
                 OpenConnection();
                 using (DbDataReader reader = Command.ExecuteReader())
                 {
@@ -597,7 +597,7 @@ namespace Marr.Data
                             if (entity.IsNewGroup(reader))
                             {
                                 // Add entity to the appropriate place in the object graph
-                                entity.AddEntity(mappingHelper.CreateAndLoadEntity(entity.EntityType, entity.Columns, reader));
+                                entity.AddEntity(mappingHelper.CreateAndLoadEntity(entity.EntityType, entity.Columns, reader, true));
                             }
                         }
                     }

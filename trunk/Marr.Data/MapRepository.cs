@@ -128,22 +128,6 @@ namespace Marr.Data
                 }
             }
 
-            // If no ColumnAttributes were found, add all public properties as OptionalColumns
-            if (mappings.Count == 0)
-            {
-                PropertyInfo[] properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy);
-                foreach (PropertyInfo property in properties)
-                {
-                    OptionalColumn column = new OptionalColumn(property.Name);
-
-                    // Get database specific DbType and store with column map in cache    
-                    Enum dbType = DbTypeBuilder.GetDbType(property.PropertyType);
-
-                    ColumnMap columnMap = new ColumnMap(property.Name, property.PropertyType, dbType, column);
-                    mappings.Add(columnMap);
-                }
-            }
-
             return mappings;
         }
 
