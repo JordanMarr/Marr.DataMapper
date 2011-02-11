@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using Marr.Data.Mapping;
 using System.Data.Common;
 using Marr.Data.Parameters;
+using System.Reflection;
 
 namespace Marr.Data.QGen
 {
@@ -17,22 +18,28 @@ namespace Marr.Data.QGen
 
         public WhereCondition(DbCommand command, Expression<Func<T, bool>> filter)
         {
-            string commandType = command.GetType().Name.ToLower();
-            if (commandType.Contains("oracle"))
-                _paramPrefix = ":";
-            else
-                _paramPrefix = "@";
-
             _command = command;
-
+            _paramPrefix = command.ParameterPrefix();
             _sb = new StringBuilder();
 
             if (filter != null)
             {
                 _sb.Append("WHERE (");
-                ParseExpression((BinaryExpression)filter.Body);
+
+                ParseExpression(filter.Body);
+
                 _sb.Append(")");
             }            
+        }
+
+        private void ParseExpression(Expression body)
+        {
+            if (body is BinaryExpression)
+                ParseBinaryExpression((BinaryExpression)body);
+            else if (body is MethodCallExpression)
+                ParseMethodCallExpression((MethodCallExpression)body);
+            else
+                throw new NotImplementedException(string.Format("{0} expressions are not currently supported.", body.NodeType.ToString()));
         }
 
         /// <summary>
@@ -40,14 +47,14 @@ namespace Marr.Data.QGen
         /// until they can be converted into a parameterized SQL where clause.
         /// </summary>
         /// <param name="body">The current expression node.</param>
-        private void ParseExpression(BinaryExpression body)
+        private void ParseBinaryExpression(BinaryExpression body)
         {
             if (body.Left is BinaryExpression)
             {
                 _sb.Append("(");
-                ParseExpression(body.Left as BinaryExpression);
+                ParseExpression(body.Left);
                 _sb.AppendFormat(" {0} ", Decode(body.NodeType));
-                ParseExpression(body.Right as BinaryExpression);
+                ParseExpression(body.Right);
                 _sb.Append(")");
             }
             else
@@ -71,11 +78,27 @@ namespace Marr.Data.QGen
 
             string statement = string.Format("{0} {1} {2}", left.Member.Name, body.NodeType, rightValue);
 
+            string columnName = GetColumnName(left.Member);
+
+            // Add parameter to Command.Parameters
+            string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
+            var parameter = new ParameterChainMethods(_command, paramName, rightValue).Parameter;
+
+            _sb.AppendFormat("[{0}] {1} {2}", columnName, Decode(body.NodeType), paramName);
+        }
+
+        /// <summary>
+        /// Get the column name from the ColumnAttribute
+        /// </summary>
+        /// <param name="member"></param>
+        /// <returns></returns>
+        private string GetColumnName(MemberInfo member)
+        {
             // Initialize column name as member name
-            string columnName = left.Member.Name;
+            string columnName = member.Name;
 
             // If column name is overridden at ColumnAttribute level, use that name instead
-            object[] attributes = left.Member.GetCustomAttributes(typeof(ColumnAttribute), false);
+            object[] attributes = member.GetCustomAttributes(typeof(ColumnAttribute), false);
             if (attributes.Length > 0)
             {
                 ColumnAttribute column = (attributes[0] as ColumnAttribute);
@@ -83,11 +106,7 @@ namespace Marr.Data.QGen
                     columnName = (attributes[0] as ColumnAttribute).Name;
             }
 
-            // Add parameter to Command.Parameters
-            string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
-            var parameter = new ParameterChainMethods(_command, paramName, rightValue).Parameter;
-
-            _sb.AppendFormat("[{0}] {1} {2}", columnName, Decode(body.NodeType), paramName);
+            return columnName;
         }
 
         private object GetRightValue(Expression rightExpression)
@@ -134,6 +153,58 @@ namespace Marr.Data.QGen
                 case ExpressionType.OrElse: return "OR";
                 default: throw new NotSupportedException(string.Format("{0} statement is not supported", expType.ToString()));
             }
+        }
+
+        private void ParseMethodCallExpression(MethodCallExpression body)
+        {
+            string method = (body as System.Linq.Expressions.MethodCallExpression).Method.Name;
+            switch (method)
+            {
+                case "Contains":
+                    Write_Contains(body);
+                    break;
+
+                case "StartsWith":
+                    Write_StartsWith(body);
+                    break;
+
+                case "EndsWith":
+                    Write_EndsWith(body);
+                    break;
+            }
+        }
+
+        private void Write_Contains(MethodCallExpression body)
+        {
+            // Add parameter to Command.Parameters
+            string search = body.Arguments[0].ToString().Replace("\"", string.Empty);
+            string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
+            var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
+
+            string columnName = GetColumnName((body.Object as MemberExpression).Member);
+            _sb.AppendFormat("[{0}] LIKE '%' + {1} + '%'", columnName, paramName);
+        }
+
+        private void Write_StartsWith(MethodCallExpression body)
+        {
+            // Add parameter to Command.Parameters
+            string search = body.Arguments[0].ToString().Replace("\"", string.Empty);
+            string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
+            var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
+
+            string columnName = GetColumnName((body.Object as MemberExpression).Member);
+            _sb.AppendFormat("[{0}] LIKE {1} + '%'", columnName, paramName);
+        }
+
+        private void Write_EndsWith(MethodCallExpression body)
+        {
+            // Add parameter to Command.Parameters
+            string search = body.Arguments[0].ToString().Replace("\"", string.Empty);
+            string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
+            var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
+
+            string columnName = GetColumnName((body.Object as MemberExpression).Member);
+            _sb.AppendFormat("[{0}] LIKE '%' + {1}", columnName, paramName);
         }
 
         public override string ToString()
