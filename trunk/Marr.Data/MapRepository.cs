@@ -17,10 +17,11 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Reflection;
-using Marr.Data.Mapping;
 using System.Data.Common;
 using Marr.Data.Converters;
 using Marr.Data.Parameters;
+using Marr.Data.Mapping;
+using Marr.Data.Mapping.Strategies;
 
 namespace Marr.Data
 {
@@ -30,7 +31,7 @@ namespace Marr.Data
         private Dictionary<Type, RelationshipCollection> _relationships;
         private FastReflection.CachedReflector _reflector;
         private IDbTypeBuilder _dbTypeBuilder;
-        private Dictionary<Type, IColumnMapStrategy> _columnMapStrategies;
+        private Dictionary<Type, IMapStrategy> _columnMapStrategies;
         internal Dictionary<Type, IConverter> TypeConverters { get; set; }
 
         // Explicit static constructor to tell C# compiler
@@ -51,8 +52,8 @@ namespace Marr.Data
             // Register a default IDbTypeBuilder
             _dbTypeBuilder = new Parameters.DbTypeBuilder();
 
-            _columnMapStrategies = new Dictionary<Type, IColumnMapStrategy>();
-            RegisterDefaultColumnMapStrategy(new AttributeColumnMapStrategy());
+            _columnMapStrategies = new Dictionary<Type, IMapStrategy>();
+            RegisterDefaultMapStrategy(new AttributeMapStrategy());
         }
 
         private readonly static MapRepository _instance = new MapRepository();
@@ -70,12 +71,12 @@ namespace Marr.Data
 
         #region - Column Map Strategies -
 
-        public void RegisterDefaultColumnMapStrategy(IColumnMapStrategy strategy)
+        public void RegisterDefaultMapStrategy(IMapStrategy strategy)
         {
-            RegisterColumnMapStrategy(typeof(object), strategy);
+            RegisterMapStrategy(typeof(object), strategy);
         }
 
-        public void RegisterColumnMapStrategy(Type entityType, IColumnMapStrategy strategy)
+        public void RegisterMapStrategy(Type entityType, IMapStrategy strategy)
         {
             if (_columnMapStrategies.ContainsKey(entityType))
                 _columnMapStrategies[entityType] = strategy;
@@ -83,7 +84,7 @@ namespace Marr.Data
                 _columnMapStrategies.Add(entityType, strategy);
         }
 
-        private IColumnMapStrategy GetColumnMapStrategy(Type entityType)
+        private IMapStrategy GetMapStrategy(Type entityType)
         {
             if (_columnMapStrategies.ContainsKey(entityType))
             {
@@ -109,7 +110,7 @@ namespace Marr.Data
             }
             else
             {
-                ColumnMapCollection columnMaps = GetColumnMapStrategy(entityType).CreateColumnMaps(entityType);
+                ColumnMapCollection columnMaps = GetMapStrategy(entityType).MapColumns(entityType);
                 _columns.Add(entityType, columnMaps);
                 return columnMaps;
             }
@@ -127,66 +128,12 @@ namespace Marr.Data
             }
             else
             {
-                RelationshipCollection relationships = ReflectRelationships(type);
+                RelationshipCollection relationships = GetMapStrategy(type).MapRelationships(type);
                 _relationships.Add(type, relationships);
                 return relationships;
             }
         }
-
-        private RelationshipCollection ReflectRelationships(Type type)
-        {
-            RelationshipCollection relationships = new RelationshipCollection();
-            MemberInfo[] members = type.GetMembers(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.FlattenHierarchy);
-            foreach (MemberInfo member in members)
-            {
-                if (!member.IsDefined(typeof(RelationshipAttribute), false))
-                    continue;
-
-                RelationshipAttribute rInfo = (RelationshipAttribute)member.GetCustomAttributes(typeof(RelationshipAttribute), false)[0];
-
-                Type memberType = ReflectionHelper.GetMemberType(member);
-
-                // Try to determine the RelationshipType
-                if (rInfo.RelationType == RelationshipTypes.AutoDetect)
-                {
-                    if (typeof(System.Collections.ICollection).IsAssignableFrom(memberType))
-                    {
-                        rInfo.RelationType = RelationshipTypes.Many;
-                    }
-                    else
-                    {
-                        rInfo.RelationType = RelationshipTypes.One;
-                    }
-                }
-
-                // Try to determine the EntityType
-                if (rInfo.EntityType == null)
-                {
-                    if (rInfo.RelationType == RelationshipTypes.Many)
-                    {
-                        if (memberType.IsGenericType)
-                        {
-                            // Assume a Collection<T> or List<T> and return T
-                            rInfo.EntityType = memberType.GetGenericArguments()[0];
-                        }
-                        else
-                        {
-                            throw new ArgumentException(string.Format(
-                                "The DataMapper could not determine the RelationshipAttribute EntityType for {0}.{1}",
-                                type.Name, memberType.Name));
-                        }
-                    }
-                    else
-                    {
-                        rInfo.EntityType = memberType;
-                    }
-                }
-                relationships.Add(new Relationship(rInfo, member));
-            }
-
-            return relationships;
-        }
-
+        
         #endregion
 
         #region - Cached Reflector -

@@ -21,8 +21,8 @@ namespace Marr.Data.Mapping
 {
     public interface IRelationshipInfo
     {
-        RelationshipTypes RelationType { get; }
-        Type EntityType { get; }
+        RelationshipTypes RelationType { get; set; }
+        Type EntityType { get; set; }
     }
 
     public enum RelationshipTypes

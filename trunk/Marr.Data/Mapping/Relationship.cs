@@ -25,10 +25,53 @@ namespace Marr.Data.Mapping
         private IRelationshipInfo _relationshipInfo;
         private MemberInfo _member;
 
-        public Relationship(IRelationshipInfo relationshipInfo, MemberInfo member)
+        public Relationship(MemberInfo member)
+            : this(member, new RelationshipInfo())
+        { }
+
+        public Relationship(MemberInfo member, IRelationshipInfo relationshipInfo)
         {
-            _relationshipInfo = relationshipInfo;
             _member = member;
+
+            Type memberType = ReflectionHelper.GetMemberType(member);
+
+            // Try to determine the RelationshipType
+            if (relationshipInfo.RelationType == RelationshipTypes.AutoDetect)
+            {
+                if (typeof(System.Collections.ICollection).IsAssignableFrom(memberType))
+                {
+                    relationshipInfo.RelationType = RelationshipTypes.Many;
+                }
+                else
+                {
+                    relationshipInfo.RelationType = RelationshipTypes.One;
+                }
+            }
+
+            // Try to determine the EntityType
+            if (relationshipInfo.EntityType == null)
+            {
+                if (relationshipInfo.RelationType == RelationshipTypes.Many)
+                {
+                    if (memberType.IsGenericType)
+                    {
+                        // Assume a Collection<T> or List<T> and return T
+                        relationshipInfo.EntityType = memberType.GetGenericArguments()[0];
+                    }
+                    else
+                    {
+                        throw new ArgumentException(string.Format(
+                            "The DataMapper could not determine the RelationshipAttribute EntityType for {0}.",
+                            memberType.Name));
+                    }
+                }
+                else
+                {
+                    relationshipInfo.EntityType = memberType;
+                }
+            }
+
+            _relationshipInfo = relationshipInfo;
         }
 
         public IRelationshipInfo RelationshipInfo
@@ -46,7 +89,6 @@ namespace Marr.Data.Mapping
             get
             {
                 // Assumes that a relationship can only have a member type of Field or Property
-
                 if (Member.MemberType == MemberTypes.Field)
                     return (Member as FieldInfo).FieldType;
                 else
