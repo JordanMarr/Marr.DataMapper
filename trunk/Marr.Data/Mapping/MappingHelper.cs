@@ -58,7 +58,7 @@ namespace Marr.Data.Mapping
                     object dbValue = reader.GetValue(ordinal);
 
                     // Handle conversions
-                    IConverter conversion = repository.GetConverter(dataMap);
+                    IConverter conversion = repository.GetConverter(dataMap.FieldType);
                     if (conversion != null)
                     {
                         dbValue = conversion.FromDB(dataMap, dbValue);
@@ -107,7 +107,7 @@ namespace Marr.Data.Mapping
 
                 var repos = MapRepository.Instance;
 
-                IConverter conversion = repos.GetConverter(columnMap);
+                IConverter conversion = repos.GetConverter(columnMap.FieldType);
                 if (conversion != null)
                 {
                     param.Value = conversion.ToDB(param.Value);

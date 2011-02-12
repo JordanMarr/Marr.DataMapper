@@ -2,10 +2,10 @@
 <package xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <id>MarrDataMapper</id>
-    <version>2.3</version>
+    <version>2.4.4060.64</version>
     <authors>Jordan Marr, Rick Schott(NuGet)</authors>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
-    <description>Marr DataMapper provides a fast and easy to use wrapper around ADO.NET that enables you to focus more on your data access queries without having to write plumbing code.</description>
+    <description>MarrDataMapper is an ORM tool that allows you to project views into complex object graphs.</description>
      <language>en-US</language>
     <projectUrl>http://marrdatamapper.codeplex.com/</projectUrl>
     <licenseUrl>http://marrdatamapper.codeplex.com/license</licenseUrl>

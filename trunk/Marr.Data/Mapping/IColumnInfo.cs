@@ -24,14 +24,13 @@ namespace Marr.Data.Mapping
 {
     public interface IColumnInfo
     {
-        string Name { get; }
+        string Name { get; set;  }
         string AltName { get; }
         int Size { get; }
         bool IsPrimaryKey { get; }
         bool IsAutoIncrement { get; }
         bool ReturnValue { get; }
         ParameterDirection ParamDirection { get; }
-        ConverterType Converter { get; }
     }
    
 }

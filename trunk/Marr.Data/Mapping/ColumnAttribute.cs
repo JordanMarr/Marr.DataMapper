@@ -27,8 +27,6 @@ namespace Marr.Data.Mapping
     {
         private string _name;
         private string _altName;
-        private ConverterType _converter = ConverterType.None;
-
         private int _size = 0;
         private bool _isPrimaryKey;
         private bool _isAutoIncrement;
@@ -117,15 +115,6 @@ namespace Marr.Data.Mapping
         {
             get { return _paramDirection; }
             set { _paramDirection = value; }
-        }
-
-        /// <summary>
-        /// Determines which data converter (if any) should be used on this value.
-        /// </summary>
-        public ConverterType Converter
-        {
-            get { return _converter; }
-            set { _converter = value; }
         }
     }
 }

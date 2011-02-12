@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Data;
+using System.Reflection;
 
 namespace Marr.Data.Mapping
 {
@@ -25,14 +26,38 @@ namespace Marr.Data.Mapping
     /// </summary>
     public class ColumnMap
     {
-        public ColumnMap(string fieldName, Type fieldType, Enum dbType, IColumnInfo columnAttribute)
-        {
-            FieldName = fieldName;
-            FieldType = fieldType;
-            DBType = dbType;
-            ColumnInfo = columnAttribute;
-        }
+        /// <summary>
+        /// Creates a column map with an empty ColumnInfo object.
+        /// </summary>
+        /// <param name="member">The .net member that is being mapped.</param>
+        public ColumnMap(MemberInfo member)
+            : this(member, new ColumnInfo())
+        { }
 
+        public ColumnMap(MemberInfo member, IColumnInfo columnInfo)
+        {
+            FieldName = member.Name;
+
+            // If the column name is not specified, the field name will be used.
+            if (string.IsNullOrEmpty(columnInfo.Name))
+                columnInfo.Name = member.Name;
+
+            FieldType = ReflectionHelper.GetMemberType(member);
+
+            Type paramNetType = FieldType;
+            MapRepository repository = MapRepository.Instance;
+            if (repository.TypeConverters.ContainsKey(FieldType))
+            {
+                // Handle conversions
+                paramNetType = repository.TypeConverters[FieldType].DbType;
+            }
+
+            // Get database specific DbType and store with column map in cache    
+            DBType = repository.DbTypeBuilder.GetDbType(paramNetType);
+
+            ColumnInfo = columnInfo;
+        }
+        
         public string FieldName { get; set; }
         public Type FieldType { get; set; }
         public Enum DBType { get; set; }

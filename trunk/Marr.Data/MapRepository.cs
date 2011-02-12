@@ -30,6 +30,7 @@ namespace Marr.Data
         private Dictionary<Type, RelationshipCollection> _relationships;
         private FastReflection.CachedReflector _reflector;
         private IDbTypeBuilder _dbTypeBuilder;
+        private Dictionary<Type, IColumnMapStrategy> _columnMapStrategies;
         internal Dictionary<Type, IConverter> TypeConverters { get; set; }
 
         // Explicit static constructor to tell C# compiler
@@ -49,6 +50,9 @@ namespace Marr.Data
 
             // Register a default IDbTypeBuilder
             _dbTypeBuilder = new Parameters.DbTypeBuilder();
+
+            _columnMapStrategies = new Dictionary<Type, IColumnMapStrategy>();
+            RegisterDefaultColumnMapStrategy(new AttributeColumnMapStrategy());
         }
 
         private readonly static MapRepository _instance = new MapRepository();
@@ -64,71 +68,51 @@ namespace Marr.Data
             }
         }
 
-        #region - Columns repository -
+        #region - Column Map Strategies -
 
-        internal ColumnMapCollection GetColumns(Type type)
+        public void RegisterDefaultColumnMapStrategy(IColumnMapStrategy strategy)
         {
-            if (_columns.ContainsKey(type))
+            RegisterColumnMapStrategy(typeof(object), strategy);
+        }
+
+        public void RegisterColumnMapStrategy(Type entityType, IColumnMapStrategy strategy)
+        {
+            if (_columnMapStrategies.ContainsKey(entityType))
+                _columnMapStrategies[entityType] = strategy;
+            else
+                _columnMapStrategies.Add(entityType, strategy);
+        }
+
+        private IColumnMapStrategy GetColumnMapStrategy(Type entityType)
+        {
+            if (_columnMapStrategies.ContainsKey(entityType))
             {
-                return _columns[type];
+                // Return entity specific column map strategy
+                return _columnMapStrategies[entityType];
             }
             else
             {
-                ColumnMapCollection columnMaps = ReflectColumns(type);
-                _columns.Add(type, columnMaps);
-                return columnMaps;
+                // Return the default column map strategy
+                return _columnMapStrategies[typeof(object)];
             }
         }
 
-        private ColumnMapCollection ReflectColumns(Type type)
+        #endregion
+
+        #region - Columns repository -
+
+        internal ColumnMapCollection GetColumns(Type entityType)
         {
-            ColumnMapCollection mappings = new ColumnMapCollection();
-            MemberInfo[] members = type.GetMembers(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.FlattenHierarchy);
-            foreach (MemberInfo member in members)
+            if (_columns.ContainsKey(entityType))
             {
-                if (!member.IsDefined(typeof(ColumnAttribute), false))
-                    continue;
-
-                ColumnAttribute column = (ColumnAttribute)member.GetCustomAttributes(typeof(ColumnAttribute), false)[0];
-
-                // If the column name is not specified, the field name will be used.
-                if (string.IsNullOrEmpty(column.Name))
-                    column.Name = member.Name;
-
-                // Determine property/field type
-                Type memberType = ReflectionHelper.GetMemberType(member);
-
-                Type paramNetType = memberType;
-
-                // Handle conversions
-                if (column.Converter != ConverterType.None)
-                {
-                    IConverter converter = ConverterFactory.Create(column.Converter);
-                    paramNetType = converter.DbType;
-                }
-                else if (TypeConverters.ContainsKey(memberType))
-                {
-                    paramNetType = TypeConverters[memberType].DbType;
-                }
-
-                try
-                {
-                    // Get database specific DbType and store with column map in cache    
-                    Enum dbType = DbTypeBuilder.GetDbType(paramNetType);
-                    ColumnMap columnMap = new ColumnMap(member.Name, memberType, dbType, column);
-                    mappings.Add(columnMap);
-                }
-                catch (ArgumentException)
-                {
-                    Enum dbType = DbTypeBuilder.GetDbType(paramNetType);
-                    string msg = string.Format(
-                        "The DataMapper failed to load '{0}.{1}'.  The configured db data type '{2}' is incompatible with the current database provider.",
-                        type.Name, member.Name, dbType.ToString());
-                    throw new ArgumentException(msg);
-                }
+                return _columns[entityType];
             }
-
-            return mappings;
+            else
+            {
+                ColumnMapCollection columnMaps = GetColumnMapStrategy(entityType).CreateColumnMaps(entityType);
+                _columns.Add(entityType, columnMaps);
+                return columnMaps;
+            }
         }
 
         #endregion
@@ -233,28 +217,6 @@ namespace Marr.Data
             else
             {
                 TypeConverters.Add(type, converter);
-            }
-        }
-
-        /// <summary>
-        /// Checks for a type converter (if one exists).
-        /// 1) Checks for a converter specified for a specific column.
-        /// 2) Checks for a converter registered for the current columns data type.
-        /// 3) Checks to see if a converter is registered for all enums (type of Enum) if the current column is an enum.
-        /// 4) Checks to see if a converter is registered for all objects (type of Object).
-        /// </summary>
-        /// <param name="dataMap">The current data map.</param>
-        /// <returns>Returns an IConverter object or null if one does not exist.</returns>
-        internal IConverter GetConverter(ColumnMap dataMap)
-        {
-            if (dataMap.ColumnInfo.Converter != ConverterType.None)
-            {
-                // Column specific converter
-                return ConverterFactory.Create(dataMap.ColumnInfo.Converter);
-            }
-            else
-            {
-                return GetConverter(dataMap.FieldType);
             }
         }
 
