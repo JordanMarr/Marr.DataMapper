@@ -227,7 +227,7 @@ namespace Marr.Data.Tests
 
 
         [TestMethod]
-        public void SqlServerSelectQuery_MethodExpressionMixedWithBinaryExpression()
+        public void SqlServerSelectQuery_BinaryExpression_MethodExpression()
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
@@ -257,8 +257,36 @@ namespace Marr.Data.Tests
             Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P1 + '%'"));
         }
 
+        [TestMethod]
+        public void SqlServerSelectQuery_MethodExpression_BinaryExpression()
+        {
+            // Arrange
+            var command = new System.Data.SqlClient.SqlCommand();
+            ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
+            MappingHelper mappingHelper = new MappingHelper(command);
 
+            Person person = new Person();
+            person.ID = 1;
+            person.Name = "Jordan";
+            person.Age = 33;
+            person.IsHappy = true;
+            person.BirthDate = new DateTime(1977, 1, 22);
 
+            List<Person> list = new List<Person>();
+
+            var where = new WhereCondition<Person>(command, p => p.Name.Contains("John") && p.Age > 5);
+            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString());
+
+            // Act
+            string queryText = query.Generate();
+
+            // Assert
+            Assert.IsNotNull(queryText);
+            Assert.AreEqual(command.Parameters["@P0"].Value, "John");
+            Assert.AreEqual(command.Parameters["@P1"].Value, 5);
+            Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P0 + '%'"));
+            Assert.IsTrue(queryText.Contains("[Age] > @P1"));            
+        }
 
     }
 }

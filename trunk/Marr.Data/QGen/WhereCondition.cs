@@ -49,18 +49,17 @@ namespace Marr.Data.QGen
         /// <param name="body">The current expression node.</param>
         private void ParseBinaryExpression(BinaryExpression body)
         {
-            if (body.Left is BinaryExpression)
+            if (body.Left is MemberExpression)
+            {
+                WriteExpression(body);
+            }
+            else
             {
                 _sb.Append("(");
                 ParseExpression(body.Left);
                 _sb.AppendFormat(" {0} ", Decode(body.NodeType));
                 ParseExpression(body.Right);
                 _sb.Append(")");
-            }
-            else
-            {
-                // Write to sb
-                WriteExpression(body);
             }
         }
 
