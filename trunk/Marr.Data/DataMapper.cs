@@ -458,7 +458,7 @@ namespace Marr.Data
 
         public AutoQueryBuilder<T> AutoQuery<T>(string target)
         {
-            return new AutoQueryBuilder<T>(this, target);
+            return new AutoQueryBuilder<T>(this, target, Query<T>);
         }
 
         /// <summary>
@@ -537,11 +537,16 @@ namespace Marr.Data
 
         #endregion
 
-        #region - Query View to Object Graph -
+        #region - Query to Graph -
 
-        public List<T> QueryViewToObjectGraph<T>(string sql)
+        public AutoQueryBuilder<T> AutoQueryToGraph<T>(string target)
         {
-            return (List<T>)QueryViewToObjectGraph<T>(sql, new List<T>());
+            return new AutoQueryBuilder<T>(this, target, QueryToGraph<T>);
+        }
+
+        public List<T> QueryToGraph<T>(string sql)
+        {
+            return (List<T>)QueryToGraph<T>(sql, new List<T>());
         }
 
         /// <summary>
@@ -551,7 +556,7 @@ namespace Marr.Data
         /// <param name="sql"></param>
         /// <param name="entityList"></param>
         /// <returns></returns>
-        public ICollection<T> QueryViewToObjectGraph<T>(string sql, ICollection<T> entityList)
+        public ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList)
         {
             if (entityList == null)
                 throw new ArgumentNullException("entityList");

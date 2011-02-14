@@ -33,6 +33,7 @@ namespace Marr.Data
         int AutoDelete<T>(T entity, string target);
         int AutoDelete<T>(T entity, string target, Expression<Func<T, bool>> filter);
         AutoQueryBuilder<T> AutoQuery<T>(string target);
+        AutoQueryBuilder<T> AutoQueryToGraph<T>(string target);
         void BeginTransaction();
         DbCommand Command { get; }
         void Commit();
@@ -57,8 +58,8 @@ namespace Marr.Data
         SqlModes SqlMode { get; set; }
         int Update<T>(T entity, string sql);
         int UpdateDataSet(DataSet ds, string updateSP);
-        List<T> QueryViewToObjectGraph<T>(string sql);
-        ICollection<T> QueryViewToObjectGraph<T>(string sql, ICollection<T> entityList);
+        List<T> QueryToGraph<T>(string sql);
+        ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList);
         event EventHandler<LoadEntityEventArgs> LoadEntity;
         event EventHandler OpeningConnection;
     }

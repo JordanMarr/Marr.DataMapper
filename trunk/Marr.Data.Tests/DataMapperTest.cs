@@ -97,7 +97,7 @@ namespace Marr.Data.Tests
         }
 
         [TestMethod]
-        public void QueryViewToObjectGraph_WithNestedRelationships_ShouldMapToGraph()
+        public void QueryToGraph_WithNestedRelationships_ShouldMapToGraph()
         {
             // Arrange
             StubResultSet rs = new StubResultSet("ID", "OrderName", "OrderItemID", "ItemDescription", "Price", "AmountPaid");
@@ -108,7 +108,7 @@ namespace Marr.Data.Tests
 
             // Act
             var db = CreateDB_ForQuery(rs);
-            List<Order> orders = db.QueryViewToObjectGraph<Order>("sql...");
+            List<Order> orders = db.QueryToGraph<Order>("sql...");
 
             // Assert
             Assert.IsTrue(orders.Count == 2);

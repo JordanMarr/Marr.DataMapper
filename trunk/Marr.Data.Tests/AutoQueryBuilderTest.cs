@@ -21,7 +21,7 @@ namespace Marr.Data.Tests
             DbCommand cmd = new System.Data.SqlClient.SqlCommand();
             db.Expect(d => d.Command).Return(cmd).Repeat.Any();
 
-            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable");
+            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable", db.Query<Person>);
 
             // Act
             List<Person> people = builder.Where(p => p.Age > 16 && p.Name.StartsWith("J"));
@@ -44,7 +44,7 @@ namespace Marr.Data.Tests
             DbCommand cmd = new System.Data.SqlClient.SqlCommand();
             db.Expect(d => d.Command).Return(cmd).Repeat.Any();
 
-            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable");
+            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable", db.Query<Person>);
 
             // Act
             List<Person> people = builder.Order(p => p.ID).Order(p => p.Name);
@@ -67,7 +67,7 @@ namespace Marr.Data.Tests
             DbCommand cmd = new System.Data.SqlClient.SqlCommand();
             db.Expect(d => d.Command).Return(cmd).Repeat.Any();
 
-            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable");
+            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable", db.Query<Person>);
 
             // Act
             List<Person> people = builder

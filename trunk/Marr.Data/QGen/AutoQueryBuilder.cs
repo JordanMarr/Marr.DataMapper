@@ -13,12 +13,14 @@ namespace Marr.Data.QGen
         private string _target;
         private WhereBuilder<T> _whereBuilder;
         private SortBuilder<T> _sortBuilder;
+        private Func<string, List<T>> _runQueryMethod;
 
-        public AutoQueryBuilder(IDataMapper db, string target)
+        public AutoQueryBuilder(IDataMapper db, string target, Func<string, List<T>> runQueryMethod)
         {
             _db = db;
             _target = target;
             _sortBuilder = new SortBuilder<T>(this);
+            _runQueryMethod = runQueryMethod;
         }
 
         public SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
@@ -50,7 +52,7 @@ namespace Marr.Data.QGen
             string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
             string sort = _sortBuilder.ToString();
             IQuery query = QueryFactory.CreateSelectQuery(columns, _target, where, sort);
-            var results = _db.Query<T>(query.Generate());
+            var results = _runQueryMethod(query.Generate());
 
             // Return to previous sql mode
             _db.SqlMode = previousSqlMode;
