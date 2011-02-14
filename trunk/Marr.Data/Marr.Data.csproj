@@ -93,14 +93,17 @@
     <Compile Include="Parameters\ParameterChainMethods.cs" />
     <Compile Include="Parameters\SqlDbTypeBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QGen\AutoQueryBuilder.cs" />
     <Compile Include="QGen\DeleteQuery.cs" />
     <Compile Include="QGen\InsertQuery.cs" />
     <Compile Include="QGen\IQuery.cs" />
     <Compile Include="QGen\QueryFactory.cs" />
     <Compile Include="QGen\SelectQuery.cs" />
+    <Compile Include="QGen\SortBuilder.cs" />
+    <Compile Include="QGen\SortColumn.cs" />
     <Compile Include="QGen\SqlServerInsertQuery.cs" />
     <Compile Include="QGen\UpdateQuery.cs" />
-    <Compile Include="QGen\WhereCondition.cs" />
+    <Compile Include="QGen\WhereBuilder.cs" />
     <Compile Include="ReflectionHelper.cs" />
     <Compile Include="SqlModesEnum.cs" />
   </ItemGroup>

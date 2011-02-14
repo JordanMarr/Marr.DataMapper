@@ -7,6 +7,8 @@ using Marr.Data.QGen;
 using Marr.Data.Tests.Entities;
 using Rhino.Mocks;
 using Marr.Data.Mapping;
+using Marr.Data;
+using System.Data.Common;
 
 namespace Marr.Data.Tests
 {
@@ -34,7 +36,7 @@ namespace Marr.Data.Tests
             mappingHelper.CreateParameters<Person>(person, columns, false, true);
 
             int idValue = 7;
-            var where = new WhereCondition<Person>(command, p => p.ID == person.ID || p.ID == idValue || p.Name == person.Name && p.Name == "Bob");
+            var where = new WhereBuilder<Person>(command, p => p.ID == person.ID || p.ID == idValue || p.Name == person.Name && p.Name == "Bob");
 
             IQuery query = new UpdateQuery(columns, command, "dbo.People", where.ToString());
 
@@ -92,7 +94,7 @@ namespace Marr.Data.Tests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
-            var where = new WhereCondition<Person>(command, p => p.ID == 5);
+            var where = new WhereBuilder<Person>(command, p => p.ID == 5);
             IQuery query = new DeleteQuery("dbo.People", where.ToString());
 
             // Act
@@ -122,8 +124,8 @@ namespace Marr.Data.Tests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereCondition<Person>(command, p => p.Name == "John" && p.Age > 15 || p.Age < 5 && p.Age > 1);
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString());
+            var where = new WhereBuilder<Person>(command, p => p.Name == "John" && p.Age > 15 || p.Age < 5 && p.Age > 1);
+            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "");
 
             // Act
             string queryText = query.Generate();
@@ -155,8 +157,8 @@ namespace Marr.Data.Tests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereCondition<Person>(command, p => p.Name.Contains("John"));
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString());
+            var where = new WhereBuilder<Person>(command, p => p.Name.Contains("John"));
+            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "");
 
             // Act
             string queryText = query.Generate();
@@ -184,8 +186,8 @@ namespace Marr.Data.Tests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereCondition<Person>(command, p => p.Name.StartsWith("John"));
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString());
+            var where = new WhereBuilder<Person>(command, p => p.Name.StartsWith("John"));
+            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "");
 
             // Act
             string queryText = query.Generate();
@@ -213,8 +215,8 @@ namespace Marr.Data.Tests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereCondition<Person>(command, p => p.Name.EndsWith("John"));
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString());
+            var where = new WhereBuilder<Person>(command, p => p.Name.EndsWith("John"));
+            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "");
 
             // Act
             string queryText = query.Generate();
@@ -243,8 +245,8 @@ namespace Marr.Data.Tests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereCondition<Person>(command, p => p.Age > 5 && p.Name.Contains("John"));
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString());
+            var where = new WhereBuilder<Person>(command, p => p.Age > 5 && p.Name.Contains("John"));
+            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "");
 
             // Act
             string queryText = query.Generate();
@@ -274,8 +276,8 @@ namespace Marr.Data.Tests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereCondition<Person>(command, p => p.Name.Contains("John") && p.Age > 5);
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString());
+            var where = new WhereBuilder<Person>(command, p => p.Name.Contains("John") && p.Age > 5);
+            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "");
 
             // Act
             string queryText = query.Generate();
@@ -287,6 +289,6 @@ namespace Marr.Data.Tests
             Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P0 + '%'"));
             Assert.IsTrue(queryText.Contains("[Age] > @P1"));            
         }
-
+        
     }
 }

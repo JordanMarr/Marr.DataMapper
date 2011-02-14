@@ -56,6 +56,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AutoQueryBuilderTest.cs" />
     <Compile Include="Entities\Order.cs" />
     <Compile Include="Entities\Person.cs" />
     <Compile Include="ParameterTest.cs" />

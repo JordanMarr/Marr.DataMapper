@@ -19,6 +19,7 @@ using System.Data.Common;
 using System.Collections.Generic;
 using Marr.Data.Parameters;
 using System.Linq.Expressions;
+using Marr.Data.QGen;
 
 namespace Marr.Data
 {
@@ -31,8 +32,7 @@ namespace Marr.Data
         int AutoInsert<T>(T entity, string target);
         int AutoDelete<T>(T entity, string target);
         int AutoDelete<T>(T entity, string target, Expression<Func<T, bool>> filter);
-        List<T> AutoQuery<T>(string target);
-        List<T> AutoQuery<T>(string target, Expression<Func<T, bool>> filter);
+        AutoQueryBuilder<T> AutoQuery<T>(string target);
         void BeginTransaction();
         DbCommand Command { get; }
         void Commit();

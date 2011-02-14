@@ -18,6 +18,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
+using System.Reflection;
+using Marr.Data.Mapping;
 
 namespace Marr.Data
 {
@@ -38,5 +40,28 @@ namespace Marr.Data
             string commandType = command.GetType().Name.ToLower();
             return commandType.Contains("oracle") ? ":" : "@";
         }
+
+        /// <summary>
+        /// Returns the ColumnAttribute column name (if attribute exists), or the member name.
+        /// </summary>
+        /// <param name="member"></param>
+        /// <returns></returns>
+        public static string GetColumnName(this MemberInfo member)
+        {
+            // Initialize column name as member name
+            string columnName = member.Name;
+
+            // If column name is overridden at ColumnAttribute level, use that name instead
+            object[] attributes = member.GetCustomAttributes(typeof(ColumnAttribute), false);
+            if (attributes.Length > 0)
+            {
+                ColumnAttribute column = (attributes[0] as ColumnAttribute);
+                if (!string.IsNullOrEmpty(column.Name))
+                    columnName = (attributes[0] as ColumnAttribute).Name;
+            }
+
+            return columnName;
+        }
+
     }
 }

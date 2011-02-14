@@ -456,29 +456,11 @@ namespace Marr.Data
 
         #region - Query -
 
-        public List<T> AutoQuery<T>(string target)
+        public AutoQueryBuilder<T> AutoQuery<T>(string target)
         {
-            return AutoQuery<T>(target, null);
+            return new AutoQueryBuilder<T>(this, target);
         }
 
-        public List<T> AutoQuery<T>(string target, Expression<Func<T, bool>> filter)
-        {
-            // Remember sql mode
-            var previousSqlMode = this.SqlMode;
-            SqlMode = SqlModes.Text;
-
-            // Generate a parameterized where clause
-            var where = new WhereCondition<T>(Command, filter);
-            var columns = MapRepository.Instance.GetColumns(typeof(T));
-            IQuery query = QueryFactory.CreateSelectQuery(columns, target, where.ToString());
-            var results = Query<T>(query.Generate());
-
-            // Return to previous sql mode
-            SqlMode = previousSqlMode;
-
-            return results;
-        }
-        
         /// <summary>
         /// Runs a query.  Use this overload when you want to manage instantiating and adding 
         /// each entity instance to a collection using the LoadEntity event.
@@ -633,7 +615,7 @@ namespace Marr.Data
             SqlMode = SqlModes.Text;
 
             var mappingHelper = new MappingHelper(Command);
-            var where = new WhereCondition<T>(Command, filter);
+            var where = new WhereBuilder<T>(Command, filter);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
             IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command, target, where.ToString());
@@ -781,7 +763,7 @@ namespace Marr.Data
             SqlMode = SqlModes.Text;
 
             var mappingHelper = new MappingHelper(Command);
-            var where = new WhereCondition<T>(Command, filter);
+            var where = new WhereBuilder<T>(Command, filter);
             IQuery query = QueryFactory.CreateDeleteQuery(target, where.ToString());
             Command.CommandText = query.Generate();
 

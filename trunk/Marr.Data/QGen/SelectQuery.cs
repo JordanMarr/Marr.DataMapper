@@ -11,13 +11,15 @@ namespace Marr.Data.QGen
     {
         protected string Target { get; set; }
         protected string WhereClause { get; set; }
+        protected string OrderBy { get; set; }
         protected ColumnMapCollection Columns { get; set; }
 
-        public SelectQuery(ColumnMapCollection columns, string target, string whereClause)
+        public SelectQuery(ColumnMapCollection columns, string target, string whereClause, string orderBy)
         {
+            Columns = columns;
             Target = target;
             WhereClause = whereClause;
-            Columns = columns;
+            OrderBy = orderBy;
         }
 
         public string Generate()
@@ -39,6 +41,8 @@ namespace Marr.Data.QGen
             sql.AppendFormat(" FROM {0} ", Target);
 
             sql.Append(WhereClause);
+
+            sql.Append(OrderBy);
 
             return sql.ToString();
         }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Linq.Expressions;
+using Marr.Data;
 using Marr.Data.Mapping;
 using System.Data.Common;
 using Marr.Data.Parameters;
@@ -10,13 +11,13 @@ using System.Reflection;
 
 namespace Marr.Data.QGen
 {
-    public class WhereCondition<T>
+    public class WhereBuilder<T>
     {
         private DbCommand _command;
         private StringBuilder _sb;
         private string _paramPrefix;
 
-        public WhereCondition(DbCommand command, Expression<Func<T, bool>> filter)
+        public WhereBuilder(DbCommand command, Expression<Func<T, bool>> filter)
         {
             _command = command;
             _paramPrefix = command.ParameterPrefix();
@@ -77,7 +78,7 @@ namespace Marr.Data.QGen
 
             string statement = string.Format("{0} {1} {2}", left.Member.Name, body.NodeType, rightValue);
 
-            string columnName = GetColumnName(left.Member);
+            string columnName = left.Member.GetColumnName();
 
             // Add parameter to Command.Parameters
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
@@ -85,29 +86,7 @@ namespace Marr.Data.QGen
 
             _sb.AppendFormat("[{0}] {1} {2}", columnName, Decode(body.NodeType), paramName);
         }
-
-        /// <summary>
-        /// Get the column name from the ColumnAttribute
-        /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
-        private string GetColumnName(MemberInfo member)
-        {
-            // Initialize column name as member name
-            string columnName = member.Name;
-
-            // If column name is overridden at ColumnAttribute level, use that name instead
-            object[] attributes = member.GetCustomAttributes(typeof(ColumnAttribute), false);
-            if (attributes.Length > 0)
-            {
-                ColumnAttribute column = (attributes[0] as ColumnAttribute);
-                if (!string.IsNullOrEmpty(column.Name))
-                    columnName = (attributes[0] as ColumnAttribute).Name;
-            }
-
-            return columnName;
-        }
-
+        
         private object GetRightValue(Expression rightExpression)
         {
             object rightValue = null;
@@ -180,7 +159,7 @@ namespace Marr.Data.QGen
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
             var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
 
-            string columnName = GetColumnName((body.Object as MemberExpression).Member);
+            string columnName = (body.Object as MemberExpression).Member.GetColumnName();
             _sb.AppendFormat("[{0}] LIKE '%' + {1} + '%'", columnName, paramName);
         }
 
@@ -191,7 +170,7 @@ namespace Marr.Data.QGen
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
             var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
 
-            string columnName = GetColumnName((body.Object as MemberExpression).Member);
+            string columnName = (body.Object as MemberExpression).Member.GetColumnName();
             _sb.AppendFormat("[{0}] LIKE {1} + '%'", columnName, paramName);
         }
 
@@ -202,7 +181,7 @@ namespace Marr.Data.QGen
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
             var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
 
-            string columnName = GetColumnName((body.Object as MemberExpression).Member);
+            string columnName = (body.Object as MemberExpression).Member.GetColumnName();
             _sb.AppendFormat("[{0}] LIKE '%' + {1}", columnName, paramName);
         }
 
