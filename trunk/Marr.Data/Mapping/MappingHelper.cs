@@ -70,7 +70,7 @@ namespace Marr.Data.Mapping
                 {
                     string msg = string.Format("The DataMapper was unable to load the following field: '{0}'.",
                         dataMap.ColumnInfo.Name);
-                    throw new Exception(msg, ex);
+                    throw new DataMappingException(msg, ex);
                 }
             }
             

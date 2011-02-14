@@ -147,6 +147,35 @@ namespace Marr.Data.Tests
         }
 
         [TestMethod]
+        public void QueryToGraph_WhenNotSortedByParent_ShouldThrowException()
+        {
+            // Arrange
+            StubResultSet rs = new StubResultSet("ID", "OrderName", "OrderItemID", "ItemDescription", "Price", "AmountPaid");
+            rs.AddRow(1, "Order1", 50, "Red car", 100.35m, DBNull.Value);
+            rs.AddRow(2, "Order2", 60, "Guitar", 1500.50m, 1500.50m);       // Reversed order
+            rs.AddRow(1, "Order1", 51, "Blue wagon", 44.87m, DBNull.Value); // Reversed order
+            rs.AddRow(2, "Order2", 61, "Bass", 2380.00m, 50.00m);
+
+            var db = CreateDB_ForQuery(rs);
+
+            Exception expectedException = null;
+
+            // Act
+            try
+            {
+                List<Order> orders = db.QueryToGraph<Order>("sql...");
+            }
+            catch (Exception ex)
+            {
+                expectedException = ex;
+            }            
+
+            // Assert
+            Assert.IsNotNull(expectedException, "The DataMapper EntityGraph should have thrown exception because the QueryToGraph results were not properly sorted.");
+            Assert.IsInstanceOfType(expectedException, typeof(DataMappingException));
+        }
+
+        [TestMethod]
         public void Update_ShouldAddFiveParameters_And_ExecuteNonQuery()
         {
             // Arrange

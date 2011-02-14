@@ -65,7 +65,7 @@ namespace Marr.Data
             catch (Exception ex)
             {
                 string msg = string.Format("The DataMapper was unable to load the following field: {0}.  \nDetails: {1}", fieldName, ex.Message);
-                throw new Exception(msg, ex);
+                throw new DataMappingException(msg, ex);
             }
         }
 
@@ -87,7 +87,7 @@ namespace Marr.Data
                     return reflector.GetValue(member, entity);
             }
 
-            throw new Exception(string.Format("The DataMapper could not get the value for {0}.{1}.", entity.GetType().Name, fieldName));
+            throw new DataMappingException(string.Format("The DataMapper could not get the value for {0}.{1}.", entity.GetType().Name, fieldName));
         }
 
         /// <summary>

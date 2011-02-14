@@ -37,7 +37,8 @@ namespace Marr.Data
         private RelationshipCollection _relationships;
         private List<EntityGraph> _children;
         private object _entity;
-        private ColumnMapCollection _groupingKeys;
+        private ColumnMapCollection _groupingKeyColumns;
+        private List<string> _groupingKeys;
 
         /// <summary>
         /// A reference to the list where entities should be added to.
@@ -45,7 +46,6 @@ namespace Marr.Data
         /// For child entities, this is the child relationship list of the parent.
         /// </summary>
         private IList _owningList;
-        private string _lastKeyGroup;
 
         /// <summary>
         /// Recursively builds an entity graph of the given parent type.
@@ -67,6 +67,7 @@ namespace Marr.Data
             _columns = repository.GetColumns(entityType);
             _relationships = repository.GetRelationships(entityType);
             _children = new List<EntityGraph>();
+            _groupingKeys = new List<string>();
 
             // Create and add children
             foreach (Relationship childRelationship in this.Relationships)
@@ -139,16 +140,7 @@ namespace Marr.Data
         {
             get { return _children; }
         }
-
-        /// <summary>
-        /// Gets or sets the last primary key value(s) found for this entity.
-        /// </summary>
-        public string LastKeyGroup
-        {
-            get { return _lastKeyGroup; }
-            set { _lastKeyGroup = value; }
-        }
-
+        
         /// <summary>
         /// Adds an entity to the appropriate place in the object graph.
         /// </summary>
@@ -187,23 +179,28 @@ namespace Marr.Data
                 return true;
 
             // Get primary keys from parent entity and any one-to-one child entites
-            ColumnMapCollection groupingKeyColumns = this.GroupingKeys;
+            ColumnMapCollection groupingKeyColumns = this.GroupingKeyColumns;
 
             // Concatenate column values
-            string groupingKeyValues = this.GetColumnValues(groupingKeyColumns, reader);
+            string groupingKey = CreateGroupingKey(groupingKeyColumns, reader);
 
-            if (groupingKeyValues != string.Empty        // Create a new group if PK is not empty
-                && LastKeyGroup != groupingKeyValues)    // and PK values are not the same
+            if (groupingKey != string.Empty        // Create a new group if PK is not empty
+                && _groupingKeys.LastOrDefault() != groupingKey)    // and PK values are not the same
             {
                 isNewGroup = true;
 
+                if (_groupingKeys.Contains(groupingKey))
+                {
+                    throw new DataMappingException("DataMapper QueryToGraph has detected query results that have not been properly ordered. Please ensure that the query is sorted by all parent nodes from top to bottom.");
+                }
+
                 // Save last pk value
-                this.LastKeyGroup = groupingKeyValues;
+                _groupingKeys.Add(groupingKey);
             }
 
             return isNewGroup;
         }
-
+        
         /// <summary>
         /// Gets the GroupingKeys for this entity.  
         /// GroupingKeys determine when to create and add a new entity to the graph.
@@ -215,14 +212,14 @@ namespace Marr.Data
         /// A child entity that has a one-to-one relationship with its parent will use the same 
         /// GroupingKeys already defined by its parent.
         /// </remarks>
-        public ColumnMapCollection GroupingKeys
+        public ColumnMapCollection GroupingKeyColumns
         {
             get
             {
-                if (_groupingKeys == null)
-                    _groupingKeys = GetGroupingKeys();
+                if (_groupingKeyColumns == null)
+                    _groupingKeyColumns = GetGroupingKeyColumns();
 
-                return _groupingKeys;
+                return _groupingKeyColumns;
             }
         }
 
@@ -246,7 +243,7 @@ namespace Marr.Data
                     }
                     catch (Exception ex)
                     {
-                        throw new Exception(
+                        throw new DataMappingException(
                             string.Format("{0}.{1} is a \"Many\" relationship type so it must derive from IList.",
                                 entityInstance.GetType().Name, relationship.Member.Name),
                             ex);
@@ -283,7 +280,7 @@ namespace Marr.Data
         /// child entity primary keys.
         /// </remarks>
         /// <returns></returns>
-        private ColumnMapCollection GetGroupingKeys()
+        private ColumnMapCollection GetGroupingKeyColumns()
         {
             // Get primary keys for this parent entity
             ColumnMapCollection groupingKeyColumns = Columns.PrimaryKeys;
@@ -293,7 +290,7 @@ namespace Marr.Data
 
             // Add parent's keys
             if (IsChild)
-                groupingKeyColumns.AddRange(Parent.GroupingKeys);
+                groupingKeyColumns.AddRange(Parent.GroupingKeyColumns);
 
             AddOneToOneChildKeys(groupingKeyColumns, this);
 
@@ -306,7 +303,7 @@ namespace Marr.Data
         /// <param name="primaryKeys">The mapped primary keys for this entity.</param>
         /// <param name="reader">The open data reader.</param>
         /// <returns>Returns the primary key value(s) as a string.</returns>
-        private string GetColumnValues(ColumnMapCollection columns, DbDataReader reader)
+        private string CreateGroupingKey(ColumnMapCollection columns, DbDataReader reader)
         {
             StringBuilder pkValues = new StringBuilder();
             foreach (ColumnMap pkColumn in columns)
