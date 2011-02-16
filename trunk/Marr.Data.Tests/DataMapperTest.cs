@@ -105,17 +105,20 @@ namespace Marr.Data.Tests
             rs.AddRow(1, "Order1", 51, "Blue wagon", 44.87m, DBNull.Value);
             rs.AddRow(2, "Order2", 60, "Guitar", 1500.50m, 1500.50m);
             rs.AddRow(2, "Order2", 61, "Bass", 2380.00m, 50.00m);
+            rs.AddRow(3, "Order3", DBNull.Value, DBNull.Value, DBNull.Value, DBNull.Value);
 
             // Act
             var db = CreateDB_ForQuery(rs);
             List<Order> orders = db.QueryToGraph<Order>("sql...");
 
             // Assert
-            Assert.IsTrue(orders.Count == 2);
+            Assert.IsTrue(orders.Count == 3);
             Order order1 = orders[0];
             Order order2 = orders[1];
+            Order order3 = orders[2];
             Assert.IsTrue(order1.OrderItems.Count == 2);
             Assert.IsTrue(order2.OrderItems.Count == 2);
+            Assert.IsTrue(order3.OrderItems.Count == 0);
 
             // Order 1
             Assert.AreEqual(1, order1.ID);

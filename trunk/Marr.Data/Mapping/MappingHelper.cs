@@ -48,12 +48,7 @@ namespace Marr.Data.Mapping
             {
                 try
                 {
-                    string colName = null;
-                    if (useAltName && !string.IsNullOrEmpty(dataMap.ColumnInfo.AltName))
-                        colName = dataMap.ColumnInfo.AltName;
-                    else
-                        colName = dataMap.ColumnInfo.Name;
-
+                    string colName = dataMap.ColumnInfo.GetColumName(useAltName);
                     int ordinal = reader.GetOrdinal(colName);
                     object dbValue = reader.GetValue(ordinal);
 

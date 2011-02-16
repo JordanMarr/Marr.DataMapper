@@ -58,17 +58,7 @@ namespace Marr.Data.Mapping
         /// </summary>
         public string AltName
         {
-            get 
-            {
-                if (!string.IsNullOrEmpty(_altName))
-                {
-                    return _altName;
-                }
-                else
-                {
-                    return _name;
-                }
-            }
+            get { return _altName; }
             set { _altName = value; }
         }
 

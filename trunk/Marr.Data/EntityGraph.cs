@@ -174,10 +174,6 @@ namespace Marr.Data
         {
             bool isNewGroup = false;
 
-            // Do not compare values for end nodes
-            if (this.Children.Count == 0)
-                return true;
-
             // Get primary keys from parent entity and any one-to-one child entites
             ColumnMapCollection groupingKeyColumns = this.GroupingKeyColumns;
 
@@ -285,7 +281,8 @@ namespace Marr.Data
             // Get primary keys for this parent entity
             ColumnMapCollection groupingKeyColumns = Columns.PrimaryKeys;
 
-            if (groupingKeyColumns.Count == 0)
+            bool isEndNode = this.Children.Count == 0;
+            if (!isEndNode && groupingKeyColumns.Count == 0)
                 throw new MissingPrimaryKeyException(string.Format("There are no primary key mappings defined for the following entity: '{0}'.", this.EntityType.Name));
 
             // Add parent's keys
@@ -299,6 +296,7 @@ namespace Marr.Data
 
         /// <summary>
         /// Returns a concatented string containing the primary key values of the current record.
+        /// If any of the PKs are null or empty, the entire grouping key will be string.Empty.
         /// </summary>
         /// <param name="primaryKeys">The mapped primary keys for this entity.</param>
         /// <param name="reader">The open data reader.</param>
@@ -308,8 +306,13 @@ namespace Marr.Data
             StringBuilder pkValues = new StringBuilder();
             foreach (ColumnMap pkColumn in columns)
             {
+                string pkValue = reader[pkColumn.ColumnInfo.GetColumName(true)].ToString();
+                
                 // A primary key should not have a null value
-                pkValues.Append(reader[pkColumn.ColumnInfo.AltName].ToString());
+                if (string.IsNullOrEmpty(pkValue))
+                    return string.Empty;
+
+                pkValues.Append(reader[pkColumn.ColumnInfo.GetColumName(true)].ToString());
             }
             return pkValues.ToString();
         }

@@ -579,12 +579,14 @@ namespace Marr.Data
                     {
                         // The entire EntityGraph is traversed for each record, 
                         // and multiple entities are created from each view record.
-                        foreach (EntityGraph entity in entityGraph)
+                        foreach (EntityGraph lvl in entityGraph)
                         {
-                            if (entity.IsNewGroup(reader))
+                            if (lvl.IsNewGroup(reader))
                             {
+                                var newEntity = mappingHelper.CreateAndLoadEntity(lvl.EntityType, lvl.Columns, reader, true);
+
                                 // Add entity to the appropriate place in the object graph
-                                entity.AddEntity(mappingHelper.CreateAndLoadEntity(entity.EntityType, entity.Columns, reader, true));
+                                lvl.AddEntity(newEntity);
                             }
                         }
                     }
