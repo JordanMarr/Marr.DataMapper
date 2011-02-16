@@ -10,11 +10,13 @@ namespace Marr.Data.QGen
     {
         private AutoQueryBuilder<T> _baseBuilder;
         private List<SortColumn<T>> _sortExpressions;
+        private bool _useAltName;
 
-        public SortBuilder(AutoQueryBuilder<T> baseBuilder)
+        public SortBuilder(AutoQueryBuilder<T> baseBuilder, bool useAltName)
         {
             _baseBuilder = baseBuilder;
             _sortExpressions = new List<SortColumn<T>>();
+            _useAltName = useAltName;
         }
 
         public SortBuilder<T> Order(Expression<Func<T, object>> sortExpression)
@@ -44,7 +46,7 @@ namespace Marr.Data.QGen
                     sb.Append(",");
 
                 MemberExpression me = GetMemberExpression(sort.SortExpression.Body);
-                sb.AppendFormat("[{0}]", me.Member.GetColumnName());
+                sb.AppendFormat("[{0}]", me.Member.GetColumnName(_useAltName));
 
                 if (sort.Direction == SortDirection.Desc)
                     sb.Append(" DESC");

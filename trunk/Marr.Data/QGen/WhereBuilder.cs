@@ -16,12 +16,14 @@ namespace Marr.Data.QGen
         private DbCommand _command;
         private StringBuilder _sb;
         private string _paramPrefix;
+        private bool _useAltName;
 
-        public WhereBuilder(DbCommand command, Expression<Func<T, bool>> filter)
+        public WhereBuilder(DbCommand command, Expression<Func<T, bool>> filter, bool useAltName)
         {
             _command = command;
             _paramPrefix = command.ParameterPrefix();
             _sb = new StringBuilder();
+            _useAltName = useAltName;
 
             if (filter != null)
             {
@@ -78,7 +80,7 @@ namespace Marr.Data.QGen
 
             string statement = string.Format("{0} {1} {2}", left.Member.Name, body.NodeType, rightValue);
 
-            string columnName = left.Member.GetColumnName();
+            string columnName = left.Member.GetColumnName(_useAltName);
 
             // Add parameter to Command.Parameters
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
@@ -122,6 +124,7 @@ namespace Marr.Data.QGen
             switch (expType)
             {
                 case ExpressionType.AndAlso: return "AND";
+                case ExpressionType.And: return "AND";
                 case ExpressionType.Equal: return "=";
                 case ExpressionType.GreaterThan: return ">";
                 case ExpressionType.GreaterThanOrEqual: return ">=";
@@ -129,6 +132,7 @@ namespace Marr.Data.QGen
                 case ExpressionType.LessThanOrEqual: return "<=";
                 case ExpressionType.NotEqual: return "<>";
                 case ExpressionType.OrElse: return "OR";
+                case ExpressionType.Or: return "OR";
                 default: throw new NotSupportedException(string.Format("{0} statement is not supported", expType.ToString()));
             }
         }
@@ -159,7 +163,7 @@ namespace Marr.Data.QGen
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
             var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
 
-            string columnName = (body.Object as MemberExpression).Member.GetColumnName();
+            string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
             _sb.AppendFormat("[{0}] LIKE '%' + {1} + '%'", columnName, paramName);
         }
 
@@ -170,7 +174,7 @@ namespace Marr.Data.QGen
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
             var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
 
-            string columnName = (body.Object as MemberExpression).Member.GetColumnName();
+            string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
             _sb.AppendFormat("[{0}] LIKE {1} + '%'", columnName, paramName);
         }
 
@@ -181,7 +185,7 @@ namespace Marr.Data.QGen
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
             var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
 
-            string columnName = (body.Object as MemberExpression).Member.GetColumnName();
+            string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
             _sb.AppendFormat("[{0}] LIKE '%' + {1}", columnName, paramName);
         }
 

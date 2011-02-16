@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Marr.Data;
 using Marr.Data.Mapping;
 using System.Data.Common;
 
@@ -13,13 +14,15 @@ namespace Marr.Data.QGen
         protected string WhereClause { get; set; }
         protected string OrderBy { get; set; }
         protected ColumnMapCollection Columns { get; set; }
+        protected bool UseAltName;
 
-        public SelectQuery(ColumnMapCollection columns, string target, string whereClause, string orderBy)
+        public SelectQuery(ColumnMapCollection columns, string target, string whereClause, string orderBy, bool useAltName)
         {
             Columns = columns;
             Target = target;
             WhereClause = whereClause;
             OrderBy = orderBy;
+            UseAltName = useAltName;
         }
 
         public string Generate()
@@ -35,7 +38,7 @@ namespace Marr.Data.QGen
                 if (sql.Length > startIndex)
                     sql.Append(",");
 
-                sql.AppendFormat("[{0}]", c.ColumnInfo.Name);
+                sql.AppendFormat("[{0}]", c.ColumnInfo.GetColumName(UseAltName));
             }
 
             sql.AppendFormat(" FROM {0} ", Target);

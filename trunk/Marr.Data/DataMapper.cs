@@ -620,7 +620,7 @@ namespace Marr.Data
             SqlMode = SqlModes.Text;
 
             var mappingHelper = new MappingHelper(Command);
-            var where = new WhereBuilder<T>(Command, filter);
+            var where = new WhereBuilder<T>(Command, filter, false);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
             IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command, target, where.ToString());
@@ -768,7 +768,7 @@ namespace Marr.Data
             SqlMode = SqlModes.Text;
 
             var mappingHelper = new MappingHelper(Command);
-            var where = new WhereBuilder<T>(Command, filter);
+            var where = new WhereBuilder<T>(Command, filter, false);
             IQuery query = QueryFactory.CreateDeleteQuery(target, where.ToString());
             Command.CommandText = query.Generate();
 

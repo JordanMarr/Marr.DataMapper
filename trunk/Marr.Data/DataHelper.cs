@@ -46,7 +46,7 @@ namespace Marr.Data
         /// </summary>
         /// <param name="member"></param>
         /// <returns></returns>
-        public static string GetColumnName(this MemberInfo member)
+        public static string GetColumnName(this MemberInfo member, bool useAltName)
         {
             // Initialize column name as member name
             string columnName = member.Name;
@@ -55,12 +55,22 @@ namespace Marr.Data
             object[] attributes = member.GetCustomAttributes(typeof(ColumnAttribute), false);
             if (attributes.Length > 0)
             {
-                ColumnAttribute column = (attributes[0] as ColumnAttribute);
-                if (!string.IsNullOrEmpty(column.Name))
-                    columnName = (attributes[0] as ColumnAttribute).Name;
+                IColumnInfo column = (attributes[0] as ColumnAttribute);
+                if (useAltName && !string.IsNullOrEmpty(column.AltName))
+                    columnName = column.AltName;
+                else if (!string.IsNullOrEmpty(column.Name))
+                    columnName = column.Name;
             }
 
             return columnName;
+        }
+
+        public static string GetColumName(this IColumnInfo col, bool useAltName)
+        {
+            if (useAltName && !string.IsNullOrEmpty(col.AltName))
+                return col.AltName;
+            else
+                return col.Name;
         }
 
     }

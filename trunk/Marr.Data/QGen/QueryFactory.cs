@@ -30,9 +30,9 @@ namespace Marr.Data.QGen
             return new DeleteQuery(target, whereClause);
         }
 
-        public static IQuery CreateSelectQuery(Mapping.ColumnMapCollection columns, string target, string where, string orderBy)
+        public static IQuery CreateSelectQuery(Mapping.ColumnMapCollection columns, string target, string where, string orderBy, bool useAltName)
         {
-            return new SelectQuery(columns, target, where, orderBy);
+            return new SelectQuery(columns, target, where, orderBy, useAltName);
         }
     }
 }

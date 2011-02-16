@@ -85,5 +85,31 @@ namespace Marr.Data.Tests
             Assert.IsTrue(generatedSql.Contains("ORDER BY [Name],[ID] DESC"));
         }
 
+        [TestMethod]
+        public void Where_Sort_Query_Should_Use_AltName()
+        {
+            // Arrange
+            IDataMapper db = MockRepository.GenerateMock<IDataMapper>();
+            DbCommand cmd = new System.Data.SqlClient.SqlCommand();
+            db.Expect(d => d.Command).Return(cmd).Repeat.Any();
+
+            AutoQueryBuilder<Order> builder = new AutoQueryBuilder<Order>(db, "OrdersTable", db.QueryToGraph<Order>);
+
+            // Act
+            List<Order> people = builder
+                .Where(o => o.OrderItems[0].ID > 0)
+                .Order(o => o.OrderItems[0].ID);
+
+            // Assert
+            var args = db.GetArgumentsForCallsMadeOn(d => d.QueryToGraph<Order>("sql.."));
+            string generatedSql = (string)args[0][0];
+
+            Assert.IsTrue(generatedSql.Contains("SELECT [ID],[OrderName],[OrderItemID],[ItemDescription],[Price],[AmountPaid] "));
+            Assert.IsTrue(generatedSql.Contains("FROM OrdersTable"));
+            Assert.IsTrue(generatedSql.Contains("([OrderItemID] > @P0)"));
+            Assert.IsTrue(generatedSql.Contains("ORDER BY [OrderItemID]"));
+        }
+
+
     }
 }
