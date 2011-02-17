@@ -233,5 +233,44 @@ namespace Marr.Data.Tests
             db.Command.VerifyAllExpectations();
             Assert.AreEqual(55, person.ID);
         }
+
+        [TestMethod]
+        public void QueryToGraph_ShouldMapToList()
+        {
+            // Arrange
+            StubResultSet rs = new StubResultSet("ID", "Name", "Age", "IsHappy", "BirthDate", "Pet_ID", "Pet_Name");
+            rs.AddRow(1, "Jordan", 33, true, new DateTime(1977, 1, 22), 1, "Chuy");
+            rs.AddRow(1, "Jordan", 33, true, new DateTime(1977, 1, 22), 2, "Bela");
+            rs.AddRow(2, "Amyme", 31, false, new DateTime(1979, 10, 19), 3, "Bird");
+            rs.AddRow(2, "Amyme", 31, false, new DateTime(1979, 10, 19), 4, "Alligator");
+
+            // Act
+            var db = CreateDB_ForQuery(rs);
+            var people = db.QueryToGraph<Person>("sql...");
+
+            // Assert
+            Assert.IsTrue(people.Count == 2);
+
+            Person jordan = people[0];
+            Assert.AreEqual(1, jordan.ID);
+            Assert.AreEqual("Jordan", jordan.Name);
+            Assert.AreEqual(33, jordan.Age);
+            Assert.AreEqual(true, jordan.IsHappy);
+            Assert.AreEqual(new DateTime(1977, 1, 22), jordan.BirthDate);
+            Assert.IsTrue(jordan.Pets.Count == 2);
+            Assert.AreEqual("Chuy", jordan.Pets[0].Name);
+            Assert.AreEqual("Bela", jordan.Pets[1].Name);
+
+            Person amyme = people[1];
+            Assert.AreEqual(2, amyme.ID);
+            Assert.AreEqual("Amyme", amyme.Name);
+            Assert.AreEqual(31, amyme.Age);
+            Assert.AreEqual(false, amyme.IsHappy);
+            Assert.AreEqual(new DateTime(1979, 10, 19), amyme.BirthDate);
+            Assert.IsTrue(amyme.Pets.Count == 2);
+            Assert.AreEqual("Bird", amyme.Pets[0].Name);
+            Assert.AreEqual("Alligator", amyme.Pets[1].Name);
+        }
+
     }
 }

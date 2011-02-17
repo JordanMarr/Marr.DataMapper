@@ -178,20 +178,20 @@ namespace Marr.Data
             ColumnMapCollection groupingKeyColumns = this.GroupingKeyColumns;
 
             // Concatenate column values
-            string groupingKey = CreateGroupingKey(groupingKeyColumns, reader);
+            KeyGroupInfo keyGroupInfo = CreateGroupingKey(groupingKeyColumns, reader);
 
-            if (groupingKey != string.Empty        // Create a new group if PK is not empty
-                && _groupingKeys.LastOrDefault() != groupingKey)    // and PK values are not the same
+            // If pk group does not have a null value and PK values are not the same
+            if (!keyGroupInfo.HasNullKey && _groupingKeys.LastOrDefault() != keyGroupInfo.GroupingKey)
             {
                 isNewGroup = true;
 
-                if (_groupingKeys.Contains(groupingKey))
+                if (_groupingKeys.Contains(keyGroupInfo.GroupingKey))
                 {
                     throw new DataMappingException("DataMapper QueryToGraph has detected query results that have not been properly ordered. Please ensure that the query is sorted by all parent nodes from top to bottom.");
                 }
 
                 // Save last pk value
-                _groupingKeys.Add(groupingKey);
+                _groupingKeys.Add(keyGroupInfo.GroupingKey);
             }
 
             return isNewGroup;
@@ -281,15 +281,17 @@ namespace Marr.Data
             // Get primary keys for this parent entity
             ColumnMapCollection groupingKeyColumns = Columns.PrimaryKeys;
 
-            bool isEndNode = this.Children.Count == 0;
-            if (!isEndNode && groupingKeyColumns.Count == 0)
+            // The following conditions should fail with an exception:
+            // 1) Any parent entity (entity with children) must have at least one PK specified or an exception will be thrown
+            // 2) All 1-M relationship entities must have at least one PK specified
+            // * Only 1-1 entities with no children are allowed to have 0 PKs specified.
+            if ((groupingKeyColumns.Count == 0 && _children.Count > 0)||
+                (groupingKeyColumns.Count == 0 && _relationship.RelationshipInfo.RelationType == RelationshipTypes.Many))
                 throw new MissingPrimaryKeyException(string.Format("There are no primary key mappings defined for the following entity: '{0}'.", this.EntityType.Name));
 
             // Add parent's keys
             if (IsChild)
                 groupingKeyColumns.AddRange(Parent.GroupingKeyColumns);
-
-            AddOneToOneChildKeys(groupingKeyColumns, this);
 
             return groupingKeyColumns;
         }
@@ -301,20 +303,22 @@ namespace Marr.Data
         /// <param name="primaryKeys">The mapped primary keys for this entity.</param>
         /// <param name="reader">The open data reader.</param>
         /// <returns>Returns the primary key value(s) as a string.</returns>
-        private string CreateGroupingKey(ColumnMapCollection columns, DbDataReader reader)
+        private KeyGroupInfo CreateGroupingKey(ColumnMapCollection columns, DbDataReader reader)
         {
             StringBuilder pkValues = new StringBuilder();
+            bool hasNullValue = false;
+
             foreach (ColumnMap pkColumn in columns)
             {
                 string pkValue = reader[pkColumn.ColumnInfo.GetColumName(true)].ToString();
                 
-                // A primary key should not have a null value
                 if (string.IsNullOrEmpty(pkValue))
-                    return string.Empty;
+                    hasNullValue = true;
 
                 pkValues.Append(reader[pkColumn.ColumnInfo.GetColumName(true)].ToString());
             }
-            return pkValues.ToString();
+
+            return new KeyGroupInfo(pkValues.ToString(), hasNullValue);
         }
 
         #region IEnumerable<EntityGraph> Members
@@ -357,5 +361,27 @@ namespace Marr.Data
         }
 
         #endregion
+    }
+}
+
+public struct KeyGroupInfo
+{
+    private string _groupingKey;
+    private bool _hasNullKey;
+
+    public KeyGroupInfo(string groupingKey, bool hasNullKey)
+    {
+        _groupingKey = groupingKey;
+        _hasNullKey = hasNullKey;
+    }
+
+    public string GroupingKey 
+    { 
+        get { return _groupingKey; } 
+    }
+
+    public bool HasNullKey 
+    {
+        get { return _hasNullKey; } 
     }
 }

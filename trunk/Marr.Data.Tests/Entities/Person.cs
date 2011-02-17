@@ -23,5 +23,16 @@ namespace Marr.Data.Tests.Entities
         [Column]
         public bool IsHappy { get; set; }
 
+        [Relationship]
+        public List<Pet> Pets { get; set; }
+    }
+
+    public class Pet
+    {
+        [Column("ID",  AltName="Pet_ID", IsPrimaryKey=true)]
+        public int ID { get; set; }
+
+        [Column("Name", AltName = "Pet_Name")]
+        public string Name { get; set; }
     }
 }
