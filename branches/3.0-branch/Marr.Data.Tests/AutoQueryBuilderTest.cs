@@ -11,24 +11,21 @@ using Marr.Data.Tests.Entities;
 namespace Marr.Data.Tests
 {
     [TestClass]
-    public class AutoQueryBuilderTest : TestBase
+    public class AutoAutoQueryBuilderTest : TestBase
     {
         [TestMethod]
         public void Complex_Where_Query_No_Sort()
         {
             // Arrange
-            IDataMapper db = MockRepository.GenerateMock<IDataMapper>();
-            DbCommand cmd = new System.Data.SqlClient.SqlCommand();
-            db.Expect(d => d.Command).Return(cmd).Repeat.Any();
-
-            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable", db.Query<Person>);
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
+            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable", false);
 
             // Act
-            List<Person> people = builder.Where(p => p.Age > 16 && p.Name.StartsWith("J"));
-
+            builder.Where(p => p.Age > 16 && p.Name.StartsWith("J"));
+            
             // Assert
-            var args = db.GetArgumentsForCallsMadeOn(d => d.Query<Person>("sql.."));
-            string generatedSql = (string)args[0][0];
+            builder.GenerateQueries();
+            string generatedSql = builder.QueryQueue.First().QueryText;
 
             Assert.IsTrue(generatedSql.Contains("SELECT [ID],[Name],[Age],[BirthDate],[IsHappy] "));
             Assert.IsTrue(generatedSql.Contains("FROM PersonTable"));
@@ -40,18 +37,15 @@ namespace Marr.Data.Tests
         public void Sort_Only_Query_No_Where()
         {
             // Arrange
-            IDataMapper db = MockRepository.GenerateMock<IDataMapper>();
-            DbCommand cmd = new System.Data.SqlClient.SqlCommand();
-            db.Expect(d => d.Command).Return(cmd).Repeat.Any();
-
-            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable", db.Query<Person>);
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
+            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable", false);
 
             // Act
-            List<Person> people = builder.Order(p => p.ID).Order(p => p.Name);
+            builder.Order(p => p.ID).Order(p => p.Name);
 
             // Assert
-            var args = db.GetArgumentsForCallsMadeOn(d => d.Query<Person>("sql.."));
-            string generatedSql = (string)args[0][0];
+            builder.GenerateQueries();
+            string generatedSql = builder.QueryQueue.First().QueryText;
 
             Assert.IsTrue(generatedSql.Contains("SELECT [ID],[Name],[Age],[BirthDate],[IsHappy] "));
             Assert.IsTrue(generatedSql.Contains("FROM PersonTable"));
@@ -63,21 +57,18 @@ namespace Marr.Data.Tests
         public void Complex_Where_Sort_Query()
         {
             // Arrange
-            IDataMapper db = MockRepository.GenerateMock<IDataMapper>();
-            DbCommand cmd = new System.Data.SqlClient.SqlCommand();
-            db.Expect(d => d.Command).Return(cmd).Repeat.Any();
-
-            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable", db.Query<Person>);
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
+            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable", false);
 
             // Act
-            List<Person> people = builder
+            builder
                 .Where(p => p.Age > 16 && p.Name.StartsWith("J"))
                 .Order(p => p.Name)
                 .OrderDesc(p => p.ID);
 
             // Assert
-            var args = db.GetArgumentsForCallsMadeOn(d => d.Query<Person>("sql.."));
-            string generatedSql = (string)args[0][0];
+            builder.GenerateQueries();
+            string generatedSql = builder.QueryQueue.First().QueryText;
 
             Assert.IsTrue(generatedSql.Contains("SELECT [ID],[Name],[Age],[BirthDate],[IsHappy] "));
             Assert.IsTrue(generatedSql.Contains("FROM PersonTable"));
@@ -89,20 +80,17 @@ namespace Marr.Data.Tests
         public void Where_Sort_Query_Should_Use_AltName()
         {
             // Arrange
-            IDataMapper db = MockRepository.GenerateMock<IDataMapper>();
-            DbCommand cmd = new System.Data.SqlClient.SqlCommand();
-            db.Expect(d => d.Command).Return(cmd).Repeat.Any();
-
-            AutoQueryBuilder<Order> builder = new AutoQueryBuilder<Order>(db, "OrdersTable", db.QueryToGraph<Order>);
-
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
+            AutoQueryBuilder<Order> builder = new AutoQueryBuilder<Order>(db, "OrdersTable", true);
+            
             // Act
-            List<Order> people = builder
+            builder
                 .Where(o => o.OrderItems[0].ID > 0)
                 .Order(o => o.OrderItems[0].ID);
 
             // Assert
-            var args = db.GetArgumentsForCallsMadeOn(d => d.QueryToGraph<Order>("sql.."));
-            string generatedSql = (string)args[0][0];
+            builder.GenerateQueries();
+            string generatedSql = builder.QueryQueue.First().QueryText;
 
             Assert.IsTrue(generatedSql.Contains("SELECT [ID],[OrderName],[OrderItemID],[ItemDescription],[Price],[AmountPaid] "));
             Assert.IsTrue(generatedSql.Contains("FROM OrdersTable"));

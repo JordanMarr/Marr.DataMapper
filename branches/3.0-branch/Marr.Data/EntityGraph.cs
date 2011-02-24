@@ -21,6 +21,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using Marr.Data.Mapping;
+using System.Reflection;
 
 namespace Marr.Data
 {
@@ -37,26 +38,26 @@ namespace Marr.Data
         private RelationshipCollection _relationships;
         private List<EntityGraph> _children;
         private object _entity;
-        private ColumnMapCollection _groupingKeyColumns;
-        private List<string> _groupingKeys;
-
-        /// <summary>
-        /// A reference to the list where entities should be added to.
-        /// For the first entity, this is the query results list.
-        /// For child entities, this is the child relationship list of the parent.
-        /// </summary>
-        private IList _owningList;
+        private GroupingKeyCollection _groupingKeyColumns;
+        private Dictionary<string, EntityReference> _entityReferences;
+        public IList RootList { get; private set; }
 
         /// <summary>
         /// Recursively builds an entity graph of the given parent type.
         /// </summary>
         /// <param name="entityType"></param>
-        public EntityGraph(Type entityType, IList queryResults)
-            : this(entityType, null, null)
+        public EntityGraph(Type entityType, IList rootList)
+            : this(entityType, null, null) // Recursively constructs hierarchy
         {
-            _owningList = queryResults;
+            RootList = rootList;
         }
 
+        /// <summary>
+        /// Recursively builds entity graph hierarchy.
+        /// </summary>
+        /// <param name="entityType"></param>
+        /// <param name="parent"></param>
+        /// <param name="relationship"></param>
         private EntityGraph(Type entityType, EntityGraph parent, Relationship relationship)
         {
             MapRepository repository = MapRepository.Instance;
@@ -67,7 +68,8 @@ namespace Marr.Data
             _columns = repository.GetColumns(entityType);
             _relationships = repository.GetRelationships(entityType);
             _children = new List<EntityGraph>();
-            _groupingKeys = new List<string>();
+            Member = relationship != null ? relationship.Member : null;
+            _entityReferences = new Dictionary<string, EntityReference>();
 
             // Create and add children
             foreach (Relationship childRelationship in this.Relationships)
@@ -75,6 +77,8 @@ namespace Marr.Data
                 _children.Add(new EntityGraph(childRelationship.RelationshipInfo.EntityType, this, childRelationship));
             }
         }
+
+        public MemberInfo Member { get; private set; }
 
         /// <summary>
         /// Gets the parent of this EntityGraph.
@@ -147,83 +151,36 @@ namespace Marr.Data
         /// <param name="entityInstance"></param>
         public void AddEntity(object entityInstance)
         {
-            this._entity = entityInstance;
+            _entity = entityInstance;
 
             // Add newly created entityInstance to list (Many) or set it to field (One)
-            if (this.IsRoot || _relationship.RelationshipInfo.RelationType == RelationshipTypes.Many)
+            if (this.IsRoot)
             {
-                _owningList.Add(entityInstance);
+                RootList.Add(entityInstance);
             }
-            else // RelationshipTypes.One
+            else if (_relationship.RelationshipInfo.RelationType == RelationshipTypes.Many)
+            {
+                var list = _parent._entityReferences[_parent.GroupingKeyColumns.GroupingKey]
+                    .ChildLists[_relationship.Member.Name];
+
+                list.Add(entityInstance);
+            }
+            else // RelationTypes.One
             {
                 ReflectionHelper.SetFieldValue(_parent._entity, _relationship.Member.Name, entityInstance);
             }
 
-            InitOneToManyChildLists(entityInstance);
-        }
+            EntityReference entityRef = new EntityReference(entityInstance);
+            _entityReferences.Add(GroupingKeyColumns.GroupingKey, entityRef);
 
-        /// <summary>
-        /// Concatenates the values of the GroupingKeys property and compares them
-        /// against the LastKeyGroup property.  Returns true if the values are different,
-        /// or false if the values are the same.
-        /// The currently concatenated keys are saved in the LastKeyGroup property.
-        /// </summary>
-        /// <param name="reader"></param>
-        /// <returns></returns>
-        public bool IsNewGroup(DbDataReader reader)
-        {
-            bool isNewGroup = false;
-
-            // Get primary keys from parent entity and any one-to-one child entites
-            ColumnMapCollection groupingKeyColumns = this.GroupingKeyColumns;
-
-            // Concatenate column values
-            KeyGroupInfo keyGroupInfo = CreateGroupingKey(groupingKeyColumns, reader);
-
-            // If pk group does not have a null value and PK values are not the same
-            if (!keyGroupInfo.HasNullKey && _groupingKeys.LastOrDefault() != keyGroupInfo.GroupingKey)
-            {
-                isNewGroup = true;
-
-                if (_groupingKeys.Contains(keyGroupInfo.GroupingKey))
-                {
-                    throw new DataMappingException("DataMapper QueryToGraph has detected query results that have not been properly ordered. Please ensure that the query is sorted by all parent nodes from top to bottom.");
-                }
-
-                // Save last pk value
-                _groupingKeys.Add(keyGroupInfo.GroupingKey);
-            }
-
-            return isNewGroup;
-        }
-        
-        /// <summary>
-        /// Gets the GroupingKeys for this entity.  
-        /// GroupingKeys determine when to create and add a new entity to the graph.
-        /// </summary>
-        /// <remarks>
-        /// A simple entity with no relationships will return only its PrimaryKey columns.
-        /// A parent entity with one-to-one child relationships will include its own PrimaryKeys,
-        /// and it will recursively traverse all Children with one-to-one relationships and add their PrimaryKeys.
-        /// A child entity that has a one-to-one relationship with its parent will use the same 
-        /// GroupingKeys already defined by its parent.
-        /// </remarks>
-        public ColumnMapCollection GroupingKeyColumns
-        {
-            get
-            {
-                if (_groupingKeyColumns == null)
-                    _groupingKeyColumns = GetGroupingKeyColumns();
-
-                return _groupingKeyColumns;
-            }
+            InitOneToManyChildLists(entityRef);           
         }
 
         /// <summary>
         /// Initializes the owning lists on many-to-many Children.
         /// </summary>
         /// <param name="entityInstance"></param>
-        private void InitOneToManyChildLists(object entityInstance)
+        private void InitOneToManyChildLists(EntityReference entityRef)
         {
             // Get a reference to the parent's the childrens' OwningLists to the parent entity
             for (int i = 0; i < Relationships.Count; i++)
@@ -234,14 +191,16 @@ namespace Marr.Data
                     try
                     {
                         IList list = (IList)ReflectionHelper.CreateInstance(relationship.MemberType);
-                        Children[i]._owningList = list;
-                        ReflectionHelper.SetFieldValue(entityInstance, relationship.Member.Name, list);
+                        ReflectionHelper.SetFieldValue(entityRef.Entity, relationship.Member.Name, list);
+                        
+                        // Save a reference to each 1-M list
+                        entityRef.AddChildList(relationship.Member.Name, list);
                     }
                     catch (Exception ex)
                     {
                         throw new DataMappingException(
                             string.Format("{0}.{1} is a \"Many\" relationship type so it must derive from IList.",
-                                entityInstance.GetType().Name, relationship.Member.Name),
+                                entityRef.Entity.GetType().Name, relationship.Member.Name),
                             ex);
                     }
                 }
@@ -266,6 +225,54 @@ namespace Marr.Data
         }
 
         /// <summary>
+        /// Concatenates the values of the GroupingKeys property and compares them
+        /// against the LastKeyGroup property.  Returns true if the values are different,
+        /// or false if the values are the same.
+        /// The currently concatenated keys are saved in the LastKeyGroup property.
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <returns></returns>
+        public bool IsNewGroup(DbDataReader reader)
+        {
+            bool isNewGroup = false;
+
+            // Get primary keys from parent entity and any one-to-one child entites
+            GroupingKeyCollection groupingKeyColumns = this.GroupingKeyColumns;
+
+            // Concatenate column values
+            KeyGroupInfo keyGroupInfo = groupingKeyColumns.CreateGroupingKey(reader);
+            
+            if (!keyGroupInfo.HasNullKey && !_entityReferences.ContainsKey(keyGroupInfo.GroupingKey))
+            {
+                isNewGroup = true;
+            }
+
+            return isNewGroup;
+        }
+        
+        /// <summary>
+        /// Gets the GroupingKeys for this entity.  
+        /// GroupingKeys determine when to create and add a new entity to the graph.
+        /// </summary>
+        /// <remarks>
+        /// A simple entity with no relationships will return only its PrimaryKey columns.
+        /// A parent entity with one-to-one child relationships will include its own PrimaryKeys,
+        /// and it will recursively traverse all Children with one-to-one relationships and add their PrimaryKeys.
+        /// A child entity that has a one-to-one relationship with its parent will use the same 
+        /// GroupingKeys already defined by its parent.
+        /// </remarks>
+        public GroupingKeyCollection GroupingKeyColumns
+        {
+            get
+            {
+                if (_groupingKeyColumns == null)
+                    _groupingKeyColumns = GetGroupingKeyColumns();
+
+                return _groupingKeyColumns;
+            }
+        }
+
+        /// <summary>
         /// Gets a list of keys to group by.
         /// </summary>
         /// <remarks>
@@ -276,49 +283,25 @@ namespace Marr.Data
         /// child entity primary keys.
         /// </remarks>
         /// <returns></returns>
-        private ColumnMapCollection GetGroupingKeyColumns()
+        private GroupingKeyCollection GetGroupingKeyColumns()
         {
             // Get primary keys for this parent entity
-            ColumnMapCollection groupingKeyColumns = Columns.PrimaryKeys;
+            GroupingKeyCollection groupingKeyColumns = new GroupingKeyCollection();
+            groupingKeyColumns.PrimaryKeys.AddRange(Columns.PrimaryKeys);
 
             // The following conditions should fail with an exception:
             // 1) Any parent entity (entity with children) must have at least one PK specified or an exception will be thrown
             // 2) All 1-M relationship entities must have at least one PK specified
             // * Only 1-1 entities with no children are allowed to have 0 PKs specified.
-            if ((groupingKeyColumns.Count == 0 && _children.Count > 0)||
-                (groupingKeyColumns.Count == 0 && _relationship.RelationshipInfo.RelationType == RelationshipTypes.Many))
+            if ((groupingKeyColumns.PrimaryKeys.Count == 0 && _children.Count > 0) ||
+                (groupingKeyColumns.PrimaryKeys.Count == 0 && _relationship.RelationshipInfo.RelationType == RelationshipTypes.Many))
                 throw new MissingPrimaryKeyException(string.Format("There are no primary key mappings defined for the following entity: '{0}'.", this.EntityType.Name));
 
             // Add parent's keys
             if (IsChild)
-                groupingKeyColumns.AddRange(Parent.GroupingKeyColumns);
+                groupingKeyColumns.ParentPrimaryKeys.AddRange(Parent.GroupingKeyColumns);
 
             return groupingKeyColumns;
-        }
-
-        /// <summary>
-        /// Returns a concatented string containing the primary key values of the current record.
-        /// If any of the PKs are null or empty, the entire grouping key will be string.Empty.
-        /// </summary>
-        /// <param name="primaryKeys">The mapped primary keys for this entity.</param>
-        /// <param name="reader">The open data reader.</param>
-        /// <returns>Returns the primary key value(s) as a string.</returns>
-        private KeyGroupInfo CreateGroupingKey(ColumnMapCollection columns, DbDataReader reader)
-        {
-            StringBuilder pkValues = new StringBuilder();
-            bool hasNullValue = false;
-
-            foreach (ColumnMap pkColumn in columns)
-            {
-                string pkValue = reader[pkColumn.ColumnInfo.GetColumName(true)].ToString();
-                
-                if (string.IsNullOrEmpty(pkValue))
-                    hasNullValue = true;
-
-                pkValues.Append(reader[pkColumn.ColumnInfo.GetColumName(true)].ToString());
-            }
-
-            return new KeyGroupInfo(pkValues.ToString(), hasNullValue);
         }
 
         #region IEnumerable<EntityGraph> Members

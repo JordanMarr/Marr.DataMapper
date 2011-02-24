@@ -69,6 +69,8 @@
     <Compile Include="DataMapper.cs" />
     <Compile Include="DataMappingException.cs" />
     <Compile Include="EntityGraph.cs" />
+    <Compile Include="EntityReference.cs" />
+    <Compile Include="GroupingKeyCollection.cs" />
     <Compile Include="IDataMapper.cs" />
     <Compile Include="LoadEntityEventArgs.cs" />
     <Compile Include="Mapping\RelationshipInfo.cs" />
