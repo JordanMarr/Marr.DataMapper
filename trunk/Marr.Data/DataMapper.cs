@@ -458,7 +458,12 @@ namespace Marr.Data
 
         public AutoQueryBuilder<T> AutoQuery<T>()
         {
-            return new AutoQueryBuilder<T>(this, false);
+            return AutoQuery<T>(null);
+        }
+
+        public AutoQueryBuilder<T> AutoQuery<T>(string target)
+        {
+            return new AutoQueryBuilder<T>(this, target, false);
         }
 
         /// <summary>
@@ -541,7 +546,12 @@ namespace Marr.Data
 
         public AutoQueryBuilder<T> AutoQueryToGraph<T>()
         {
-            return new AutoQueryBuilder<T>(this, true);
+            return AutoQueryToGraph<T>(null);
+        }
+
+        public AutoQueryBuilder<T> AutoQueryToGraph<T>(string target)
+        {
+            return new AutoQueryBuilder<T>(this, target, true);
         }
 
         public List<T> QueryToGraph<T>(string sql)

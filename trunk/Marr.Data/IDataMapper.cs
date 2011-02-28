@@ -34,7 +34,9 @@ namespace Marr.Data
         int AutoDelete<T>(T entity);
         int AutoDelete<T>(T entity, Expression<Func<T, bool>> filter);
         AutoQueryBuilder<T> AutoQuery<T>();
+        AutoQueryBuilder<T> AutoQuery<T>(string target);
         AutoQueryBuilder<T> AutoQueryToGraph<T>();
+        AutoQueryBuilder<T> AutoQueryToGraph<T>(string target);
         void BeginTransaction();
         DbCommand Command { get; }
         void Commit();

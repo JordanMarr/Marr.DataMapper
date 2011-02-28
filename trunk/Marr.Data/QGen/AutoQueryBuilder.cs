@@ -18,15 +18,21 @@ namespace Marr.Data.QGen
         private DataMapper _db;
         private WhereBuilder<T> _whereBuilder;
         private SortBuilder<T> _sortBuilder;
+        private string _tableName;
         private bool _useAltName;
         private bool _isGraph;
         
         public List<QueryQueueItem> QueryQueue { get; private set; }
 
         internal AutoQueryBuilder(DataMapper db, bool isGraph)
+            : this(db, null, isGraph)
+        { }
+
+        internal AutoQueryBuilder(DataMapper db, string tableName, bool isGraph)
         {
             QueryQueue = new List<QueryQueueItem>();
             _db = db;
+            _tableName = tableName ?? MapRepository.Instance.GetTableName(typeof(T));
             _useAltName = isGraph;
             _isGraph = isGraph;
             _sortBuilder = new SortBuilder<T>(this, _useAltName);
@@ -130,8 +136,6 @@ namespace Marr.Data.QGen
             if (QueryQueue.Count == 0)
                 QueryQueue.Add(new QueryQueueItem(null, null));
 
-            string tableName = MapRepository.Instance.GetTableName(typeof(T));
-
             foreach (var queueItem in QueryQueue)
             {
                 if (queueItem.QueryText == null)
@@ -140,7 +144,7 @@ namespace Marr.Data.QGen
                     var columns = GetColumns(queueItem.EntitiesToLoad);
                     string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
                     string sort = _sortBuilder.ToString();
-                    IQuery query = QueryFactory.CreateSelectQuery(columns, tableName, where, sort, _useAltName);
+                    IQuery query = QueryFactory.CreateSelectQuery(columns, _tableName, where, sort, _useAltName);
                     queueItem.QueryText = query.Generate();
                 }
             }
