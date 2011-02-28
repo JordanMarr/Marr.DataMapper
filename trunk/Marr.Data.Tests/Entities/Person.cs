@@ -6,6 +6,7 @@ using Marr.Data.Mapping;
 
 namespace Marr.Data.Tests.Entities
 {
+    [Table("PersonTable")]
     public class Person
     {
         [Column(IsPrimaryKey = true, IsAutoIncrement = true, ReturnValue = true)]

@@ -86,5 +86,10 @@ namespace Marr.Data.Tests
                 return CurrentRow[i];
             }
         }
+
+        public void Reset()
+        {
+            _currentRowIndex = -1;
+        }
     }
 }

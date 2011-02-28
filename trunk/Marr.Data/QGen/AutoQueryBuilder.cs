@@ -2,48 +2,87 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Marr.Data.QGen;
 using System.Linq.Expressions;
 using System.Reflection;
 using Marr.Data.Mapping;
+using System.Data.Common;
+using System.Collections;
 
 namespace Marr.Data.QGen
 {
-    public class AutoQueryBuilder<T>
+	public class AutoQueryBuilder<T> : ExpressionVisitor, IEnumerable<T>
     {
-        private IDataMapper _db;
-        private string _target;
+        #region - AutoQueryBuilder -
+
+        private DataMapper _db;
         private WhereBuilder<T> _whereBuilder;
         private SortBuilder<T> _sortBuilder;
-        private Func<string, List<T>> _runQueryMethod;
         private bool _useAltName;
+        private bool _isGraph;
+        
+        public List<QueryQueueItem> QueryQueue { get; private set; }
 
-        public AutoQueryBuilder(IDataMapper db, string target, Func<string, List<T>> runQueryMethod)
+        internal AutoQueryBuilder(DataMapper db, bool isGraph)
         {
+            QueryQueue = new List<QueryQueueItem>();
             _db = db;
-            _target = target;
-
-            // Only use alt name if querying a graph
-            _useAltName = runQueryMethod == db.QueryToGraph<T>;
-
+            _useAltName = isGraph;
+            _isGraph = isGraph;
             _sortBuilder = new SortBuilder<T>(this, _useAltName);
-            _runQueryMethod = runQueryMethod;
         }
 
-        public SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
+        public AutoQueryBuilder<T> Load(params Expression<Func<T, object>>[] childrenToLoad)
+        {
+            return Load(null, childrenToLoad);
+        }
+
+        public AutoQueryBuilder<T> Load(string queryText, params Expression<Func<T, object>>[] childrenToLoad)
+        {
+            List<string> entitiesToLoad = new List<string>();
+
+            // Parse relationship member names from expression array
+            foreach (var exp in childrenToLoad)
+            {
+                entitiesToLoad.Add((exp.Body as MemberExpression).Member.Name);
+            }
+
+            // Add query path
+            if (entitiesToLoad.Count > 0)
+            {
+                QueryQueue.Add(new QueryQueueItem(queryText, entitiesToLoad));
+            }
+
+            return this;
+        }
+
+        internal SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
         {
             _whereBuilder = new WhereBuilder<T>(_db.Command, filterExpression, _useAltName);
             return _sortBuilder;
         }
 
-        public SortBuilder<T> Order(Expression<Func<T, object>> sortExpression)
+        internal SortBuilder<T> OrderBy(Expression<Func<T, object>> sortExpression)
         {
-            _sortBuilder.Order(sortExpression);
+            _sortBuilder.OrderBy(sortExpression);
             return _sortBuilder;
         }
 
-        public SortBuilder<T> OrderDesc(Expression<Func<T, object>> sortExpression)
+        internal SortBuilder<T> ThenBy(Expression<Func<T, object>> sortExpression)
         {
-            _sortBuilder.OrderDesc(sortExpression);
+            _sortBuilder.OrderBy(sortExpression);
+            return _sortBuilder;
+        }
+
+        internal SortBuilder<T> OrderByDescending(Expression<Func<T, object>> sortExpression)
+        {
+            _sortBuilder.OrderByDescending(sortExpression);
+            return _sortBuilder;
+        }
+
+        internal SortBuilder<T> ThenByDescending(Expression<Func<T, object>> sortExpression)
+        {
+            _sortBuilder.OrderByDescending(sortExpression);
             return _sortBuilder;
         }
 
@@ -53,12 +92,32 @@ namespace Marr.Data.QGen
             var previousSqlMode = _db.SqlMode;
             _db.SqlMode = SqlModes.Text;
 
-            // Generate a parameterized where clause
-            var columns = GetColumns(typeof(T), _useAltName);
-            string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
-            string sort = _sortBuilder.ToString();
-            IQuery query = QueryFactory.CreateSelectQuery(columns, _target, where, sort, _useAltName);
-            var results = _runQueryMethod(query.Generate());
+            List<T> results = new List<T>();
+
+            EntityGraph graph = new EntityGraph(typeof(T), results);
+
+            GenerateQueries();
+
+            try
+            {
+                if (_isGraph)
+                {
+                    _db.OpenConnection();
+                    foreach (QueryQueueItem queueItem in QueryQueue)
+                    {
+                        results = (List<T>)_db.QueryToGraph<T>(queueItem.QueryText, graph, queueItem == null ? null : queueItem.EntitiesToLoad);
+                    }
+                }
+                else
+                {
+                    string query = QueryQueue.First().QueryText;
+                    results = (List<T>)_db.Query(query, results);
+                }
+            }
+            finally
+            {
+                _db.CloseConnection();
+            }
 
             // Return to previous sql mode
             _db.SqlMode = previousSqlMode;
@@ -66,29 +125,125 @@ namespace Marr.Data.QGen
             return results;
         }
 
-        private ColumnMapCollection GetColumns(Type entityType, bool loadRelationshipColumns)
+        internal void GenerateQueries()
         {
-            if (loadRelationshipColumns)
-            {
-                ColumnMapCollection columns = new ColumnMapCollection();
+            if (QueryQueue.Count == 0)
+                QueryQueue.Add(new QueryQueueItem(null, null));
 
-                EntityGraph graph = new EntityGraph(entityType, null);
-                foreach (var entity in graph)
+            string tableName = MapRepository.Instance.GetTableName(typeof(T));
+
+            foreach (var queueItem in QueryQueue)
+            {
+                if (queueItem.QueryText == null)
                 {
-                    columns.AddRange(entity.Columns);
+                    // Generate a parameterized where clause
+                    var columns = GetColumns(queueItem.EntitiesToLoad);
+                    string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
+                    string sort = _sortBuilder.ToString();
+                    IQuery query = QueryFactory.CreateSelectQuery(columns, tableName, where, sort, _useAltName);
+                    queueItem.QueryText = query.Generate();
                 }
-
-                return columns;
-            }
-            else
-            {
-                return MapRepository.Instance.GetColumns(entityType);
             }
         }
+        
+        private ColumnMapCollection GetColumns(IEnumerable<string> entitiesToLoad)
+        {
+            // If QueryToGraph<T> and no child load entities are specified, load all children
+            bool loadAllChildren = _useAltName && entitiesToLoad == null;
 
+            // If Query<T>
+            if (!_useAltName)
+            {
+                return MapRepository.Instance.GetColumns(typeof(T));
+            }
+
+            ColumnMapCollection columns = new ColumnMapCollection();
+
+            Type baseEntityType = typeof(T);
+            EntityGraph graph = new EntityGraph(baseEntityType, null);
+
+            foreach (var lvl in graph)
+            {
+                if (loadAllChildren || lvl.IsRoot || entitiesToLoad.Contains(lvl.Member.Name))
+                {
+                    columns.AddRange(lvl.Columns);
+                }
+            }
+
+            return columns;
+        }
+        
         public static implicit operator List<T>(AutoQueryBuilder<T> builder)
         {
             return builder.ToList();
         }
+
+        #endregion
+
+        #region - Query<T> -
+
+        /// <summary>
+        /// Handles all.
+        /// </summary>
+        /// <param name="expression"></param>
+        /// <returns></returns>
+        public override System.Linq.Expressions.Expression Visit(System.Linq.Expressions.Expression expression)
+        {
+            return base.Visit(expression);
+        }
+
+        /// <summary>
+        /// Handles Where.
+        /// </summary>
+        /// <param name="lambdaExpression"></param>
+        /// <returns></returns>
+        public override System.Linq.Expressions.Expression VisitLamda(System.Linq.Expressions.LambdaExpression lambdaExpression)
+        {
+            _sortBuilder = this.Where(lambdaExpression as Expression<Func<T, bool>>);
+            return base.VisitLamda(lambdaExpression);
+        }
+
+        /// <summary>
+        /// Handles OrderBy.
+        /// </summary>
+        /// <param name="expression"></param>
+        /// <returns></returns>
+        public override System.Linq.Expressions.Expression VisitMethodCall(MethodCallExpression expression)
+        {
+            if (expression.Method.Name == "OrderBy" || expression.Method.Name == "ThenBy")
+            {
+                var memberExp = ((expression.Arguments[1] as UnaryExpression).Operand as System.Linq.Expressions.LambdaExpression).Body as System.Linq.Expressions.MemberExpression;
+                _sortBuilder.Order(memberExp.Member);
+            }
+            if (expression.Method.Name == "OrderByDescending" || expression.Method.Name == "ThenByDescending")
+            {
+                var memberExp = ((expression.Arguments[1] as UnaryExpression).Operand as System.Linq.Expressions.LambdaExpression).Body as System.Linq.Expressions.MemberExpression;
+                _sortBuilder.OrderByDescending(memberExp.Member);
+            }
+
+            return base.VisitMethodCall(expression);
+        }
+
+        #endregion
+
+        #region IEnumerable<T> Members
+
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        {
+            var list = this.ToList();
+            return list.GetEnumerator();
+        }
+
+        #endregion
+
+        #region IEnumerable Members
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            var list = this.ToList();
+            return list.GetEnumerator();
+        }
+
+        #endregion
     }
 }

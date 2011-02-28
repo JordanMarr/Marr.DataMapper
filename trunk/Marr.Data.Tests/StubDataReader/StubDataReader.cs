@@ -41,6 +41,10 @@ namespace Marr.Data.Tests
 
         public override void Close()
         {
+            foreach (var rs in _stubResultSets)
+            {
+                rs.Reset();
+            }
         }
 
         public override bool NextResult()

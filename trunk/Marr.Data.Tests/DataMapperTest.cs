@@ -106,7 +106,7 @@ namespace Marr.Data.Tests
             rs.AddRow(2, "Order2", 60, "Guitar", 1500.50m, 1500.50m);
             rs.AddRow(2, "Order2", 61, "Bass", 2380.00m, 50.00m);
             rs.AddRow(3, "Order3", DBNull.Value, DBNull.Value, DBNull.Value, DBNull.Value);
-
+            
             // Act
             var db = CreateDB_ForQuery(rs);
             List<Order> orders = db.QueryToGraph<Order>("sql...");
@@ -150,32 +150,59 @@ namespace Marr.Data.Tests
         }
 
         [TestMethod]
-        public void QueryToGraph_WhenNotSortedByParent_ShouldThrowException()
+        public void QueryToGraph_WithNestedRelationships_UnsortedResults_ShouldMapToGraph()
         {
             // Arrange
             StubResultSet rs = new StubResultSet("ID", "OrderName", "OrderItemID", "ItemDescription", "Price", "AmountPaid");
+
+            // For this test, results are purposefully out of order
+            rs.AddRow(3, "Order3", DBNull.Value, DBNull.Value, DBNull.Value, DBNull.Value);
             rs.AddRow(1, "Order1", 50, "Red car", 100.35m, DBNull.Value);
-            rs.AddRow(2, "Order2", 60, "Guitar", 1500.50m, 1500.50m);       // Reversed order
-            rs.AddRow(1, "Order1", 51, "Blue wagon", 44.87m, DBNull.Value); // Reversed order
+            rs.AddRow(2, "Order2", 60, "Guitar", 1500.50m, 1500.50m);
+            rs.AddRow(1, "Order1", 51, "Blue wagon", 44.87m, DBNull.Value);
             rs.AddRow(2, "Order2", 61, "Bass", 2380.00m, 50.00m);
 
-            var db = CreateDB_ForQuery(rs);
-
-            Exception expectedException = null;
-
             // Act
-            try
-            {
-                List<Order> orders = db.QueryToGraph<Order>("sql...");
-            }
-            catch (Exception ex)
-            {
-                expectedException = ex;
-            }            
+            var db = CreateDB_ForQuery(rs);
+            List<Order> orders = db.QueryToGraph<Order>("sql...");
 
             // Assert
-            Assert.IsNotNull(expectedException, "The DataMapper EntityGraph should have thrown exception because the QueryToGraph results were not properly sorted.");
-            Assert.IsInstanceOfType(expectedException, typeof(DataMappingException));
+            Assert.IsTrue(orders.Count == 3);
+            // NOTE: Cannot assume that orders are sorted, so get by OrderName to verify children
+            Order order1 = orders.Where(o => o.OrderName == "Order1").FirstOrDefault();
+            Order order2 = orders.Where(o => o.OrderName == "Order2").FirstOrDefault();
+            Order order3 = orders.Where(o => o.OrderName == "Order3").FirstOrDefault();
+            Assert.IsTrue(order1.OrderItems.Count == 2);
+            Assert.IsTrue(order2.OrderItems.Count == 2);
+            Assert.IsTrue(order3.OrderItems.Count == 0);
+
+            // Order 1
+            Assert.AreEqual(1, order1.ID);
+            Assert.AreEqual("Order1", order1.OrderName);
+
+            // Order 1 -> Item 1
+            Assert.AreEqual(50, order1.OrderItems[0].ID);
+            Assert.AreEqual("Red car", order1.OrderItems[0].ItemDescription);
+            Assert.AreEqual(100.35m, order1.OrderItems[0].Price);
+            Assert.IsNull(order1.OrderItems[0].ItemReceipt.AmountPaid);
+
+            // Order 1 -> Item 2
+            Assert.AreEqual(51, order1.OrderItems[1].ID);
+            Assert.AreEqual("Blue wagon", order1.OrderItems[1].ItemDescription);
+            Assert.AreEqual(44.87m, order1.OrderItems[1].Price);
+            Assert.IsNull(order1.OrderItems[1].ItemReceipt.AmountPaid);
+
+            // Order 2 -> Item 1
+            Assert.AreEqual(60, order2.OrderItems[0].ID);
+            Assert.AreEqual("Guitar", order2.OrderItems[0].ItemDescription);
+            Assert.AreEqual(1500.50m, order2.OrderItems[0].Price);
+            Assert.AreEqual(1500.50m, order2.OrderItems[0].ItemReceipt.AmountPaid);
+
+            // Order 2 -> Item 2
+            Assert.AreEqual(61, order2.OrderItems[1].ID);
+            Assert.AreEqual("Bass", order2.OrderItems[1].ItemDescription);
+            Assert.AreEqual(2380.00m, order2.OrderItems[1].Price);
+            Assert.AreEqual(50.00m, order2.OrderItems[1].ItemReceipt.AmountPaid);
         }
 
         [TestMethod]
@@ -272,5 +299,25 @@ namespace Marr.Data.Tests
             Assert.AreEqual("Alligator", amyme.Pets[1].Name);
         }
 
+        [TestMethod]
+        public void MultiEntityTest()
+        {
+            // Arrange
+            StubResultSet rs = new StubResultSet("ID", "OrderName", "OrderItemID", "ItemDescription", "Price", "AmountPaid");
+            rs.AddRow(1, "Order1", 50, "Red car", 100.35m, DBNull.Value);
+            rs.AddRow(1, "Order1", 51, "Blue wagon", 44.87m, DBNull.Value);
+            rs.AddRow(2, "Order2", 60, "Guitar", 1500.50m, 1500.50m);
+            rs.AddRow(2, "Order2", 61, "Bass", 2380.00m, 50.00m);
+            rs.AddRow(3, "Order3", DBNull.Value, DBNull.Value, DBNull.Value, DBNull.Value);
+
+            // Act
+            var db = CreateDB_ForQuery(rs);
+            List<Order> people = db.AutoQueryToGraph<Order>()
+                .Load(o => o.OrderItems)
+                .Load(o => o.OrderItems, o => o.OrderItems.First().ItemReceipt)
+                .Where(o => o.ID > 1);
+                
+                
+        }
     }
 }

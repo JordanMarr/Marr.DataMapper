@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using Marr.Data.Parameters;
 using System.Linq.Expressions;
 using Marr.Data.QGen;
+using System.Reflection;
 
 namespace Marr.Data
 {
@@ -27,13 +28,13 @@ namespace Marr.Data
     {
         ParameterChainMethods AddParameter(string name, object value);
         IDbDataParameter AddParameter(IDbDataParameter parameter);
-        int AutoUpdate<T>(T entity, string target);
-        int AutoUpdate<T>(T entity, string target, Expression<Func<T, bool>> filter);
-        int AutoInsert<T>(T entity, string target);
-        int AutoDelete<T>(T entity, string target);
-        int AutoDelete<T>(T entity, string target, Expression<Func<T, bool>> filter);
-        AutoQueryBuilder<T> AutoQuery<T>(string target);
-        AutoQueryBuilder<T> AutoQueryToGraph<T>(string target);
+        int AutoUpdate<T>(T entity);
+        int AutoUpdate<T>(T entity, Expression<Func<T, bool>> filter);
+        int AutoInsert<T>(T entity);
+        int AutoDelete<T>(T entity);
+        int AutoDelete<T>(T entity, Expression<Func<T, bool>> filter);
+        AutoQueryBuilder<T> AutoQuery<T>();
+        AutoQueryBuilder<T> AutoQueryToGraph<T>();
         void BeginTransaction();
         DbCommand Command { get; }
         void Commit();

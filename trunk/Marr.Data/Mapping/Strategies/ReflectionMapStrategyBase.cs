@@ -63,6 +63,19 @@ namespace Marr.Data.Mapping.Strategies
             _bindingFlags = bindingFlags;
         }
 
+        public string MapTable(Type entityType)
+        {
+            object[] atts = entityType.GetCustomAttributes(typeof(TableAttribute), true);
+            if (atts.Length > 0)
+            {
+                return (atts[0] as TableAttribute).Name;
+            }
+            else
+            {
+                return entityType.Name;
+            }
+        }
+
         /// <summary>
         /// Implements IMapStrategy.
         /// Loops through filtered members and calls the virtual "CreateColumnMap" void for each member.

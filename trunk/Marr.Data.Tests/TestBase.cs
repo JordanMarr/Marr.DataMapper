@@ -22,6 +22,7 @@ namespace Marr.Data.Tests
 
             _command = MockRepository.GenerateMock<DbCommand>();
             _command.Expect(c => c.ExecuteReader()).Return(reader);
+            
             _command.Expect(c => c.Parameters).Return(_parameters);
             _command.Expect(c => c.CreateParameter()).Return(new System.Data.SqlClient.SqlParameter()).Repeat.Any();
             _command.Stub(c => c.CommandText);

@@ -456,9 +456,9 @@ namespace Marr.Data
 
         #region - Query -
 
-        public AutoQueryBuilder<T> AutoQuery<T>(string target)
+        public AutoQueryBuilder<T> AutoQuery<T>()
         {
-            return new AutoQueryBuilder<T>(this, target, Query<T>);
+            return new AutoQueryBuilder<T>(this, false);
         }
 
         /// <summary>
@@ -539,14 +539,20 @@ namespace Marr.Data
 
         #region - Query to Graph -
 
-        public AutoQueryBuilder<T> AutoQueryToGraph<T>(string target)
+        public AutoQueryBuilder<T> AutoQueryToGraph<T>()
         {
-            return new AutoQueryBuilder<T>(this, target, QueryToGraph<T>);
+            return new AutoQueryBuilder<T>(this, true);
         }
 
         public List<T> QueryToGraph<T>(string sql)
         {
             return (List<T>)QueryToGraph<T>(sql, new List<T>());
+        }
+
+        public ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList)
+        {
+            EntityGraph graph = new EntityGraph(typeof(T), (IList)entityList);
+            return QueryToGraph<T>(sql, graph, null);
         }
 
         /// <summary>
@@ -555,12 +561,10 @@ namespace Marr.Data
         /// <typeparam name="T"></typeparam>
         /// <param name="sql"></param>
         /// <param name="entityList"></param>
+        /// <param name="entityGraph">Coordinates loading all objects in the graph..</param>
         /// <returns></returns>
-        public ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList)
+        internal ICollection<T> QueryToGraph<T>(string sql, EntityGraph graph, IEnumerable<string> childrenToLoad)
         {
-            if (entityList == null)
-                throw new ArgumentNullException("entityList");
-
             if (string.IsNullOrEmpty(sql))
                 throw new ArgumentNullException("sql");
 
@@ -570,8 +574,6 @@ namespace Marr.Data
 
             try
             {
-                EntityGraph entityGraph = new EntityGraph(parentType, (IList)entityList);
-                
                 OpenConnection();
                 using (DbDataReader reader = Command.ExecuteReader())
                 {
@@ -579,8 +581,15 @@ namespace Marr.Data
                     {
                         // The entire EntityGraph is traversed for each record, 
                         // and multiple entities are created from each view record.
-                        foreach (EntityGraph lvl in entityGraph)
+                        foreach (EntityGraph lvl in graph)
                         {
+                            // If is child relationship entity, and childrenToLoad are specified, and entity is not listed,
+                            // then skip this entity.
+                            if (childrenToLoad != null && !lvl.IsRoot && !childrenToLoad.Contains(lvl.Member.Name))
+                            {
+                                continue;
+                            }
+
                             if (lvl.IsNewGroup(reader))
                             {
                                 var newEntity = mappingHelper.CreateAndLoadEntity(lvl.EntityType, lvl.Columns, reader, true);
@@ -597,35 +606,33 @@ namespace Marr.Data
                 CloseConnection();
             }
 
-            return entityList;
+            return (ICollection<T>)graph.RootList;
         }
 
         #endregion
 
         #region - Update -
 
-        public int AutoUpdate<T>(T entity, string target)
+        public int AutoUpdate<T>(T entity)
         {
-            return AutoUpdate<T>(entity, target, null);
+            return AutoUpdate<T>(entity, null);
         }
 
-        public int AutoUpdate<T>(T entity, string target, Expression<Func<T, bool>> filter)
+        public int AutoUpdate<T>(T entity, Expression<Func<T, bool>> filter)
         {
             if (entity == null)
                 throw new ArgumentNullException("entity");
-
-            if (string.IsNullOrEmpty(target))
-                throw new ArgumentNullException("target");
 
             // Remember sql mode
             var previousSqlMode = this.SqlMode;
             SqlMode = SqlModes.Text;
 
             var mappingHelper = new MappingHelper(Command);
+            string tableName = MapRepository.Instance.GetTableName(typeof(T));
             var where = new WhereBuilder<T>(Command, filter, false);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
-            IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command, target, where.ToString());
+            IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command, tableName, where.ToString());
             Command.CommandText = query.Generate();
 
             int rowsAffected = 0;
@@ -679,22 +686,20 @@ namespace Marr.Data
 
         #region - Insert -
 
-        public int AutoInsert<T>(T entity, string target)
+        public int AutoInsert<T>(T entity)
         {
             if (entity == null)
                 throw new ArgumentNullException("entity");
-
-            if (string.IsNullOrEmpty(target))
-                throw new ArgumentNullException("target");
-
+            
             // Remember sql mode
             var previousSqlMode = this.SqlMode;
             SqlMode = SqlModes.Text;
 
             var mappingHelper = new MappingHelper(Command);
+            string tableName = MapRepository.Instance.GetTableName(typeof(T));
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
-            IQuery query = QueryFactory.CreateInsertQuery(mappings, Command, target);
+            IQuery query = QueryFactory.CreateInsertQuery(mappings, Command, tableName);
             Command.CommandText = query.Generate();
 
             int rowsAffected = 0;
@@ -752,26 +757,24 @@ namespace Marr.Data
 
         #region - Delete -
 
-        public int AutoDelete<T>(T entity, string target)
+        public int AutoDelete<T>(T entity)
         {
-            return AutoDelete<T>(entity, target, null);
+            return AutoDelete<T>(entity, null);
         }
 
-        public int AutoDelete<T>(T entity, string target, Expression<Func<T, bool>> filter)
+        public int AutoDelete<T>(T entity, Expression<Func<T, bool>> filter)
         {
             if (entity == null)
                 throw new ArgumentNullException("entity");
-
-            if (string.IsNullOrEmpty(target))
-                throw new ArgumentNullException("target");
-
+            
             // Remember sql mode
             var previousSqlMode = this.SqlMode;
             SqlMode = SqlModes.Text;
 
             var mappingHelper = new MappingHelper(Command);
+            string tableName = MapRepository.Instance.GetTableName(typeof(T));
             var where = new WhereBuilder<T>(Command, filter, false);
-            IQuery query = QueryFactory.CreateDeleteQuery(target, where.ToString());
+            IQuery query = QueryFactory.CreateDeleteQuery(tableName, where.ToString());
             Command.CommandText = query.Generate();
 
             int rowsAffected = 0;
@@ -810,7 +813,7 @@ namespace Marr.Data
                 OpeningConnection(this, EventArgs.Empty);
         }
 
-        protected void OpenConnection()
+        protected internal void OpenConnection()
         {
             OnOpeningConnection();
 
@@ -818,9 +821,9 @@ namespace Marr.Data
                 Command.Connection.Open();
         }
 
-        protected void CloseConnection()
+        protected internal void CloseConnection()
         {
-            this.Parameters.Clear();
+            Command.Parameters.Clear();
             Command.CommandText = string.Empty;
 
             if (Command.Transaction == null)

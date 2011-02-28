@@ -27,6 +27,7 @@ namespace Marr.Data
 {
     public class MapRepository
     {
+        private Dictionary<Type, string> _tables;
         private Dictionary<Type, ColumnMapCollection> _columns;
         private Dictionary<Type, RelationshipCollection> _relationships;
         private FastReflection.CachedReflector _reflector;
@@ -41,6 +42,7 @@ namespace Marr.Data
 
         private MapRepository()
         {
+            _tables = new Dictionary<Type, string>();
             _columns = new Dictionary<Type, ColumnMapCollection>();
             _relationships = new Dictionary<Type, RelationshipCollection>();
             _reflector = new FastReflection.CachedReflector();
@@ -95,6 +97,24 @@ namespace Marr.Data
             {
                 // Return the default column map strategy
                 return _columnMapStrategies[typeof(object)];
+            }
+        }
+
+        #endregion
+
+        #region - Table repository -
+
+        internal string GetTableName(Type entityType)
+        {
+            if (_tables.ContainsKey(entityType))
+            {
+                return _tables[entityType];
+            }
+            else
+            {
+                string tableName = GetMapStrategy(entityType).MapTable(entityType);
+                _tables.Add(entityType, tableName);
+                return tableName;
             }
         }
 
