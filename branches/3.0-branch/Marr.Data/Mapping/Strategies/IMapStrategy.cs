@@ -26,6 +26,13 @@ namespace Marr.Data.Mapping.Strategies
     public interface IMapStrategy
     {
         /// <summary>
+        /// Creates a table map for a given entity type.
+        /// </summary>
+        /// <param name="entityType"></param>
+        /// <returns></returns>
+        string MapTable(Type entityType);
+
+        /// <summary>
         /// Creates a ColumnMapCollection for a given entity type.
         /// </summary>
         /// <param name="entityType">The entity that is being mapped.</param>

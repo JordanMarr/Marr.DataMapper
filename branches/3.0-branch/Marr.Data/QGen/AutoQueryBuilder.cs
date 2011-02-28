@@ -11,10 +11,11 @@ using System.Collections;
 
 namespace Marr.Data.QGen
 {
-	public class AutoQueryBuilder<T>
+	public class AutoQueryBuilder<T> : ExpressionVisitor, IEnumerable<T>
     {
+        #region - AutoQueryBuilder -
+
         private DataMapper _db;
-        private string _target;
         private WhereBuilder<T> _whereBuilder;
         private SortBuilder<T> _sortBuilder;
         private bool _useAltName;
@@ -22,11 +23,10 @@ namespace Marr.Data.QGen
         
         public List<QueryQueueItem> QueryQueue { get; private set; }
 
-        internal AutoQueryBuilder(DataMapper db, string target, bool isGraph)
+        internal AutoQueryBuilder(DataMapper db, bool isGraph)
         {
             QueryQueue = new List<QueryQueueItem>();
             _db = db;
-            _target = target;
             _useAltName = isGraph;
             _isGraph = isGraph;
             _sortBuilder = new SortBuilder<T>(this, _useAltName);
@@ -56,21 +56,33 @@ namespace Marr.Data.QGen
             return this;
         }
 
-        public SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
+        internal SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
         {
             _whereBuilder = new WhereBuilder<T>(_db.Command, filterExpression, _useAltName);
             return _sortBuilder;
         }
 
-        public SortBuilder<T> Order(Expression<Func<T, object>> sortExpression)
+        internal SortBuilder<T> OrderBy(Expression<Func<T, object>> sortExpression)
         {
-            _sortBuilder.Order(sortExpression);
+            _sortBuilder.OrderBy(sortExpression);
             return _sortBuilder;
         }
 
-        public SortBuilder<T> OrderDesc(Expression<Func<T, object>> sortExpression)
+        internal SortBuilder<T> ThenBy(Expression<Func<T, object>> sortExpression)
         {
-            _sortBuilder.OrderDesc(sortExpression);
+            _sortBuilder.OrderBy(sortExpression);
+            return _sortBuilder;
+        }
+
+        internal SortBuilder<T> OrderByDescending(Expression<Func<T, object>> sortExpression)
+        {
+            _sortBuilder.OrderByDescending(sortExpression);
+            return _sortBuilder;
+        }
+
+        internal SortBuilder<T> ThenByDescending(Expression<Func<T, object>> sortExpression)
+        {
+            _sortBuilder.OrderByDescending(sortExpression);
             return _sortBuilder;
         }
 
@@ -118,6 +130,8 @@ namespace Marr.Data.QGen
             if (QueryQueue.Count == 0)
                 QueryQueue.Add(new QueryQueueItem(null, null));
 
+            string tableName = MapRepository.Instance.GetTableName(typeof(T));
+
             foreach (var queueItem in QueryQueue)
             {
                 if (queueItem.QueryText == null)
@@ -126,7 +140,7 @@ namespace Marr.Data.QGen
                     var columns = GetColumns(queueItem.EntitiesToLoad);
                     string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
                     string sort = _sortBuilder.ToString();
-                    IQuery query = QueryFactory.CreateSelectQuery(columns, _target, where, sort, _useAltName);
+                    IQuery query = QueryFactory.CreateSelectQuery(columns, tableName, where, sort, _useAltName);
                     queueItem.QueryText = query.Generate();
                 }
             }
@@ -163,18 +177,73 @@ namespace Marr.Data.QGen
         {
             return builder.ToList();
         }
-    }
 
-    public class QueryQueueItem
-    {
-        public QueryQueueItem(string queryText, IEnumerable<string> entitiesToLoad)
+        #endregion
+
+        #region - Query<T> -
+
+        /// <summary>
+        /// Handles all.
+        /// </summary>
+        /// <param name="expression"></param>
+        /// <returns></returns>
+        public override System.Linq.Expressions.Expression Visit(System.Linq.Expressions.Expression expression)
         {
-            QueryText = queryText;
-            EntitiesToLoad = entitiesToLoad;
+            return base.Visit(expression);
         }
 
-        public string QueryText { get; set; }
-        public IEnumerable<string> EntitiesToLoad { get; private set; }
-    }
+        /// <summary>
+        /// Handles Where.
+        /// </summary>
+        /// <param name="lambdaExpression"></param>
+        /// <returns></returns>
+        public override System.Linq.Expressions.Expression VisitLamda(System.Linq.Expressions.LambdaExpression lambdaExpression)
+        {
+            _sortBuilder = this.Where(lambdaExpression as Expression<Func<T, bool>>);
+            return base.VisitLamda(lambdaExpression);
+        }
 
+        /// <summary>
+        /// Handles OrderBy.
+        /// </summary>
+        /// <param name="expression"></param>
+        /// <returns></returns>
+        public override System.Linq.Expressions.Expression VisitMethodCall(MethodCallExpression expression)
+        {
+            if (expression.Method.Name == "OrderBy" || expression.Method.Name == "ThenBy")
+            {
+                var memberExp = ((expression.Arguments[1] as UnaryExpression).Operand as System.Linq.Expressions.LambdaExpression).Body as System.Linq.Expressions.MemberExpression;
+                _sortBuilder.Order(memberExp.Member);
+            }
+            if (expression.Method.Name == "OrderByDescending" || expression.Method.Name == "ThenByDescending")
+            {
+                var memberExp = ((expression.Arguments[1] as UnaryExpression).Operand as System.Linq.Expressions.LambdaExpression).Body as System.Linq.Expressions.MemberExpression;
+                _sortBuilder.OrderByDescending(memberExp.Member);
+            }
+
+            return base.VisitMethodCall(expression);
+        }
+
+        #endregion
+
+        #region IEnumerable<T> Members
+
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        {
+            var list = this.ToList();
+            return list.GetEnumerator();
+        }
+
+        #endregion
+
+        #region IEnumerable Members
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            var list = this.ToList();
+            return list.GetEnumerator();
+        }
+
+        #endregion
+    }
 }

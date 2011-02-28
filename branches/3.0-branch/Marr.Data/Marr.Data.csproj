@@ -89,6 +89,7 @@
     <Compile Include="Mapping\RelationshipAttribute.cs" />
     <Compile Include="Mapping\RelationshipCollection.cs" />
     <Compile Include="Mapping\Strategies\IMapStrategy.cs" />
+    <Compile Include="Mapping\TableAttribute.cs" />
     <Compile Include="MapRepository.cs" />
     <Compile Include="Parameters\DbTypeBuilder.cs" />
     <Compile Include="Parameters\IDbTypeBuilder.cs" />
@@ -98,9 +99,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QGen\AutoQueryBuilder.cs" />
     <Compile Include="QGen\DeleteQuery.cs" />
+    <Compile Include="QGen\ExpressionVisitor.cs" />
     <Compile Include="QGen\InsertQuery.cs" />
     <Compile Include="QGen\IQuery.cs" />
     <Compile Include="QGen\QueryFactory.cs" />
+    <Compile Include="QGen\QueryQueueItem.cs" />
     <Compile Include="QGen\SelectQuery.cs" />
     <Compile Include="QGen\SortBuilder.cs" />
     <Compile Include="QGen\SortColumn.cs" />
@@ -114,10 +117,10 @@
     <Folder Include="NuGet\Tools\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="NuGet\marrdatamapper.nuspec" />
+    <Content Include="NuGet\NuGet.exe" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="NuGet\NuGet.exe" />
+    <None Include="NuGet\marrdatamapper.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

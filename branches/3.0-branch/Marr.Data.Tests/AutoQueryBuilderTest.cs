@@ -18,7 +18,7 @@ namespace Marr.Data.Tests
         {
             // Arrange
             var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
-            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable", false);
+            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, false);
 
             // Act
             builder.Where(p => p.Age > 16 && p.Name.StartsWith("J"));
@@ -38,10 +38,10 @@ namespace Marr.Data.Tests
         {
             // Arrange
             var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
-            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable", false);
+            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, false);
 
             // Act
-            builder.Order(p => p.ID).Order(p => p.Name);
+            builder.OrderBy(p => p.ID).OrderBy(p => p.Name);
 
             // Assert
             builder.GenerateQueries();
@@ -58,13 +58,13 @@ namespace Marr.Data.Tests
         {
             // Arrange
             var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
-            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, "PersonTable", false);
+            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, false);
 
             // Act
             builder
                 .Where(p => p.Age > 16 && p.Name.StartsWith("J"))
-                .Order(p => p.Name)
-                .OrderDesc(p => p.ID);
+                .OrderBy(p => p.Name)
+                .OrderByDescending(p => p.ID);
 
             // Assert
             builder.GenerateQueries();
@@ -81,23 +81,38 @@ namespace Marr.Data.Tests
         {
             // Arrange
             var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
-            AutoQueryBuilder<Order> builder = new AutoQueryBuilder<Order>(db, "OrdersTable", true);
+            AutoQueryBuilder<Order> builder = new AutoQueryBuilder<Order>(db, true);
             
             // Act
             builder
                 .Where(o => o.OrderItems[0].ID > 0)
-                .Order(o => o.OrderItems[0].ID);
+                .OrderBy(o => o.OrderItems[0].ID);
 
             // Assert
             builder.GenerateQueries();
             string generatedSql = builder.QueryQueue.First().QueryText;
 
             Assert.IsTrue(generatedSql.Contains("SELECT [ID],[OrderName],[OrderItemID],[ItemDescription],[Price],[AmountPaid] "));
-            Assert.IsTrue(generatedSql.Contains("FROM OrdersTable"));
+            Assert.IsTrue(generatedSql.Contains("FROM Order"));
             Assert.IsTrue(generatedSql.Contains("([OrderItemID] > @P0)"));
             Assert.IsTrue(generatedSql.Contains("ORDER BY [OrderItemID]"));
         }
 
+        //[TestMethod]
+        public void TestLinq()
+        {
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
+            var results = from o in db.AutoQueryToGraph<Order>()
+                          where o.ID > 5
+                          orderby o.ID, o.OrderName descending
+                          select o;
+                            
+            foreach (var result in results)
+            {
+                string orderName = result.OrderName;
+                int orderID = result.ID;
+            }
+        }
 
     }
 }

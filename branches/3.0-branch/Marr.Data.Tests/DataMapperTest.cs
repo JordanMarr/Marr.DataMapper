@@ -312,7 +312,7 @@ namespace Marr.Data.Tests
 
             // Act
             var db = CreateDB_ForQuery(rs);
-            List<Order> people = db.AutoQueryToGraph<Order>("OrderTable")
+            List<Order> people = db.AutoQueryToGraph<Order>()
                 .Load(o => o.OrderItems)
                 .Load(o => o.OrderItems, o => o.OrderItems.First().ItemReceipt)
                 .Where(o => o.ID > 1);
