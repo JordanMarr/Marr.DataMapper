@@ -1,4 +1,8 @@
-﻿using System;
+﻿/* This class was copied from Mehfuz's LinqExtender project, which is available from github.
+ * http://mehfuzh.github.com/LinqExtender/
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
