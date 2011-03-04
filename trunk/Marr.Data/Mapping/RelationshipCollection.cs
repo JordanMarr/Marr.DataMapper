@@ -21,5 +21,18 @@ namespace Marr.Data.Mapping
 {
     public class RelationshipCollection : List<Relationship>
     {
+        /// <summary>
+        /// Gets a ColumnMap by its field name.
+        /// </summary>
+        /// <param name="fieldName"></param>
+        /// <returns></returns>
+        public Relationship this[string fieldName]
+        {
+            get
+            {
+                return this.Find(m => m.Member.Name == fieldName);
+            }
+        }
+
     }
 }

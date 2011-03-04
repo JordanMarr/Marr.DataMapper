@@ -27,6 +27,19 @@ namespace Marr.Data.Mapping
         #region - Filters -
 
         /// <summary>
+        /// Gets a ColumnMap by its field name.
+        /// </summary>
+        /// <param name="fieldName"></param>
+        /// <returns></returns>
+        public ColumnMap this[string fieldName]
+        {
+            get
+            {
+                return this.Find(m => m.FieldName == fieldName);
+            }
+        }
+
+        /// <summary>
         /// Iterates through all fields marked as return values.
         /// </summary>
         public IEnumerable<ColumnMap> ReturnValues

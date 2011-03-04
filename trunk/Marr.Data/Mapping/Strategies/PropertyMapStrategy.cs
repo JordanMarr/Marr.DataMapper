@@ -63,8 +63,23 @@ namespace Marr.Data.Mapping.Strategies
         /// <param name="relationships">A list of Relationships.</param>
         protected override void CreateRelationship(Type entityType, MemberInfo member, RelationshipAttribute relationshipAtt, RelationshipCollection relationships)
         {
-            // Add relationships by RelationshipAttribute
-            base.CreateRelationship(entityType, member, relationshipAtt, relationships);
+            if (relationshipAtt != null)
+            {
+                // Add relationships by RelationshipAttribute
+                base.CreateRelationship(entityType, member, relationshipAtt, relationships);
+            }
+            else
+            {
+                if (member.MemberType == MemberTypes.Property)
+                {
+                    PropertyInfo propertyInfo = member as PropertyInfo;
+                    if (typeof(System.Collections.ICollection).IsAssignableFrom(propertyInfo.PropertyType))
+                    {
+                        Relationship relationship = new Relationship(member);
+                        relationships.Add(relationship);
+                    }
+                }
+            }
         }
     }
 }

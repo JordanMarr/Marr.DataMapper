@@ -25,12 +25,12 @@ namespace Marr.Data.Mapping
     public interface IColumnInfo
     {
         string Name { get; set;  }
-        string AltName { get; }
-        int Size { get; }
-        bool IsPrimaryKey { get; }
-        bool IsAutoIncrement { get; }
-        bool ReturnValue { get; }
-        ParameterDirection ParamDirection { get; }
+        string AltName { get; set; }
+        int Size { get; set;  }
+        bool IsPrimaryKey { get; set; }
+        bool IsAutoIncrement { get; set; }
+        bool ReturnValue { get; set; }
+        ParameterDirection ParamDirection { get; set; }
     }
    
 }

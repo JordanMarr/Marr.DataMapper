@@ -28,11 +28,12 @@ namespace Marr.Data
     public class MapRepository
     {
         private Dictionary<Type, string> _tables;
-        private Dictionary<Type, ColumnMapCollection> _columns;
-        private Dictionary<Type, RelationshipCollection> _relationships;
         private FastReflection.CachedReflector _reflector;
         private IDbTypeBuilder _dbTypeBuilder;
         private Dictionary<Type, IMapStrategy> _columnMapStrategies;
+
+        internal Dictionary<Type, ColumnMapCollection> Columns;
+        internal Dictionary<Type, RelationshipCollection> Relationships;
         internal Dictionary<Type, IConverter> TypeConverters { get; set; }
 
         // Explicit static constructor to tell C# compiler
@@ -43,8 +44,8 @@ namespace Marr.Data
         private MapRepository()
         {
             _tables = new Dictionary<Type, string>();
-            _columns = new Dictionary<Type, ColumnMapCollection>();
-            _relationships = new Dictionary<Type, RelationshipCollection>();
+            Columns = new Dictionary<Type, ColumnMapCollection>();
+            Relationships = new Dictionary<Type, RelationshipCollection>();
             _reflector = new FastReflection.CachedReflector();
             TypeConverters = new Dictionary<Type, IConverter>();
             
@@ -124,14 +125,14 @@ namespace Marr.Data
 
         internal ColumnMapCollection GetColumns(Type entityType)
         {
-            if (_columns.ContainsKey(entityType))
+            if (Columns.ContainsKey(entityType))
             {
-                return _columns[entityType];
+                return Columns[entityType];
             }
             else
             {
                 ColumnMapCollection columnMaps = GetMapStrategy(entityType).MapColumns(entityType);
-                _columns.Add(entityType, columnMaps);
+                Columns.Add(entityType, columnMaps);
                 return columnMaps;
             }
         }
@@ -142,14 +143,14 @@ namespace Marr.Data
 
         public RelationshipCollection GetRelationships(Type type)
         {
-            if (_relationships.ContainsKey(type))
+            if (Relationships.ContainsKey(type))
             {
-                return _relationships[type];
+                return Relationships[type];
             }
             else
             {
                 RelationshipCollection relationships = GetMapStrategy(type).MapRelationships(type);
-                _relationships.Add(type, relationships);
+                Relationships.Add(type, relationships);
                 return relationships;
             }
         }
