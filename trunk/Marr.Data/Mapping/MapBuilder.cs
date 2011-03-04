@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Marr.Data.Mapping.Strategies;
+using System.Reflection;
+using System.Collections;
 
 namespace Marr.Data.Mapping
 {
@@ -23,86 +25,102 @@ namespace Marr.Data.Mapping
 
         /// <summary>
         /// Creates column mappings for the given type.
-        /// Captures all properties.
+        /// Maps all properties.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
+        /// <typeparam name="T">The type that is being built.</typeparam>
+        /// <returns><see cref="ColumnMapCollection"/></returns>
         public ColumnMapCollection BuildColumns<T>()
         {
-            ColumnMapCollection maps = LoadAllColumns<T>();
-            return maps;
+            return BuildColumns<T>(m => m.MemberType == MemberTypes.Property);
         }
 
         /// <summary>
         /// Creates column mappings for the given type.  
-        /// Captures only the properties that are listed.
+        /// Maps properties that are included in the include list.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="T">The type that is being built.</typeparam>
         /// <param name="propertiesToInclude"></param>
-        /// <returns></returns>
+        /// <returns><see cref="ColumnMapCollection"/></returns>
         public ColumnMapCollection BuildColumns<T>(params string[] propertiesToInclude)
         {
-            ColumnMapCollection maps = LoadAllColumns<T>();
-            maps.RemoveAll(p => !propertiesToInclude.Contains(p.FieldName));
-            return maps;
+            return BuildColumns<T>(m =>
+                m.MemberType == MemberTypes.Property &&
+                propertiesToInclude.Contains(m.Name));
         }
-                       
+
         /// <summary>
         /// Creates column mappings for the given type.
-        /// Captures all properties except those that are listed.
+        /// Maps all properties except the ones in the exclusion list.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="properties"></param>
-        /// <returns></returns>
-        public ColumnMapCollection BuildColumnsExcept<T>(params string[] properties)
+        /// <typeparam name="T">The type that is being built.</typeparam>
+        /// <param name="propertiesToExclude"></param>
+        /// <returns><see cref="ColumnMapCollection"/></returns>
+        public ColumnMapCollection BuildColumnsExcept<T>(params string[] propertiesToExclude)
         {
-            ColumnMapCollection maps = LoadAllColumns<T>();
-            maps.RemoveAll(p => properties.Contains(p.FieldName));
-            return maps;
+            return BuildColumns<T>(m => 
+                m.MemberType == MemberTypes.Property &&
+                !propertiesToExclude.Contains(m.Name));
         }
 
-        private ColumnMapCollection LoadAllColumns<T>()
+        /// <summary>
+        /// Creates column mappings for the given type if they match the predicate.
+        /// </summary>
+        /// <typeparam name="T">The type that is being built.</typeparam>
+        /// <param name="predicate">Determines whether a mapping should be created based on the member info.</param>
+        /// <returns><see cref="ColumnMapCollection"/></returns>
+        public ColumnMapCollection BuildColumns<T>(Func<MemberInfo, bool> predicate)
         {
-            var mapStrategy = new PropertyMapStrategy(_publicOnly);
-            return mapStrategy.MapColumns(typeof(T));
+            ConventionMapStrategy strategy = new ConventionMapStrategy(_publicOnly);
+            strategy.ColumnPredicate = predicate;
+            return strategy.MapColumns(typeof(T));
         }
-
+        
         #endregion
 
         #region - Relationships -
 
         /// <summary>
         /// Creates relationship mappings for the given type.
-        /// Captures relationship attributes and ICollection fields.
+        /// Maps all properties that implement ICollection.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
+        /// <typeparam name="T">The type that is being built.</typeparam>
+        /// <returns><see cref="ColumnMapCollection"/></returns>
         public RelationshipCollection BuildRelationships<T>()
         {
-            var maps = LoadAllRelationships<T>();
-            return maps;
+            return BuildRelationships<T>(m => 
+                m.MemberType == MemberTypes.Property && 
+                typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType));
         }
 
         /// <summary>
         /// Creates relationship mappings for the given type.
-        /// Only captures the properties that are listed.
+        /// Maps all properties that are listed in the include list.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="T">The type that is being built.</typeparam>
         /// <param name="propertiesToInclude"></param>
-        /// <returns></returns>
+        /// <returns><see cref="ColumnMapCollection"/></returns>
         public RelationshipCollection BuildRelationships<T>(params string[] propertiesToInclude)
         {
-            var maps = LoadAllRelationships<T>();
-            maps.RemoveAll(r => !propertiesToInclude.Contains(r.Member.Name));
-            return maps;
+            return BuildRelationships<T>(m => 
+                m.MemberType == MemberTypes.Property && 
+                typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType) &&
+                propertiesToInclude.Contains(m.Name));
         }
 
-        private RelationshipCollection LoadAllRelationships<T>()
+        /// <summary>
+        /// Creates relationship mappings for the given type if they match the predicate.
+        /// </summary>
+        /// <typeparam name="T">The type that is being built.</typeparam>
+        /// <param name="predicate">Determines whether a mapping should be created based on the member info.</param>
+        /// <returns><see cref="ColumnMapCollection"/></returns>
+        public RelationshipCollection BuildRelationships<T>(Func<MemberInfo, bool> predicate)
         {
-            var mapStrategy = new PropertyMapStrategy(_publicOnly);
-            return mapStrategy.MapRelationships(typeof(T));
+            ConventionMapStrategy strategy = new ConventionMapStrategy(_publicOnly);
+            strategy.RelationshipPredicate = predicate;
+            return strategy.MapRelationships(typeof(T));
         }
-
+        
         #endregion
+
     }
 }

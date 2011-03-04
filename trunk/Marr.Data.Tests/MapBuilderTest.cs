@@ -5,6 +5,7 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Marr.Data.Tests.Entities;
 using Marr.Data.Mapping;
+using System.Reflection;
 
 namespace Marr.Data.Tests
 {
@@ -53,12 +54,23 @@ namespace Marr.Data.Tests
             Assert.IsNotNull(maps["Name"]);
         }
 
+        [TestMethod]
+        public void MapBuilder_ShouldMapPublicProperties_ThatAreOfTypeDateTime()
+        {
+            var mapBuilder = new MapBuilder();
+            var maps = mapBuilder.BuildColumns<UnmappedPerson>(m => 
+                m.MemberType == MemberTypes.Property && (m as PropertyInfo).PropertyType == typeof(DateTime));
+            
+            Assert.IsTrue(maps.Count == 1);
+            Assert.IsTrue(maps[0].FieldType == typeof(DateTime));
+        }
+
         #endregion
 
         #region - Relationships -
 
         [TestMethod]
-        public void MapBuilder_Relationships_ShouldMapPublicProperties_ThatIsICollection()
+        public void MapBuilder_Relationships_ShouldMapPublicProperties_ThatAreICollection()
         {
             var mapBuilder = new MapBuilder();
             var maps = mapBuilder.BuildRelationships<UnmappedPerson>();

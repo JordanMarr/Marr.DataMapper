@@ -80,6 +80,7 @@
     <Compile Include="Mapping\ColumnInfo.cs" />
     <Compile Include="Mapping\ColumnMap.cs" />
     <Compile Include="Mapping\ColumnMapCollection.cs" />
+    <Compile Include="Mapping\Strategies\ConventionMapStrategy.cs" />
     <Compile Include="Mapping\Strategies\PropertyMapStrategy.cs" />
     <Compile Include="Mapping\Strategies\ReflectionMapStrategyBase.cs" />
     <Compile Include="Mapping\EnumConversionType.cs" />
