@@ -5,7 +5,7 @@ using System.Text;
 using System.Data.Common;
 using Rhino.Mocks;
 
-namespace Marr.Data.Tests
+namespace Marr.Data.UnitTests
 {
     public class TestBase
     {

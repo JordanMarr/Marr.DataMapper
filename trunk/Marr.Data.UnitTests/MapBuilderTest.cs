@@ -3,11 +3,11 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Marr.Data.Tests.Entities;
+using Marr.Data.UnitTests.Entities;
 using Marr.Data.Mapping;
 using System.Reflection;
 
-namespace Marr.Data.Tests
+namespace Marr.Data.UnitTests
 {
     /// <summary>
     /// Summary description for MapBuilderTest

@@ -6,9 +6,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Data.Common;
 using Rhino.Mocks;
 using Marr.Data.QGen;
-using Marr.Data.Tests.Entities;
+using Marr.Data.UnitTests.Entities;
 
-namespace Marr.Data.Tests
+namespace Marr.Data.UnitTests
 {
     [TestClass]
     public class AutoAutoQueryBuilderTest : TestBase

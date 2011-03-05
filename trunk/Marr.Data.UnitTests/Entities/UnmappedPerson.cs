@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Marr.Data.Tests.Entities
+namespace Marr.Data.UnitTests.Entities
 {
     /// <summary>
     /// A person with no mapping attributes.

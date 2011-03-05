@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Marr.Data.QGen;
-using Marr.Data.Tests.Entities;
+using Marr.Data.UnitTests.Entities;
 using Rhino.Mocks;
 using Marr.Data.Mapping;
 using Marr.Data;
 using System.Data.Common;
 
-namespace Marr.Data.Tests
+namespace Marr.Data.UnitTests
 {
     /// <summary>
     /// Summary description for QGenTest

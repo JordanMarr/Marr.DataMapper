@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Marr.Data.Mapping;
 
-namespace Marr.Data.UnitTests.Entities
+namespace Marr.Data.IntegrationTests.Entities
 {
     [Table("Order")]
     public class Order

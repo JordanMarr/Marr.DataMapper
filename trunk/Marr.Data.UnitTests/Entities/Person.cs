@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Marr.Data.Mapping;
 
-namespace Marr.Data.Tests.Entities
+namespace Marr.Data.UnitTests.Entities
 {
     [Table("PersonTable")]
     public class Person

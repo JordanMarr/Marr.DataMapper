@@ -5,7 +5,7 @@ using System.Text;
 using System.Data;
 using System.Data.Common;
 
-namespace Marr.Data.Tests
+namespace Marr.Data.UnitTests
 {
     /// <summary>
     /// This class fakes up a data reader.
