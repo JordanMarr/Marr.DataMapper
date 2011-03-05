@@ -33,6 +33,9 @@ namespace Marr.Data.QGen
             QueryQueue = new List<QueryQueueItem>();
             _db = db;
             _tableName = tableName ?? MapRepository.Instance.GetTableName(typeof(T));
+            if (string.IsNullOrEmpty(_tableName))
+                throw new DataMappingException("A target table must be passed in or set in a TableAttribute.");
+
             _useAltName = isGraph;
             _isGraph = isGraph;
             _sortBuilder = new SortBuilder<T>(this, _useAltName);
@@ -191,7 +194,7 @@ namespace Marr.Data.QGen
         /// </summary>
         /// <param name="expression"></param>
         /// <returns></returns>
-        public override System.Linq.Expressions.Expression Visit(System.Linq.Expressions.Expression expression)
+        protected override System.Linq.Expressions.Expression Visit(System.Linq.Expressions.Expression expression)
         {
             return base.Visit(expression);
         }
@@ -201,7 +204,7 @@ namespace Marr.Data.QGen
         /// </summary>
         /// <param name="lambdaExpression"></param>
         /// <returns></returns>
-        public override System.Linq.Expressions.Expression VisitLamda(System.Linq.Expressions.LambdaExpression lambdaExpression)
+        protected override System.Linq.Expressions.Expression VisitLamda(System.Linq.Expressions.LambdaExpression lambdaExpression)
         {
             _sortBuilder = this.Where(lambdaExpression as Expression<Func<T, bool>>);
             return base.VisitLamda(lambdaExpression);
@@ -212,7 +215,7 @@ namespace Marr.Data.QGen
         /// </summary>
         /// <param name="expression"></param>
         /// <returns></returns>
-        public override System.Linq.Expressions.Expression VisitMethodCall(MethodCallExpression expression)
+        protected override System.Linq.Expressions.Expression VisitMethodCall(MethodCallExpression expression)
         {
             if (expression.Method.Name == "OrderBy" || expression.Method.Name == "ThenBy")
             {

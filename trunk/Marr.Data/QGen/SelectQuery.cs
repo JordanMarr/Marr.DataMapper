@@ -18,6 +18,9 @@ namespace Marr.Data.QGen
 
         public SelectQuery(ColumnMapCollection columns, string target, string whereClause, string orderBy, bool useAltName)
         {
+            if (string.IsNullOrEmpty(target))
+                throw new ArgumentNullException(target);
+
             Columns = columns;
             Target = target;
             WhereClause = whereClause;

@@ -72,7 +72,7 @@ namespace Marr.Data.Mapping.Strategies
             }
             else
             {
-                return entityType.Name;
+                return null;
             }
         }
 

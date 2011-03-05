@@ -20,7 +20,7 @@ namespace Marr.Data.QGen
         /// </summary>
         /// <param name="expression"></param>
         /// <returns></returns>
-        public virtual Expression Visit(Expression expression)
+        protected virtual Expression Visit(Expression expression)
         {
             if (expression == null)
                 return null;
@@ -82,7 +82,7 @@ namespace Marr.Data.QGen
         /// </summary>
         /// <param name="expression"></param>
         /// <returns></returns>
-        public virtual Expression VisitConstant(ConstantExpression expression)
+        protected virtual Expression VisitConstant(ConstantExpression expression)
         {
             return expression;
         }
@@ -92,7 +92,7 @@ namespace Marr.Data.QGen
         /// </summary>
         /// <param name="expression"></param>
         /// <returns></returns>
-        public virtual Expression VisitMemberAccess(MemberExpression expression)
+        protected virtual Expression VisitMemberAccess(MemberExpression expression)
         {
             return expression;
         }
@@ -102,7 +102,7 @@ namespace Marr.Data.QGen
         /// </summary>
         /// <param name="expression"></param>
         /// <returns></returns>
-        public virtual Expression VisitMethodCall(MethodCallExpression expression)
+        protected virtual Expression VisitMethodCall(MethodCallExpression expression)
         {
             throw new NotImplementedException();
         }
@@ -112,7 +112,7 @@ namespace Marr.Data.QGen
         /// </summary>
         /// <param name="expression"></param>
         /// <returns></returns>
-        public virtual Expression VisitBinary(BinaryExpression expression)
+        protected virtual Expression VisitBinary(BinaryExpression expression)
         {
             this.Visit(expression.Left);
             this.Visit(expression.Right);
@@ -124,7 +124,7 @@ namespace Marr.Data.QGen
         /// </summary>
         /// <param name="expression"></param>
         /// <returns></returns>
-        public virtual Expression VisitUnary(UnaryExpression expression)
+        protected virtual Expression VisitUnary(UnaryExpression expression)
         {
             this.Visit(expression.Operand);
             return expression;
@@ -135,7 +135,7 @@ namespace Marr.Data.QGen
         /// </summary>
         /// <param name="lambdaExpression"></param>
         /// <returns></returns>
-        public virtual Expression VisitLamda(LambdaExpression lambdaExpression)
+        protected virtual Expression VisitLamda(LambdaExpression lambdaExpression)
         {
             this.Visit(lambdaExpression.Body);
             return lambdaExpression;
