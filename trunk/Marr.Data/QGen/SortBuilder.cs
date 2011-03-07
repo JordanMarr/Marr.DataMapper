@@ -32,25 +32,25 @@ namespace Marr.Data.QGen
             return this;
         }
 
-        internal SortBuilder<T> OrderBy(Expression<Func<T, object>> sortExpression)
+        public SortBuilder<T> OrderBy(Expression<Func<T, object>> sortExpression)
         {
             _sortExpressions.Add(new SortColumn<T>(sortExpression, SortDirection.Asc));
             return this;
         }
 
-        internal SortBuilder<T> OrderByDescending(Expression<Func<T, object>> sortExpression)
+        public SortBuilder<T> OrderByDescending(Expression<Func<T, object>> sortExpression)
         {
             _sortExpressions.Add(new SortColumn<T>(sortExpression, SortDirection.Desc));
             return this;
         }
 
-        internal SortBuilder<T> ThenBy(Expression<Func<T, object>> sortExpression)
+        public SortBuilder<T> ThenBy(Expression<Func<T, object>> sortExpression)
         {
             _sortExpressions.Add(new SortColumn<T>(sortExpression, SortDirection.Asc));
             return this;
         }
 
-        internal SortBuilder<T> ThenByDescending(Expression<Func<T, object>> sortExpression)
+        public SortBuilder<T> ThenByDescending(Expression<Func<T, object>> sortExpression)
         {
             _sortExpressions.Add(new SortColumn<T>(sortExpression, SortDirection.Desc));
             return this;

@@ -65,31 +65,31 @@ namespace Marr.Data.QGen
             return this;
         }
 
-        internal SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
+        public SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
         {
             _whereBuilder = new WhereBuilder<T>(_db.Command, filterExpression, _useAltName);
             return _sortBuilder;
         }
 
-        internal SortBuilder<T> OrderBy(Expression<Func<T, object>> sortExpression)
+        public SortBuilder<T> OrderBy(Expression<Func<T, object>> sortExpression)
         {
             _sortBuilder.OrderBy(sortExpression);
             return _sortBuilder;
         }
 
-        internal SortBuilder<T> ThenBy(Expression<Func<T, object>> sortExpression)
+        public SortBuilder<T> ThenBy(Expression<Func<T, object>> sortExpression)
         {
             _sortBuilder.OrderBy(sortExpression);
             return _sortBuilder;
         }
 
-        internal SortBuilder<T> OrderByDescending(Expression<Func<T, object>> sortExpression)
+        public SortBuilder<T> OrderByDescending(Expression<Func<T, object>> sortExpression)
         {
             _sortBuilder.OrderByDescending(sortExpression);
             return _sortBuilder;
         }
 
-        internal SortBuilder<T> ThenByDescending(Expression<Func<T, object>> sortExpression)
+        public SortBuilder<T> ThenByDescending(Expression<Func<T, object>> sortExpression)
         {
             _sortBuilder.OrderByDescending(sortExpression);
             return _sortBuilder;
