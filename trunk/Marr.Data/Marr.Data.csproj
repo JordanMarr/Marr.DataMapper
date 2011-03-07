@@ -99,11 +99,11 @@
     <Compile Include="Parameters\ParameterChainMethods.cs" />
     <Compile Include="Parameters\SqlDbTypeBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QGen\AutoQueryBuilder.cs" />
     <Compile Include="QGen\DeleteQuery.cs" />
     <Compile Include="QGen\ExpressionVisitor.cs" />
     <Compile Include="QGen\InsertQuery.cs" />
     <Compile Include="QGen\IQuery.cs" />
+    <Compile Include="QGen\QueryBuilder.cs" />
     <Compile Include="QGen\QueryFactory.cs" />
     <Compile Include="QGen\QueryQueueItem.cs" />
     <Compile Include="QGen\SelectQuery.cs" />

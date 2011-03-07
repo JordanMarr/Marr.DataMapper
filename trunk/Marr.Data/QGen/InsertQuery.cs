@@ -43,7 +43,14 @@ namespace Marr.Data.QGen
 
                 if (!c.ColumnInfo.IsAutoIncrement)
                 {
-                    sql.AppendFormat("[{0}]", c.ColumnInfo.Name);
+                    string columnName = c.ColumnInfo.Name;
+                    bool hasSpaces = columnName.Contains(' ');
+
+                    if (hasSpaces)
+                        sql.AppendFormat("[{0}]", columnName);
+                    else
+                        sql.AppendFormat("{0}", columnName);
+
                     values.AppendFormat("{0}{1}", Command.ParameterPrefix(), p.ParameterName);
                 }
             }

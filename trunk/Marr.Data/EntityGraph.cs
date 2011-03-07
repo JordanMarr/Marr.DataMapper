@@ -294,7 +294,7 @@ namespace Marr.Data
             // 2) All 1-M relationship entities must have at least one PK specified
             // * Only 1-1 entities with no children are allowed to have 0 PKs specified.
             if ((groupingKeyColumns.PrimaryKeys.Count == 0 && _children.Count > 0) ||
-                (groupingKeyColumns.PrimaryKeys.Count == 0 && _relationship.RelationshipInfo.RelationType == RelationshipTypes.Many))
+                (groupingKeyColumns.PrimaryKeys.Count == 0 && !IsRoot && _relationship.RelationshipInfo.RelationType == RelationshipTypes.Many))
                 throw new MissingPrimaryKeyException(string.Format("There are no primary key mappings defined for the following entity: '{0}'.", this.EntityType.Name));
 
             // Add parent's keys

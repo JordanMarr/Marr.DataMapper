@@ -28,15 +28,11 @@ namespace Marr.Data
     {
         ParameterChainMethods AddParameter(string name, object value);
         IDbDataParameter AddParameter(IDbDataParameter parameter);
-        int AutoUpdate<T>(T entity);
-        int AutoUpdate<T>(T entity, Expression<Func<T, bool>> filter);
-        int AutoInsert<T>(T entity);
-        int AutoDelete<T>(T entity);
-        int AutoDelete<T>(T entity, Expression<Func<T, bool>> filter);
-        AutoQueryBuilder<T> AutoQuery<T>();
-        AutoQueryBuilder<T> AutoQuery<T>(string target);
-        AutoQueryBuilder<T> AutoQueryToGraph<T>();
-        AutoQueryBuilder<T> AutoQueryToGraph<T>(string target);
+        int Update<T>(T entity);
+        int Update<T>(T entity, Expression<Func<T, bool>> filter);
+        int Insert<T>(T entity);
+        int Delete<T>(T entity);
+        int Delete<T>(T entity, Expression<Func<T, bool>> filter);
         void BeginTransaction();
         DbCommand Command { get; }
         void Commit();
@@ -54,15 +50,16 @@ namespace Marr.Data
         void Find(string sql);
         T Find<T>(string sql);
         T Find<T>(string sql, T ent);
+        QueryBuilder<T> Query<T>();
         List<T> Query<T>(string sql);
+        List<T> QueryToGraph<T>(string sql);
+        ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList);
         void Query(string sql);
         ICollection<T> Query<T>(string sql, ICollection<T> entityList);
         void RollBack();
         SqlModes SqlMode { get; set; }
         int Update<T>(T entity, string sql);
         int UpdateDataSet(DataSet ds, string updateSP);
-        List<T> QueryToGraph<T>(string sql);
-        ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList);
         event EventHandler<LoadEntityEventArgs> LoadEntity;
         event EventHandler OpeningConnection;
     }

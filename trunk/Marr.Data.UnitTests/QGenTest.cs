@@ -46,14 +46,14 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.IsTrue(queryText.Contains("UPDATE dbo.People"));
-            Assert.IsTrue(queryText.Contains("[Name]"));
-            Assert.IsTrue(queryText.Contains("[Age]"));
-            Assert.IsTrue(queryText.Contains("[IsHappy]"));
-            Assert.IsTrue(queryText.Contains("[BirthDate]"));
-            Assert.IsTrue(queryText.Contains("[ID] = @P5"));
-            Assert.IsTrue(queryText.Contains("[ID] = @P6"));
-            Assert.IsTrue(queryText.Contains("[Name] = @P7"));
-            Assert.IsTrue(queryText.Contains("[Name] = @P8"));
+            Assert.IsTrue(queryText.Contains("Name"));
+            Assert.IsTrue(queryText.Contains("Age"));
+            Assert.IsTrue(queryText.Contains("IsHappy"));
+            Assert.IsTrue(queryText.Contains("BirthDate"));
+            Assert.IsTrue(queryText.Contains("ID = @P5"));
+            Assert.IsTrue(queryText.Contains("ID = @P6"));
+            Assert.IsTrue(queryText.Contains("Name = @P7"));
+            Assert.IsTrue(queryText.Contains("Name = @P8"));
             Assert.AreEqual(command.Parameters["@P5"].Value, 1);
             Assert.AreEqual(command.Parameters["@P6"].Value, 7);
             Assert.AreEqual(command.Parameters["@P7"].Value, "Jordan");
@@ -85,8 +85,8 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.IsTrue(queryText.Contains("INSERT INTO dbo.People"));
-            Assert.IsFalse(queryText.Contains("[ID]"), "Should not contain [ID] column since it is marked as AutoIncrement");
-            Assert.IsTrue(queryText.Contains("[Name]"), "Should contain the name column");
+            Assert.IsFalse(queryText.Contains("@ID"), "Should not contain ID column since it is marked as AutoIncrement");
+            Assert.IsTrue(queryText.Contains("Name"), "Should contain the name column");
         }
 
         [TestMethod]
@@ -103,7 +103,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.IsTrue(queryText.Contains("DELETE FROM dbo.People"));
-            Assert.IsTrue(queryText.Contains("WHERE ([ID] = @P0)"));
+            Assert.IsTrue(queryText.Contains("WHERE (ID = @P0)"));
             Assert.AreEqual(command.Parameters["@P0"].Value, 5);
         }
 
@@ -136,8 +136,8 @@ namespace Marr.Data.UnitTests
             Assert.AreEqual(command.Parameters["@P1"].Value, 15);
             Assert.AreEqual(command.Parameters["@P2"].Value, 5);
             Assert.AreEqual(command.Parameters["@P3"].Value, 1);
-            Assert.IsTrue(queryText.Contains("[Name] = @P0 AND [Age] > @P1)"));
-            Assert.IsTrue(queryText.Contains("[Age] < @P2 AND [Age] > @P3)"));
+            Assert.IsTrue(queryText.Contains("Name = @P0 AND Age > @P1)"));
+            Assert.IsTrue(queryText.Contains("Age < @P2 AND Age > @P3)"));
         }
 
         [TestMethod]
@@ -166,7 +166,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.AreEqual(command.Parameters["@P0"].Value, "John");
-            Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P0 + '%'"));
+            Assert.IsTrue(queryText.Contains("Name LIKE '%' + @P0 + '%'"));
         }
 
         [TestMethod]
@@ -195,7 +195,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.AreEqual(command.Parameters["@P0"].Value, "John");
-            Assert.IsTrue(queryText.Contains("[Name] LIKE @P0 + '%'"));
+            Assert.IsTrue(queryText.Contains("Name LIKE @P0 + '%'"));
         }
 
         [TestMethod]
@@ -224,7 +224,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.AreEqual(command.Parameters["@P0"].Value, "John");
-            Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P0"));
+            Assert.IsTrue(queryText.Contains("Name LIKE '%' + @P0"));
         }
 
 
@@ -255,8 +255,8 @@ namespace Marr.Data.UnitTests
             Assert.IsNotNull(queryText);
             Assert.AreEqual(command.Parameters["@P0"].Value, 5);
             Assert.AreEqual(command.Parameters["@P1"].Value, "John");
-            Assert.IsTrue(queryText.Contains("[Age] > @P0"));
-            Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P1 + '%'"));
+            Assert.IsTrue(queryText.Contains("Age > @P0"));
+            Assert.IsTrue(queryText.Contains("Name LIKE '%' + @P1 + '%'"));
         }
 
         [TestMethod]
@@ -286,8 +286,8 @@ namespace Marr.Data.UnitTests
             Assert.IsNotNull(queryText);
             Assert.AreEqual(command.Parameters["@P0"].Value, "John");
             Assert.AreEqual(command.Parameters["@P1"].Value, 5);
-            Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P0 + '%'"));
-            Assert.IsTrue(queryText.Contains("[Age] > @P1"));            
+            Assert.IsTrue(queryText.Contains("Name LIKE '%' + @P0 + '%'"));
+            Assert.IsTrue(queryText.Contains("Age > @P1"));            
         }
         
     }

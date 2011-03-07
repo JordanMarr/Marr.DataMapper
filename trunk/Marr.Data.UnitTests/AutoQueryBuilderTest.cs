@@ -18,18 +18,18 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
-            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, false);
+            QueryBuilder<Person> builder = new QueryBuilder<Person>(db);
 
             // Act
             builder.Where(p => p.Age > 16 && p.Name.StartsWith("J"));
             
             // Assert
-            builder.GenerateQueries();
-            string generatedSql = builder.QueryQueue.First().QueryText;
+            builder.BuildQuery();
+            string generatedSql = builder._queryText;
 
-            Assert.IsTrue(generatedSql.Contains("SELECT [ID],[Name],[Age],[BirthDate],[IsHappy] "));
+            Assert.IsTrue(generatedSql.Contains("SELECT ID,Name,Age,BirthDate,IsHappy "));
             Assert.IsTrue(generatedSql.Contains("FROM PersonTable"));
-            Assert.IsTrue(generatedSql.Contains("(([Age] > @P0 AND [Name] LIKE @P1 + '%'))"));
+            Assert.IsTrue(generatedSql.Contains("((Age > @P0 AND Name LIKE @P1 + '%'))"));
             Assert.IsFalse(generatedSql.Contains("ORDER BY"));
         }
 
@@ -38,19 +38,19 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
-            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, false);
+            QueryBuilder<Person> builder = new QueryBuilder<Person>(db);
 
             // Act
             builder.OrderBy(p => p.ID).OrderBy(p => p.Name);
 
             // Assert
-            builder.GenerateQueries();
-            string generatedSql = builder.QueryQueue.First().QueryText;
+            builder.BuildQuery();
+            string generatedSql = builder._queryText;
 
-            Assert.IsTrue(generatedSql.Contains("SELECT [ID],[Name],[Age],[BirthDate],[IsHappy] "));
+            Assert.IsTrue(generatedSql.Contains("SELECT ID,Name,Age,BirthDate,IsHappy "));
             Assert.IsTrue(generatedSql.Contains("FROM PersonTable"));
             Assert.IsFalse(generatedSql.Contains("WHERE"));
-            Assert.IsTrue(generatedSql.Contains("ORDER BY [ID],[Name]"));
+            Assert.IsTrue(generatedSql.Contains("ORDER BY ID,Name"));
         }
 
         [TestMethod]
@@ -58,7 +58,7 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
-            AutoQueryBuilder<Person> builder = new AutoQueryBuilder<Person>(db, false);
+            QueryBuilder<Person> builder = new QueryBuilder<Person>(db);
 
             // Act
             builder
@@ -67,13 +67,13 @@ namespace Marr.Data.UnitTests
                 .OrderByDescending(p => p.ID);
 
             // Assert
-            builder.GenerateQueries();
-            string generatedSql = builder.QueryQueue.First().QueryText;
+            builder.BuildQuery();
+            string generatedSql = builder._queryText;
 
-            Assert.IsTrue(generatedSql.Contains("SELECT [ID],[Name],[Age],[BirthDate],[IsHappy] "));
+            Assert.IsTrue(generatedSql.Contains("SELECT ID,Name,Age,BirthDate,IsHappy "));
             Assert.IsTrue(generatedSql.Contains("FROM PersonTable"));
-            Assert.IsTrue(generatedSql.Contains("(([Age] > @P0 AND [Name] LIKE @P1 + '%'))"));
-            Assert.IsTrue(generatedSql.Contains("ORDER BY [Name],[ID] DESC"));
+            Assert.IsTrue(generatedSql.Contains("((Age > @P0 AND Name LIKE @P1 + '%'))"));
+            Assert.IsTrue(generatedSql.Contains("ORDER BY Name,ID DESC"));
         }
 
         [TestMethod]
@@ -81,7 +81,8 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
-            AutoQueryBuilder<Order> builder = new AutoQueryBuilder<Order>(db, true);
+            QueryBuilder<Order> builder = new QueryBuilder<Order>(db);
+            builder.Graph();
             
             // Act
             builder
@@ -89,29 +90,13 @@ namespace Marr.Data.UnitTests
                 .OrderBy(o => o.OrderItems[0].ID);
 
             // Assert
-            builder.GenerateQueries();
-            string generatedSql = builder.QueryQueue.First().QueryText;
+            builder.BuildQuery();
+            string generatedSql = builder._queryText;
 
-            Assert.IsTrue(generatedSql.Contains("SELECT [ID],[OrderName],[OrderItemID],[ItemDescription],[Price],[AmountPaid] "));
+            Assert.IsTrue(generatedSql.Contains("SELECT ID,OrderName,OrderItemID,ItemDescription,Price,AmountPaid "));
             Assert.IsTrue(generatedSql.Contains("FROM Order"));
-            Assert.IsTrue(generatedSql.Contains("([OrderItemID] > @P0)"));
-            Assert.IsTrue(generatedSql.Contains("ORDER BY [OrderItemID]"));
-        }
-
-        //[TestMethod]
-        public void TestLinq()
-        {
-            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
-            var results = from o in db.AutoQueryToGraph<Order>()
-                          where o.ID > 5
-                          orderby o.ID, o.OrderName descending
-                          select o;
-                            
-            foreach (var result in results)
-            {
-                string orderName = result.OrderName;
-                int orderID = result.ID;
-            }
+            Assert.IsTrue(generatedSql.Contains("(OrderItemID > @P0)"));
+            Assert.IsTrue(generatedSql.Contains("ORDER BY OrderItemID"));
         }
 
     }

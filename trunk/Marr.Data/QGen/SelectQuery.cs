@@ -41,7 +41,13 @@ namespace Marr.Data.QGen
                 if (sql.Length > startIndex)
                     sql.Append(",");
 
-                sql.AppendFormat("[{0}]", c.ColumnInfo.GetColumName(UseAltName));
+                string columnName = c.ColumnInfo.GetColumName(UseAltName);
+                bool hasSpaces = columnName.Contains(' ');
+
+                if (hasSpaces)
+                    sql.AppendFormat("[{0}]", columnName);
+                else
+                    sql.Append(columnName);
             }
 
             sql.AppendFormat(" FROM {0} ", Target);

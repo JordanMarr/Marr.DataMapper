@@ -9,11 +9,11 @@ namespace Marr.Data.QGen
 {
     public class SortBuilder<T> : IEnumerable<T>
     {
-        private AutoQueryBuilder<T> _baseBuilder;
+        private QueryBuilder<T> _baseBuilder;
         private List<SortColumn<T>> _sortExpressions;
         private bool _useAltName;
 
-        public SortBuilder(AutoQueryBuilder<T> baseBuilder, bool useAltName)
+        public SortBuilder(QueryBuilder<T> baseBuilder, bool useAltName)
         {
             _baseBuilder = baseBuilder;
             _sortExpressions = new List<SortColumn<T>>();
@@ -70,7 +70,13 @@ namespace Marr.Data.QGen
                 if (sb.Length > 0)
                     sb.Append(",");
 
-                sb.AppendFormat("[{0}]", sort.Member.GetColumnName(_useAltName));
+                string columnName = sort.Member.GetColumnName(_useAltName);
+                bool hasSpaces = columnName.Contains(' ');
+
+                if (hasSpaces)
+                    sb.AppendFormat("[{0}]", sort.Member.GetColumnName(_useAltName));
+                else
+                    sb.AppendFormat("{0}", sort.Member.GetColumnName(_useAltName));
 
                 if (sort.Direction == SortDirection.Desc)
                     sb.Append(" DESC");

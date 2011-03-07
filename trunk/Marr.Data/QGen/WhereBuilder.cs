@@ -86,7 +86,12 @@ namespace Marr.Data.QGen
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
             var parameter = new ParameterChainMethods(_command, paramName, rightValue).Parameter;
 
-            _sb.AppendFormat("[{0}] {1} {2}", columnName, Decode(body.NodeType), paramName);
+            bool hasSpaces = columnName.Contains(' ');
+
+            if (hasSpaces)
+                _sb.AppendFormat("[{0}] {1} {2}", columnName, Decode(body.NodeType), paramName);
+            else
+                _sb.AppendFormat("{0} {1} {2}", columnName, Decode(body.NodeType), paramName);
         }
         
         private object GetRightValue(Expression rightExpression)
@@ -164,7 +169,12 @@ namespace Marr.Data.QGen
             var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
 
             string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
-            _sb.AppendFormat("[{0}] LIKE '%' + {1} + '%'", columnName, paramName);
+            bool hasSpaces = columnName.Contains(' ');
+
+            if (hasSpaces)
+                _sb.AppendFormat("[{0}] LIKE '%' + {1} + '%'", columnName, paramName);
+            else
+                _sb.AppendFormat("{0} LIKE '%' + {1} + '%'", columnName, paramName);
         }
 
         private void Write_StartsWith(MethodCallExpression body)
@@ -175,7 +185,12 @@ namespace Marr.Data.QGen
             var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
 
             string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
-            _sb.AppendFormat("[{0}] LIKE {1} + '%'", columnName, paramName);
+            bool hasSpaces = columnName.Contains(' ');
+
+            if (hasSpaces)
+                _sb.AppendFormat("[{0}] LIKE {1} + '%'", columnName, paramName);
+            else
+                _sb.AppendFormat("{0} LIKE {1} + '%'", columnName, paramName);
         }
 
         private void Write_EndsWith(MethodCallExpression body)
@@ -186,7 +201,13 @@ namespace Marr.Data.QGen
             var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
 
             string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
-            _sb.AppendFormat("[{0}] LIKE '%' + {1}", columnName, paramName);
+            bool hasSpaces = columnName.Contains(' ');
+
+            if (hasSpaces)
+                _sb.AppendFormat("[{0}] LIKE '%' + {1}", columnName, paramName);
+            else
+                _sb.AppendFormat("{0} LIKE '%' + {1}", columnName, paramName);
+
         }
 
         public override string ToString()

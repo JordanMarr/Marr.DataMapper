@@ -456,14 +456,9 @@ namespace Marr.Data
 
         #region - Query -
 
-        public AutoQueryBuilder<T> AutoQuery<T>()
+        public QueryBuilder<T> Query<T>()
         {
-            return AutoQuery<T>(null);
-        }
-
-        public AutoQueryBuilder<T> AutoQuery<T>(string target)
-        {
-            return new AutoQueryBuilder<T>(this, target, false);
+            return new QueryBuilder<T>(this);
         }
 
         /// <summary>
@@ -543,17 +538,7 @@ namespace Marr.Data
         #endregion
 
         #region - Query to Graph -
-
-        public AutoQueryBuilder<T> AutoQueryToGraph<T>()
-        {
-            return AutoQueryToGraph<T>(null);
-        }
-
-        public AutoQueryBuilder<T> AutoQueryToGraph<T>(string target)
-        {
-            return new AutoQueryBuilder<T>(this, target, true);
-        }
-
+        
         public List<T> QueryToGraph<T>(string sql)
         {
             return (List<T>)QueryToGraph<T>(sql, new List<T>());
@@ -623,12 +608,12 @@ namespace Marr.Data
 
         #region - Update -
 
-        public int AutoUpdate<T>(T entity)
+        public int Update<T>(T entity)
         {
-            return AutoUpdate<T>(entity, null);
+            return Update<T>(entity, (Expression<Func<T, bool>>)null);
         }
 
-        public int AutoUpdate<T>(T entity, Expression<Func<T, bool>> filter)
+        public int Update<T>(T entity, Expression<Func<T, bool>> filter)
         {
             if (entity == null)
                 throw new ArgumentNullException("entity");
@@ -696,7 +681,7 @@ namespace Marr.Data
 
         #region - Insert -
 
-        public int AutoInsert<T>(T entity)
+        public int Insert<T>(T entity)
         {
             if (entity == null)
                 throw new ArgumentNullException("entity");
@@ -767,12 +752,12 @@ namespace Marr.Data
 
         #region - Delete -
 
-        public int AutoDelete<T>(T entity)
+        public int Delete<T>(T entity)
         {
-            return AutoDelete<T>(entity, null);
+            return Delete<T>(entity, null);
         }
 
-        public int AutoDelete<T>(T entity, Expression<Func<T, bool>> filter)
+        public int Delete<T>(T entity, Expression<Func<T, bool>> filter)
         {
             if (entity == null)
                 throw new ArgumentNullException("entity");
