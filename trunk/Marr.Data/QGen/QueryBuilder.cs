@@ -98,16 +98,31 @@ namespace Marr.Data.QGen
 
             List<T> results = new List<T>();
 
-            EntityGraph graph = new EntityGraph(typeof(T), results);
-
             if (_queryText == null)
             {
+                // Build entire query
                 _db.SqlMode = SqlModes.Text;
                 BuildQuery();
+            }
+            else if (_whereBuilder != null || _sortBuilder != null)
+            {
+                _db.SqlMode = SqlModes.Text;
+                if (_whereBuilder != null)
+                {
+                    // Append a where clause to an existing query
+                    _queryText = string.Concat(_queryText, " ", _whereBuilder.ToString());
+                }
+
+                if (_sortBuilder != null)
+                {
+                    // Append an order clause to an existing query
+                    _queryText = string.Concat(_queryText, " ", _sortBuilder.ToString());
+                }
             }
 
             if (_useAltName) // _useAltName is only set to true for graphs
             {
+                EntityGraph graph = new EntityGraph(typeof(T), results);
                 results = (List<T>)_db.QueryToGraph<T>(_queryText, graph, _childrenToLoad);
             }
             else
