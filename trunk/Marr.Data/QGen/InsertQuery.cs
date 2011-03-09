@@ -55,7 +55,7 @@ namespace Marr.Data.QGen
                 }
             }
 
-            values.Append(");");
+            values.Append(")");
 
             sql.Append(values);
             

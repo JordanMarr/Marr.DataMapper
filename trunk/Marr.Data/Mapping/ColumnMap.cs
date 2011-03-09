@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Data;
 using System.Reflection;
+using Marr.Data.Converters;
 
 namespace Marr.Data.Mapping
 {
@@ -46,10 +47,13 @@ namespace Marr.Data.Mapping
 
             Type paramNetType = FieldType;
             MapRepository repository = MapRepository.Instance;
-            if (repository.TypeConverters.ContainsKey(FieldType))
+
+            Type memberType = ReflectionHelper.GetMemberType(member);
+            IConverter converter = repository.GetConverter(memberType);
+            if (converter != null)
             {
                 // Handle conversions
-                paramNetType = repository.TypeConverters[FieldType].DbType;
+                paramNetType = converter.DbType;
             }
 
             // Get database specific DbType and store with column map in cache    
