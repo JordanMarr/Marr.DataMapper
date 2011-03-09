@@ -26,7 +26,7 @@ namespace Marr.Data.QGen
         {
             StringBuilder sql = new StringBuilder();
 
-            sql.AppendFormat("UPDATE {0} SET", Target);
+            sql.AppendFormat("UPDATE {0} SET ", Target);
 
             int startIndex = sql.Length;
 

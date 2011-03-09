@@ -28,11 +28,14 @@ namespace Marr.Data
     {
         ParameterChainMethods AddParameter(string name, object value);
         IDbDataParameter AddParameter(IDbDataParameter parameter);
-        int Update<T>(T entity);
         int Update<T>(T entity, Expression<Func<T, bool>> filter);
+        int Update<T>(string tableName, T entity, Expression<Func<T, bool>> filter);
+        int Update<T>(T entity, string sql);
         int Insert<T>(T entity);
-        int Delete<T>(T entity);
-        int Delete<T>(T entity, Expression<Func<T, bool>> filter);
+        int Insert<T>(string tableName, T entity);
+        int Insert<T>(T entity, string sql);
+        int Delete<T>(Expression<Func<T, bool>> filter);
+        int Delete<T>(string tableName, Expression<Func<T, bool>> filter);
         void BeginTransaction();
         DbCommand Command { get; }
         void Commit();
@@ -43,7 +46,6 @@ namespace Marr.Data
         DataSet GetDataSet(string sql, DataSet ds, string tableName);
         DataTable GetDataTable(string sql, DataTable dt, string tableName);
         DataTable GetDataTable(string sql);
-        int Insert<T>(T entity, string sql);
         int InsertDataTable(DataTable table, string insertSP);
         int InsertDataTable(DataTable table, string insertSP, UpdateRowSource updateRowSource);
         DbParameterCollection Parameters { get; }
@@ -57,8 +59,7 @@ namespace Marr.Data
         void Query(string sql);
         ICollection<T> Query<T>(string sql, ICollection<T> entityList);
         void RollBack();
-        SqlModes SqlMode { get; set; }
-        int Update<T>(T entity, string sql);
+        SqlModes SqlMode { get; set; }        
         int UpdateDataSet(DataSet ds, string updateSP);
         event EventHandler<LoadEntityEventArgs> LoadEntity;
         event EventHandler OpeningConnection;

@@ -608,12 +608,12 @@ namespace Marr.Data
 
         #region - Update -
 
-        public int Update<T>(T entity)
+        public int Update<T>(T entity, Expression<Func<T, bool>> filter)
         {
-            return Update<T>(entity, (Expression<Func<T, bool>>)null);
+            return Update<T>(null, entity, filter);
         }
 
-        public int Update<T>(T entity, Expression<Func<T, bool>> filter)
+        public int Update<T>(string tableName, T entity, Expression<Func<T, bool>> filter)
         {
             if (entity == null)
                 throw new ArgumentNullException("entity");
@@ -623,10 +623,15 @@ namespace Marr.Data
             SqlMode = SqlModes.Text;
 
             var mappingHelper = new MappingHelper(Command);
-            string tableName = MapRepository.Instance.GetTableName(typeof(T));
-            var where = new WhereBuilder<T>(Command, filter, false);
+            if (tableName == null)
+            {
+                tableName = MapRepository.Instance.GetTableName(typeof(T));
+            }
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
+            // Add update parameters
             mappingHelper.CreateParameters<T>(entity, mappings, false, true);
+            // Create where clause and add where parameters
+            var where = new WhereBuilder<T>(Command, filter, false);
             IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command, tableName, where.ToString());
             Command.CommandText = query.Generate();
 
@@ -683,6 +688,11 @@ namespace Marr.Data
 
         public int Insert<T>(T entity)
         {
+            return Insert<T>(null, entity);
+        }
+
+        public int Insert<T>(string tableName, T entity)
+        {
             if (entity == null)
                 throw new ArgumentNullException("entity");
             
@@ -691,7 +701,10 @@ namespace Marr.Data
             SqlMode = SqlModes.Text;
 
             var mappingHelper = new MappingHelper(Command);
-            string tableName = MapRepository.Instance.GetTableName(typeof(T));
+            if (tableName == null)
+            {
+                tableName = MapRepository.Instance.GetTableName(typeof(T));
+            }
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, true, true);
             IQuery query = QueryFactory.CreateInsertQuery(mappings, Command, tableName);
@@ -752,22 +765,22 @@ namespace Marr.Data
 
         #region - Delete -
 
-        public int Delete<T>(T entity)
+        public int Delete<T>(Expression<Func<T, bool>> filter)
         {
-            return Delete<T>(entity, null);
+            return Delete<T>(null, filter);
         }
 
-        public int Delete<T>(T entity, Expression<Func<T, bool>> filter)
+        public int Delete<T>(string tableName, Expression<Func<T, bool>> filter)
         {
-            if (entity == null)
-                throw new ArgumentNullException("entity");
-            
             // Remember sql mode
             var previousSqlMode = this.SqlMode;
             SqlMode = SqlModes.Text;
 
             var mappingHelper = new MappingHelper(Command);
-            string tableName = MapRepository.Instance.GetTableName(typeof(T));
+            if (tableName == null)
+            {
+                tableName = MapRepository.Instance.GetTableName(typeof(T));
+            }
             var where = new WhereBuilder<T>(Command, filter, false);
             IQuery query = QueryFactory.CreateDeleteQuery(tableName, where.ToString());
             Command.CommandText = query.Generate();
