@@ -693,7 +693,7 @@ namespace Marr.Data
             var mappingHelper = new MappingHelper(Command);
             string tableName = MapRepository.Instance.GetTableName(typeof(T));
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
-            mappingHelper.CreateParameters<T>(entity, mappings, false, true);
+            mappingHelper.CreateParameters<T>(entity, mappings, true, true);
             IQuery query = QueryFactory.CreateInsertQuery(mappings, Command, tableName);
             Command.CommandText = query.Generate();
 
