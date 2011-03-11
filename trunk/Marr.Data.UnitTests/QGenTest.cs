@@ -103,7 +103,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.IsTrue(queryText.Contains("DELETE FROM dbo.People"));
-            Assert.IsTrue(queryText.Contains("WHERE (ID = @P0)"));
+            Assert.IsTrue(queryText.Contains("WHERE ((ID = @P0))"));
             Assert.AreEqual(command.Parameters["@P0"].Value, 5);
         }
 
@@ -136,8 +136,8 @@ namespace Marr.Data.UnitTests
             Assert.AreEqual(command.Parameters["@P1"].Value, 15);
             Assert.AreEqual(command.Parameters["@P2"].Value, 5);
             Assert.AreEqual(command.Parameters["@P3"].Value, 1);
-            Assert.IsTrue(queryText.Contains("Name = @P0 AND Age > @P1)"));
-            Assert.IsTrue(queryText.Contains("Age < @P2 AND Age > @P3)"));
+            Assert.IsTrue(queryText.Contains("(Name = @P0) AND (Age > @P1))"));
+            Assert.IsTrue(queryText.Contains("(Age < @P2) AND (Age > @P3))"));
         }
 
         [TestMethod]

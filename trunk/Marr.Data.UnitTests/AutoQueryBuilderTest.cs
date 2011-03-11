@@ -29,7 +29,7 @@ namespace Marr.Data.UnitTests
 
             Assert.IsTrue(generatedSql.Contains("SELECT ID,Name,Age,BirthDate,IsHappy "));
             Assert.IsTrue(generatedSql.Contains("FROM PersonTable"));
-            Assert.IsTrue(generatedSql.Contains("((Age > @P0 AND Name LIKE @P1 + '%'))"));
+            Assert.IsTrue(generatedSql.Contains("(((Age > @P0) AND Name LIKE @P1 + '%'))"));
             Assert.IsFalse(generatedSql.Contains("ORDER BY"));
         }
 
@@ -72,8 +72,9 @@ namespace Marr.Data.UnitTests
 
             Assert.IsTrue(generatedSql.Contains("SELECT ID,Name,Age,BirthDate,IsHappy "));
             Assert.IsTrue(generatedSql.Contains("FROM PersonTable"));
-            Assert.IsTrue(generatedSql.Contains("((Age > @P0 AND Name LIKE @P1 + '%'))"));
+            Assert.IsTrue(generatedSql.Contains("(((Age > @P0) AND Name LIKE @P1 + '%'))"));
             Assert.IsTrue(generatedSql.Contains("ORDER BY Name,ID DESC"));
+            Assert.AreEqual(db.Command.Parameters.Count, 2);
         }
 
         [TestMethod]

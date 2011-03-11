@@ -11,12 +11,13 @@ using System.Reflection;
 
 namespace Marr.Data.QGen
 {
-    public class WhereBuilder<T>
+    public class WhereBuilder<T> : ExpressionVisitor
     {
         private DbCommand _command;
         private StringBuilder _sb;
         private string _paramPrefix;
         private bool _useAltName;
+        private bool isLeftSide = true;
 
         public WhereBuilder(DbCommand command, Expression<Func<T, bool>> filter, bool useAltName)
         {
@@ -29,71 +30,91 @@ namespace Marr.Data.QGen
             {
                 _sb.Append("WHERE (");
 
-                ParseExpression(filter.Body);
+                base.Visit(filter.Body);
 
                 _sb.Append(")");
             }            
         }
 
-        private void ParseExpression(Expression body)
+        protected override Expression VisitBinary(BinaryExpression expression)
         {
-            if (body is BinaryExpression)
-                ParseBinaryExpression((BinaryExpression)body);
-            else if (body is MethodCallExpression)
-                ParseMethodCallExpression((MethodCallExpression)body);
-            else
-                throw new NotImplementedException(string.Format("{0} expressions are not currently supported.", body.NodeType.ToString()));
+            _sb.Append("(");
+
+            isLeftSide = true;
+            Visit(expression.Left);
+
+            _sb.AppendFormat(" {0} ", Decode(expression.NodeType));
+
+            isLeftSide = false;
+            Visit(expression.Right);
+
+            _sb.Append(")");
+
+            return expression;
         }
 
-        /// <summary>
-        /// Iterates through a BinaryExpression tree and simplifies nested BinaryExpressions 
-        /// until they can be converted into a parameterized SQL where clause.
-        /// </summary>
-        /// <param name="body">The current expression node.</param>
-        private void ParseBinaryExpression(BinaryExpression body)
+        protected override Expression VisitMethodCall(MethodCallExpression expression)
         {
-            if (body.Left is MemberExpression)
+            string method = (expression as System.Linq.Expressions.MethodCallExpression).Method.Name;
+            switch (method)
             {
-                WriteExpression(body);
+                case "Contains":
+                    Write_Contains(expression);
+                    break;
+
+                case "StartsWith":
+                    Write_StartsWith(expression);
+                    break;
+
+                case "EndsWith":
+                    Write_EndsWith(expression);
+                    break;
+
+                default:
+                    string msg = string.Format("'{0}' expressions are not yet implemented in the where clause expression tree parser.", method);
+                    throw new NotImplementedException(msg);
+            }
+
+            return expression;
+        }
+
+        protected override Expression VisitMemberAccess(MemberExpression expression)
+        {
+            if (isLeftSide)
+            {
+                string columnName = expression.Member.GetColumnName(_useAltName);
+
+                bool hasSpaces = columnName.Contains(' ');
+
+                if (hasSpaces)
+                    _sb.AppendFormat("[{0}]", columnName);
+                else
+                    _sb.Append(columnName);
             }
             else
             {
-                _sb.Append("(");
-                ParseExpression(body.Left);
-                _sb.AppendFormat(" {0} ", Decode(body.NodeType));
-                ParseExpression(body.Right);
-                _sb.Append(")");
+                // Add parameter to Command.Parameters
+                string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
+                _sb.Append(paramName);
+
+                object value = GetRightValue(expression);
+                new ParameterChainMethods(_command, paramName, value);
             }
+
+            return expression;
         }
 
-        /// <summary>
-        /// 1) Converts a binary expression into a where clause
-        /// 2) Examines the property to see if it has a ColumnAttribute, and if so, substitutes the overriden column name, if one exists
-        /// 3) Adds the parameters to the DbCommand
-        /// </summary>
-        /// <param name="body">A binary expression that consists of a MemberExpression and a ConstantExpression.</param>
-        private void WriteExpression(BinaryExpression body)
+        protected override Expression VisitConstant(ConstantExpression expression)
         {
-            var left = body.Left as MemberExpression;
-
-            var rightValue = GetRightValue(body.Right);
-
-            string statement = string.Format("{0} {1} {2}", left.Member.Name, body.NodeType, rightValue);
-
-            string columnName = left.Member.GetColumnName(_useAltName);
-
             // Add parameter to Command.Parameters
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
-            var parameter = new ParameterChainMethods(_command, paramName, rightValue).Parameter;
 
-            bool hasSpaces = columnName.Contains(' ');
+            _sb.Append(paramName);
 
-            if (hasSpaces)
-                _sb.AppendFormat("[{0}] {1} {2}", columnName, Decode(body.NodeType), paramName);
-            else
-                _sb.AppendFormat("{0} {1} {2}", columnName, Decode(body.NodeType), paramName);
+            var parameter = new ParameterChainMethods(_command, paramName, expression.Value).Parameter;
+            return expression;
         }
-        
+
         private object GetRightValue(Expression rightExpression)
         {
             object rightValue = null;
@@ -207,7 +228,6 @@ namespace Marr.Data.QGen
                 _sb.AppendFormat("[{0}] LIKE '%' + {1}", columnName, paramName);
             else
                 _sb.AppendFormat("{0} LIKE '%' + {1}", columnName, paramName);
-
         }
 
         public override string ToString()
