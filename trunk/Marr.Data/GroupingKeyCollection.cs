@@ -43,12 +43,12 @@ namespace Marr.Data
 
             foreach (ColumnMap pkColumn in this)
             {
-                string pkValue = reader[pkColumn.ColumnInfo.GetColumName(true)].ToString();
+                object pkValue = reader[pkColumn.ColumnInfo.GetColumName(true)];
 
-                if (string.IsNullOrEmpty(pkValue))
+                if (pkValue == DBNull.Value)
                     hasNullValue = true;
 
-                pkValues.Append(reader[pkColumn.ColumnInfo.GetColumName(true)].ToString());
+                pkValues.Append(pkValue.ToString());
             }
 
             GroupingKey = pkValues.ToString();
