@@ -163,31 +163,12 @@ namespace Marr.Data.QGen
             }
         }
 
-        private void ParseMethodCallExpression(MethodCallExpression body)
-        {
-            string method = (body as System.Linq.Expressions.MethodCallExpression).Method.Name;
-            switch (method)
-            {
-                case "Contains":
-                    Write_Contains(body);
-                    break;
-
-                case "StartsWith":
-                    Write_StartsWith(body);
-                    break;
-
-                case "EndsWith":
-                    Write_EndsWith(body);
-                    break;
-            }
-        }
-
         private void Write_Contains(MethodCallExpression body)
         {
             // Add parameter to Command.Parameters
-            string search = body.Arguments[0].ToString().Replace("\"", string.Empty);
+            object value = GetRightValue(body.Arguments[0]);
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
-            var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
+            var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
             string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
             bool hasSpaces = columnName.Contains(' ');
@@ -201,9 +182,9 @@ namespace Marr.Data.QGen
         private void Write_StartsWith(MethodCallExpression body)
         {
             // Add parameter to Command.Parameters
-            string search = body.Arguments[0].ToString().Replace("\"", string.Empty);
+            object value = GetRightValue(body.Arguments[0]);
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
-            var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
+            var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
             string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
             bool hasSpaces = columnName.Contains(' ');
@@ -217,9 +198,9 @@ namespace Marr.Data.QGen
         private void Write_EndsWith(MethodCallExpression body)
         {
             // Add parameter to Command.Parameters
-            string search = body.Arguments[0].ToString().Replace("\"", string.Empty);
+            object value = GetRightValue(body.Arguments[0]);
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
-            var parameter = new ParameterChainMethods(_command, paramName, search).Parameter;
+            var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
             string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
             bool hasSpaces = columnName.Contains(' ');

@@ -3,11 +3,11 @@
   <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <id>MarrDataMapper</id>
     <version>
-      3.3.4094.18948
+      3.3.4095.39144
     </version>
     <authors>Jordan Marr, Rick Schott(NuGet)</authors>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
-    <description>MarrDataMapper is an ORM tool that allows you to project views into complex object graphs.</description>
+    <description>Marr DataMapper is a Linq enabled ORM that allows you to project views into complex object graphs.</description>
      <language>en-US</language>
     <projectUrl>http://marrdatamapper.codeplex.com/</projectUrl>
     <licenseUrl>http://marrdatamapper.codeplex.com/license</licenseUrl>

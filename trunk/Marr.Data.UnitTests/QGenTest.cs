@@ -141,7 +141,7 @@ namespace Marr.Data.UnitTests
         }
 
         [TestMethod]
-        public void SqlServerSelectQuery_Contains()
+        public void SqlServerSelectQuery_Contains_Constant()
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
@@ -170,7 +170,39 @@ namespace Marr.Data.UnitTests
         }
 
         [TestMethod]
-        public void SqlServerSelectQuery_StartsWith()
+        public void SqlServerSelectQuery_Contains_Variable()
+        {
+            // Arrange
+            var command = new System.Data.SqlClient.SqlCommand();
+            ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
+            MappingHelper mappingHelper = new MappingHelper(command);
+
+            Person person = new Person();
+            person.ID = 1;
+            person.Name = "Jordan";
+            person.Age = 33;
+            person.IsHappy = true;
+            person.BirthDate = new DateTime(1977, 1, 22);
+
+            List<Person> list = new List<Person>();
+
+            string john = "John";
+
+            var where = new WhereBuilder<Person>(command, p => p.Name.Contains(john), false);
+            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "", false);
+
+            // Act
+            string queryText = query.Generate();
+
+            // Assert
+            Assert.IsNotNull(queryText);
+            Assert.AreEqual(command.Parameters["@P0"].Value, "John");
+            Assert.IsTrue(queryText.Contains("Name LIKE '%' + @P0 + '%'"));
+        }
+
+
+        [TestMethod]
+        public void SqlServerSelectQuery_StartsWith_Constant()
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
@@ -199,7 +231,38 @@ namespace Marr.Data.UnitTests
         }
 
         [TestMethod]
-        public void SqlServerSelectQuery_EndsWith()
+        public void SqlServerSelectQuery_StartsWith_Variable()
+        {
+            // Arrange
+            var command = new System.Data.SqlClient.SqlCommand();
+            ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
+            MappingHelper mappingHelper = new MappingHelper(command);
+
+            Person person = new Person();
+            person.ID = 1;
+            person.Name = "Jordan";
+            person.Age = 33;
+            person.IsHappy = true;
+            person.BirthDate = new DateTime(1977, 1, 22);
+
+            List<Person> list = new List<Person>();
+
+            string john = "John";
+
+            var where = new WhereBuilder<Person>(command, p => p.Name.StartsWith(john), false);
+            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "", false);
+
+            // Act
+            string queryText = query.Generate();
+
+            // Assert
+            Assert.IsNotNull(queryText);
+            Assert.AreEqual(command.Parameters["@P0"].Value, "John");
+            Assert.IsTrue(queryText.Contains("Name LIKE @P0 + '%'"));
+        }
+
+        [TestMethod]
+        public void SqlServerSelectQuery_EndsWith_Constant()
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
@@ -227,6 +290,36 @@ namespace Marr.Data.UnitTests
             Assert.IsTrue(queryText.Contains("Name LIKE '%' + @P0"));
         }
 
+        [TestMethod]
+        public void SqlServerSelectQuery_EndsWith_Variable()
+        {
+            // Arrange
+            var command = new System.Data.SqlClient.SqlCommand();
+            ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
+            MappingHelper mappingHelper = new MappingHelper(command);
+
+            Person person = new Person();
+            person.ID = 1;
+            person.Name = "Jordan";
+            person.Age = 33;
+            person.IsHappy = true;
+            person.BirthDate = new DateTime(1977, 1, 22);
+
+            List<Person> list = new List<Person>();
+
+            string john = "John";
+
+            var where = new WhereBuilder<Person>(command, p => p.Name.EndsWith(john), false);
+            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "", false);
+
+            // Act
+            string queryText = query.Generate();
+
+            // Assert
+            Assert.IsNotNull(queryText);
+            Assert.AreEqual(command.Parameters["@P0"].Value, "John");
+            Assert.IsTrue(queryText.Contains("Name LIKE '%' + @P0"));
+        }
 
         [TestMethod]
         public void SqlServerSelectQuery_BinaryExpression_MethodExpression()
