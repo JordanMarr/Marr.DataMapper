@@ -206,7 +206,7 @@ namespace Marr.Data.UnitTests
         }
 
         [TestMethod]
-        public void Update_ShouldAddFiveParameters_And_ExecuteNonQuery()
+        public void Update_ShouldAddFourParameters_And_ExecuteNonQuery()
         {
             // Arrange
             Person person = new Person();
@@ -220,7 +220,7 @@ namespace Marr.Data.UnitTests
             db.Command.Parameters
                 .Expect(p => p.Add(null))
                 .IgnoreArguments()
-                .Repeat.Times(5)
+                .Repeat.Times(4)
                 .Return(0);
 
             // Act

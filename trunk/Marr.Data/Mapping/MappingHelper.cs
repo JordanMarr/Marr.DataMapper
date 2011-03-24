@@ -76,7 +76,7 @@ namespace Marr.Data.Mapping
         /// Creates all parameters for a SP based on the mappings of the entity,
         /// and assigns them values based on the field values of the entity.
         /// </summary>
-        public void CreateParameters<T>(T entity, ColumnMapCollection columnMapCollection, bool isInsert, bool isAutoQuery)
+        public void CreateParameters<T>(T entity, ColumnMapCollection columnMapCollection, bool isAutoQuery)
         {
             ColumnMapCollection mappings = columnMapCollection;
 
@@ -88,7 +88,7 @@ namespace Marr.Data.Mapping
 
             foreach (ColumnMap columnMap in mappings)
             {
-                if (isInsert && columnMap.ColumnInfo.IsAutoIncrement)
+                if (columnMap.ColumnInfo.IsAutoIncrement)
                     continue;
 
                 var param = _command.CreateParameter();

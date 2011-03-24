@@ -33,7 +33,7 @@ namespace Marr.Data.UnitTests
             person.IsHappy = true;
             person.BirthDate = new DateTime(1977, 1, 22);
 
-            mappingHelper.CreateParameters<Person>(person, columns, false, true);
+            mappingHelper.CreateParameters<Person>(person, columns, true);
 
             int idValue = 7;
             var where = new WhereBuilder<Person>(command, p => p.ID == person.ID || p.ID == idValue || p.Name == person.Name && p.Name == "Bob", false);
@@ -50,14 +50,14 @@ namespace Marr.Data.UnitTests
             Assert.IsTrue(queryText.Contains("Age"));
             Assert.IsTrue(queryText.Contains("IsHappy"));
             Assert.IsTrue(queryText.Contains("BirthDate"));
+            Assert.IsTrue(queryText.Contains("ID = @P4"));
             Assert.IsTrue(queryText.Contains("ID = @P5"));
-            Assert.IsTrue(queryText.Contains("ID = @P6"));
+            Assert.IsTrue(queryText.Contains("Name = @P6"));
             Assert.IsTrue(queryText.Contains("Name = @P7"));
-            Assert.IsTrue(queryText.Contains("Name = @P8"));
-            Assert.AreEqual(command.Parameters["@P5"].Value, 1);
-            Assert.AreEqual(command.Parameters["@P6"].Value, 7);
-            Assert.AreEqual(command.Parameters["@P7"].Value, "Jordan");
-            Assert.AreEqual(command.Parameters["@P8"].Value, "Bob");
+            Assert.AreEqual(command.Parameters["@P4"].Value, 1);
+            Assert.AreEqual(command.Parameters["@P5"].Value, 7);
+            Assert.AreEqual(command.Parameters["@P6"].Value, "Jordan");
+            Assert.AreEqual(command.Parameters["@P7"].Value, "Bob");
         }
 
         [TestMethod]
@@ -75,7 +75,7 @@ namespace Marr.Data.UnitTests
             person.IsHappy = true;
             person.BirthDate = new DateTime(1977, 1, 22);
 
-            mappingHelper.CreateParameters<Person>(person, columns, false, true);
+            mappingHelper.CreateParameters<Person>(person, columns, true);
 
             IQuery query = new SqlServerInsertQuery(columns, command, "dbo.People");
 

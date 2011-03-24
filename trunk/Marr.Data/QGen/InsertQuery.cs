@@ -30,10 +30,12 @@ namespace Marr.Data.QGen
             int sqlStartIndex = sql.Length;
             int valuesStartIndex = values.Length;
 
-            for (int i = 0; i < Command.Parameters.Count; i++)
+            foreach (DbParameter p in Command.Parameters)
             {
-                var p = Command.Parameters[i];
-                var c = Columns[i];
+                var c = Columns[p.ParameterName];
+
+                if (c == null)
+                    break; // All insert columns have been added
 
                 if (sql.Length > sqlStartIndex)
                     sql.Append(",");

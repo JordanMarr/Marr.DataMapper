@@ -629,7 +629,7 @@ namespace Marr.Data
             }
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             // Add update parameters
-            mappingHelper.CreateParameters<T>(entity, mappings, false, true);
+            mappingHelper.CreateParameters<T>(entity, mappings, true);
             // Create where clause and add where parameters
             var where = new WhereBuilder<T>(Command, filter, false);
             IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command, tableName, where.ToString());
@@ -665,7 +665,7 @@ namespace Marr.Data
             var mappingHelper = new MappingHelper(Command);
             Command.CommandText = sql;
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
-            mappingHelper.CreateParameters<T>(entity, mappings, false, false);
+            mappingHelper.CreateParameters<T>(entity, mappings, false);
             int rowsAffected = 0;
 
             try
@@ -706,7 +706,7 @@ namespace Marr.Data
                 tableName = MapRepository.Instance.GetTableName(typeof(T));
             }
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
-            mappingHelper.CreateParameters<T>(entity, mappings, true, true);
+            mappingHelper.CreateParameters<T>(entity, mappings, true);
             IQuery query = QueryFactory.CreateInsertQuery(mappings, Command, tableName);
             Command.CommandText = query.Generate();
 
@@ -742,7 +742,7 @@ namespace Marr.Data
             Command.CommandText = sql;
             Type entityType = typeof(T);
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(entityType);
-            mappingHelper.CreateParameters<T>(entity, mappings.NonReturnValues, true, false);
+            mappingHelper.CreateParameters<T>(entity, mappings.NonReturnValues, false);
 
             int rowsAffected = 0;
 
