@@ -48,8 +48,7 @@ namespace Marr.Data.Mapping
             Type paramNetType = FieldType;
             MapRepository repository = MapRepository.Instance;
 
-            Type memberType = ReflectionHelper.GetMemberType(member);
-            IConverter converter = repository.GetConverter(memberType);
+            IConverter converter = repository.GetConverter(FieldType);
             if (converter != null)
             {
                 // Handle conversions

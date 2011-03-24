@@ -13,6 +13,7 @@ namespace Marr.Data.QGen
 {
     public class WhereBuilder<T> : ExpressionVisitor
     {
+        private MapRepository _repos;
         private DbCommand _command;
         private StringBuilder _sb;
         private string _paramPrefix;
@@ -21,6 +22,7 @@ namespace Marr.Data.QGen
 
         public WhereBuilder(DbCommand command, Expression<Func<T, bool>> filter, bool useAltName)
         {
+            _repos = MapRepository.Instance;
             _command = command;
             _paramPrefix = command.ParameterPrefix();
             _sb = new StringBuilder();
@@ -128,13 +130,13 @@ namespace Marr.Data.QGen
                 {
                     string entityName = (rightMemberExp.Expression as MemberExpression).Member.Name;
                     var container = ((rightMemberExp.Expression as MemberExpression).Expression as ConstantExpression).Value;
-                    var entity = ReflectionHelper.GetFieldValue(container, entityName);
-                    rightValue = ReflectionHelper.GetFieldValue(entity, rightMemberExp.Member.Name);
+                    var entity = _repos.ReflectionStrategy.GetFieldValue(container, entityName);
+                    rightValue = _repos.ReflectionStrategy.GetFieldValue(entity, rightMemberExp.Member.Name);
                 }
                 else // Value is passed in as a variable
                 {
                     var parent = (rightMemberExp.Expression as ConstantExpression).Value;
-                    rightValue = ReflectionHelper.GetFieldValue(parent, rightMemberExp.Member.Name);
+                    rightValue = _repos.ReflectionStrategy.GetFieldValue(parent, rightMemberExp.Member.Name);
                 }
             }
             else // Value is passed in directly as a constant

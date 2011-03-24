@@ -112,7 +112,10 @@
     <Compile Include="QGen\SqlServerInsertQuery.cs" />
     <Compile Include="QGen\UpdateQuery.cs" />
     <Compile Include="QGen\WhereBuilder.cs" />
-    <Compile Include="ReflectionHelper.cs" />
+    <Compile Include="Reflection\IReflectionStrategy.cs" />
+    <Compile Include="Reflection\SimpleReflectionStrategy.cs" />
+    <Compile Include="Reflection\CachedReflectionStrategy.cs" />
+    <Compile Include="Reflection\ReflectionHelper.cs" />
     <Compile Include="SqlModesEnum.cs" />
   </ItemGroup>
   <ItemGroup>

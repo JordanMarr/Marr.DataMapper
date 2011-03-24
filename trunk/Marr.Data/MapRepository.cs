@@ -22,13 +22,13 @@ using Marr.Data.Converters;
 using Marr.Data.Parameters;
 using Marr.Data.Mapping;
 using Marr.Data.Mapping.Strategies;
+using Marr.Data.Reflection;
 
 namespace Marr.Data
 {
     public class MapRepository
     {
         private Dictionary<Type, string> _tables;
-        private FastReflection.CachedReflector _reflector;
         private IDbTypeBuilder _dbTypeBuilder;
         private Dictionary<Type, IMapStrategy> _columnMapStrategies;
 
@@ -46,8 +46,10 @@ namespace Marr.Data
             _tables = new Dictionary<Type, string>();
             Columns = new Dictionary<Type, ColumnMapCollection>();
             Relationships = new Dictionary<Type, RelationshipCollection>();
-            _reflector = new FastReflection.CachedReflector();
             TypeConverters = new Dictionary<Type, IConverter>();
+
+            // Register a default IReflectionStrategy
+            ReflectionStrategy = new CachedReflectionStrategy();
             
             // Register a default type converter for Enums
             TypeConverters.Add(typeof(Enum), new Converters.EnumStringConverter());
@@ -157,15 +159,14 @@ namespace Marr.Data
         
         #endregion
 
-        #region - Cached Reflector -
+        #region - Reflection Strategy -
 
         /// <summary>
-        /// Gets a CachedReflector instance.
+        /// Gets or sets the reflection strategy that the DataMapper will use to load entities.
+        /// By default the CachedReflector will be used, which provides a performance increase over the SimpleReflector.  
+        /// However, the SimpleReflector can be used in Medium Trust enviroments.
         /// </summary>
-        internal FastReflection.CachedReflector Reflector
-        {
-            get { return _reflector; }
-        }
+        public IReflectionStrategy ReflectionStrategy { get; set; }
 
         #endregion
 

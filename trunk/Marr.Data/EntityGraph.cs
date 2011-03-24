@@ -31,7 +31,8 @@ namespace Marr.Data
     /// </summary>
     internal class EntityGraph : IEnumerable<EntityGraph>
     {
-        EntityGraph _parent;
+        private MapRepository _repos;
+        private EntityGraph _parent;
         private Type _entityType;
         private Relationship _relationship;
         private ColumnMapCollection _columns;
@@ -40,6 +41,7 @@ namespace Marr.Data
         private object _entity;
         private GroupingKeyCollection _groupingKeyColumns;
         private Dictionary<string, EntityReference> _entityReferences;
+
         public IList RootList { get; private set; }
 
         /// <summary>
@@ -60,13 +62,13 @@ namespace Marr.Data
         /// <param name="relationship"></param>
         private EntityGraph(Type entityType, EntityGraph parent, Relationship relationship)
         {
-            MapRepository repository = MapRepository.Instance;
+            _repos = MapRepository.Instance;
 
             _entityType = entityType;
             _parent = parent;
             _relationship = relationship;
-            _columns = repository.GetColumns(entityType);
-            _relationships = repository.GetRelationships(entityType);
+            _columns = _repos.GetColumns(entityType);
+            _relationships = _repos.GetRelationships(entityType);
             _children = new List<EntityGraph>();
             Member = relationship != null ? relationship.Member : null;
             _entityReferences = new Dictionary<string, EntityReference>();
@@ -167,7 +169,7 @@ namespace Marr.Data
             }
             else // RelationTypes.One
             {
-                ReflectionHelper.SetFieldValue(_parent._entity, _relationship.Member.Name, entityInstance);
+                _repos.ReflectionStrategy.SetFieldValue(_parent._entity, _relationship.Member.Name, entityInstance);
             }
 
             EntityReference entityRef = new EntityReference(entityInstance);
@@ -190,8 +192,8 @@ namespace Marr.Data
                 {
                     try
                     {
-                        IList list = (IList)ReflectionHelper.CreateInstance(relationship.MemberType);
-                        ReflectionHelper.SetFieldValue(entityRef.Entity, relationship.Member.Name, list);
+                        IList list = (IList)_repos.ReflectionStrategy.CreateInstance(relationship.MemberType);
+                        _repos.ReflectionStrategy.SetFieldValue(entityRef.Entity, relationship.Member.Name, list);
                         
                         // Save a reference to each 1-M list
                         entityRef.AddChildList(relationship.Member.Name, list);

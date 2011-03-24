@@ -9,10 +9,12 @@ namespace Marr.Data.Mapping
 {
     internal class MappingHelper
     {
+        private MapRepository _repos;
         private DbCommand _command;
 
         public MappingHelper(DbCommand command)
         {
+            _repos = MapRepository.Instance;
             _command = command;
         }
 
@@ -35,7 +37,7 @@ namespace Marr.Data.Mapping
         public object CreateAndLoadEntity(Type entityType, ColumnMapCollection mappings, DbDataReader reader, bool useAltName)
         {
             // Create new entity
-            object ent = ReflectionHelper.CreateInstance(entityType);
+            object ent = _repos.ReflectionStrategy.CreateInstance(entityType);
             return LoadExistingEntity(mappings, reader, ent, useAltName);
         }
 
@@ -59,7 +61,7 @@ namespace Marr.Data.Mapping
                         dbValue = conversion.FromDB(dataMap, dbValue);
                     }
 
-                    ReflectionHelper.SetFieldValue(ent, dataMap.FieldName, dbValue);
+                    _repos.ReflectionStrategy.SetFieldValue(ent, dataMap.FieldName, dbValue);
                 }
                 catch (Exception ex)
                 {
@@ -96,7 +98,7 @@ namespace Marr.Data.Mapping
                 param.Size = columnMap.ColumnInfo.Size;
                 param.Direction = columnMap.ColumnInfo.ParamDirection;
 
-                object val = ReflectionHelper.GetFieldValue(entity, columnMap.FieldName);
+                object val = _repos.ReflectionStrategy.GetFieldValue(entity, columnMap.FieldName);
 
                 param.Value = val == null ? DBNull.Value : val; // Convert nulls to DBNulls
 
@@ -124,7 +126,7 @@ namespace Marr.Data.Mapping
             foreach (ColumnMap dataMap in mappings)
             {
                 object output = _command.Parameters[dataMap.ColumnInfo.Name].Value;
-                ReflectionHelper.SetFieldValue(entity, dataMap.FieldName, output);
+                _repos.ReflectionStrategy.SetFieldValue(entity, dataMap.FieldName, output);
             }
         }
 
@@ -135,7 +137,7 @@ namespace Marr.Data.Mapping
         {
             foreach (ColumnMap dataMap in mappings)
             {
-                ReflectionHelper.SetFieldValue(entity, dataMap.FieldName, Convert.ChangeType(value, dataMap.FieldType));
+                _repos.ReflectionStrategy.SetFieldValue(entity, dataMap.FieldName, Convert.ChangeType(value, dataMap.FieldType));
             }
         }
 
