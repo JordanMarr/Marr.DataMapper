@@ -15,8 +15,9 @@ namespace Marr.Data.IntegrationTests
     public class DataMapperTests
     {
         [TestMethod]
-        public void TestLinq()
+        public void TestSqlCe_Insert_Query()
         {
+            MapRepository.Instance.EnableTraceLogging = true;
             var db = new DataMapper(System.Data.SqlServerCe.SqlCeProviderFactory.Instance, ConfigurationManager.ConnectionStrings["TestDB"].ConnectionString);
 
             Order order1 = new Order { OrderName = "Test1" };
