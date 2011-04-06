@@ -9,7 +9,7 @@ namespace Marr.Data.IntegrationTests.Entities
     [Table("Order")]
     public class Order
     {
-        [Column(IsPrimaryKey = true)]
+        [Column(IsPrimaryKey = true, IsAutoIncrement=true)]
         public int ID { get; set; }
 
         [Column]

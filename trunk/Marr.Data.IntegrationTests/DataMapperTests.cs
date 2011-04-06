@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Marr.Data.IntegrationTests.Entities;
+using System.Configuration;
 
 namespace Marr.Data.IntegrationTests
 {
@@ -13,20 +14,25 @@ namespace Marr.Data.IntegrationTests
     [TestClass]
     public class DataMapperTests
     {
-        //[TestMethod]
+        [TestMethod]
         public void TestLinq()
         {
-            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
-            var results = from o in db.Query<Order>()
-                          where o.ID > 5
-                          orderby o.ID, o.OrderName descending
-                          select o;
+            var db = new DataMapper(System.Data.SqlServerCe.SqlCeProviderFactory.Instance, ConfigurationManager.ConnectionStrings["TestDB"].ConnectionString);
 
-            foreach (var result in results)
-            {
-                string orderName = result.OrderName;
-                int orderID = result.ID;
-            }
+            Order order1 = new Order { OrderName = "Test1" };
+            db.Insert(order1);
+
+            Order order2 = new Order { OrderName = "Test2" };
+            db.Insert(order2);
+
+            var results = (from o in db.Query<Order>()
+                           orderby o.OrderName ascending
+                           select o).ToList();
+
+            Assert.IsTrue(results.Count == 2);
+            Assert.AreEqual(results[0].OrderName, "Test1");
+            Assert.AreEqual(results[1].OrderName, "Test2");
+            
         }
     }
 }
