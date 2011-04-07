@@ -27,6 +27,7 @@ using Marr.Data.Converters;
 using Marr.Data.Parameters;
 using Marr.Data.QGen;
 using System.Linq.Expressions;
+using System.Diagnostics;
 
 namespace Marr.Data
 {
@@ -811,6 +812,8 @@ namespace Marr.Data
 
         public event EventHandler OpeningConnection;
 
+        public event EventHandler ClosingConnection;
+
         #endregion
 
         #region - Connections / Transactions -
@@ -819,6 +822,14 @@ namespace Marr.Data
         {
             if (OpeningConnection != null)
                 OpeningConnection(this, EventArgs.Empty);
+        }
+
+        protected virtual void OnClosingConnection()
+        {
+            WriteToTraceLog();
+
+            if (ClosingConnection != null)
+                ClosingConnection(this, EventArgs.Empty);
         }
 
         protected internal void OpenConnection()
@@ -831,14 +842,55 @@ namespace Marr.Data
 
         protected internal void CloseConnection()
         {
+            OnClosingConnection();
+
             Command.Parameters.Clear();
             Command.CommandText = string.Empty;
 
             if (Command.Transaction == null)
                 Command.Connection.Close(); // Only close if no transaction is present
 
+            UnbindEvents();
+        }
+
+        private void WriteToTraceLog()
+        {
+            if (MapRepository.Instance.EnableTraceLogging)
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine();
+                sb.AppendLine("==== Begin Query Trace ====");
+                sb.AppendLine();
+                sb.AppendLine("QUERY TYPE:");
+                sb.AppendLine(Command.CommandType.ToString());
+                sb.AppendLine();
+                sb.AppendLine("QUERY TEXT:");
+                sb.AppendLine(Command.CommandText);
+                sb.AppendLine();
+                sb.AppendLine("PARAMETERS:");
+                foreach (IDbDataParameter p in Parameters)
+                {
+                    object val = (p.Value != null && p.Value is string) ? string.Format("\"{0}\"", p.Value) : p.Value;
+                    sb.AppendFormat("{0} = [{1}]", p.ParameterName, val ?? "NULL").AppendLine();
+                }
+                sb.AppendLine();
+                sb.AppendLine("==== End Query Trace ====");
+                sb.AppendLine();
+
+                Trace.Write(sb.ToString());
+            }
+        }
+
+        private void UnbindEvents()
+        {
             if (LoadEntity != null)
                 LoadEntity = null;
+
+            if (OpeningConnection != null)
+                OpeningConnection = null;
+
+            if (ClosingConnection != null)
+                ClosingConnection = null;
         }
 
         public void BeginTransaction()

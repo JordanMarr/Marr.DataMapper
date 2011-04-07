@@ -59,6 +59,8 @@ namespace Marr.Data
 
             _columnMapStrategies = new Dictionary<Type, IMapStrategy>();
             RegisterDefaultMapStrategy(new AttributeMapStrategy());
+
+            EnableTraceLogging = false;
         }
 
         private readonly static MapRepository _instance = new MapRepository();
@@ -73,6 +75,12 @@ namespace Marr.Data
                 return _instance;
             }
         }
+
+        /// <summary>
+        /// Gets or sets a boolean that determines whether debug information should be written to the trace log.
+        /// The default is false.
+        /// </summary>
+        public bool EnableTraceLogging { get; set; }
 
         #region - Column Map Strategies -
 

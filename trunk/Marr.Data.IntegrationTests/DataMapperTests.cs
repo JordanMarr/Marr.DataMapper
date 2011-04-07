@@ -14,10 +14,15 @@ namespace Marr.Data.IntegrationTests
     [TestClass]
     public class DataMapperTests
     {
+        [TestInitialize]
+        public void Setup()
+        {
+            MapRepository.Instance.EnableTraceLogging = true;
+        }
+
         [TestMethod]
         public void TestSqlCe_Insert_Query()
         {
-            MapRepository.Instance.EnableTraceLogging = true;
             var db = new DataMapper(System.Data.SqlServerCe.SqlCeProviderFactory.Instance, ConfigurationManager.ConnectionStrings["TestDB"].ConnectionString);
 
             Order order1 = new Order { OrderName = "Test1" };
