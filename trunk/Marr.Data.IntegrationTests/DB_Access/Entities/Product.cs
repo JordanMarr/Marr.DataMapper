@@ -25,35 +25,8 @@ namespace Marr.Data.IntegrationTests.DB_Access.Entities
         [Column]
         public int? CategoryID { get; set; }
 
-        [Column(Size=100)]
-        public string ImageFileName { get; set; }
-
-        /// <summary>
-        /// Gets the product slug (url friendly name).
-        /// Ex: Name = "my blue dog" returns "my-blue-dog".
-        /// </summary>
-        public string Slug
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(Name))
-                {
-                    return string.Empty;
-                }
-                else
-                {
-                    return Name
-                        .Replace(" ", "-")
-                        .Replace(",", "-");
-                }
-            }
-        }
-
         [Column]
         public bool NewItem { get; set; }
-
-        [Column]
-        public bool IsSplash { get; set; }
 
         [Relationship]
         public Category Category { get; set; }
