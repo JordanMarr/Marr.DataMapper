@@ -1,0 +1,23 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Configuration;
+
+namespace Marr.Data.IntegrationTests
+{
+    public class TestBase
+    {
+        protected IDataMapper CreateSqlServerCeDB()
+        {
+            var db = new DataMapper(System.Data.SqlServerCe.SqlCeProviderFactory.Instance, ConfigurationManager.ConnectionStrings["DB_SqlServerCe"].ConnectionString);
+            return db;
+        }
+
+        protected IDataMapper CreateAccessDB()
+        {
+            var db = new DataMapper(System.Data.OleDb.OleDbFactory.Instance, ConfigurationManager.ConnectionStrings["DB_Access"].ConnectionString);
+            return db;
+        }
+    }
+}

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Marr.Data.Mapping;
 
-namespace Marr.Data.IntegrationTests.Entities
+namespace Marr.Data.IntegrationTests.DB_SqlServerCe.Entities
 {
     [Table("Order")]
     public class Order
