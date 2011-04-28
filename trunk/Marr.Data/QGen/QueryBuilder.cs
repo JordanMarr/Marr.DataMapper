@@ -15,6 +15,7 @@ namespace Marr.Data.QGen
     {
         #region - Private Members -
 
+        private Dialects.Dialect _dialect;
         private DataMapper _db;
         private WhereBuilder<T> _whereBuilder;
         private SortBuilder<T> _sortBuilder;
@@ -28,7 +29,7 @@ namespace Marr.Data.QGen
             {
                 // Lazy load
                 if (_sortBuilder == null)
-                    _sortBuilder = new SortBuilder<T>(this, _useAltName);
+                    _sortBuilder = new SortBuilder<T>(this, _dialect, _useAltName);
 
                 return _sortBuilder;
             }
@@ -38,9 +39,10 @@ namespace Marr.Data.QGen
 
         #region - Constructor -
 
-        internal QueryBuilder(DataMapper db)
+        internal QueryBuilder(DataMapper db, Dialects.Dialect dialect)
         {
             _db = db;
+            _dialect = dialect;
         }
 
         #endregion
@@ -149,7 +151,7 @@ namespace Marr.Data.QGen
             var columns = GetColumns(_childrenToLoad);
             string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
             string sort = SortBuilder.ToString();
-            IQuery query = QueryFactory.CreateSelectQuery(columns, _tableName, where, sort, _useAltName);
+            IQuery query = QueryFactory.CreateSelectQuery(columns, _db, _tableName, where, sort, _useAltName);
             _queryText = query.Generate();
         }
 
@@ -195,7 +197,7 @@ namespace Marr.Data.QGen
 
         public SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
         {
-            _whereBuilder = new WhereBuilder<T>(_db.Command, filterExpression, _useAltName);
+            _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _useAltName);
             return SortBuilder;
         }
 

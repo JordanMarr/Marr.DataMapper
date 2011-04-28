@@ -65,6 +65,14 @@ namespace Marr.Data
             _connectionString = connectionString;
         }
 
+        public string ProviderString
+        {
+            get
+            {
+                return _dbProviderFactory.ToString();
+            }
+        }
+
         /// <summary>
         /// Creates a new command utilizing the connection string.
         /// </summary>
@@ -459,7 +467,8 @@ namespace Marr.Data
 
         public QueryBuilder<T> Query<T>()
         {
-            return new QueryBuilder<T>(this);
+            var dialect = QGen.QueryFactory.CreateDialect(this);
+            return new QueryBuilder<T>(this, dialect);
         }
 
         /// <summary>
@@ -507,9 +516,6 @@ namespace Marr.Data
                 OpenConnection();
                 using (DbDataReader reader = Command.ExecuteReader())
                 {
-                    if (!reader.HasRows)
-                        return entityList;
-
                     while (reader.Read())
                     {
                         if (LoadEntity != null)
@@ -632,8 +638,9 @@ namespace Marr.Data
             // Add update parameters
             mappingHelper.CreateParameters<T>(entity, mappings, true);
             // Create where clause and add where parameters
-            var where = new WhereBuilder<T>(Command, filter, false);
-            IQuery query = QueryFactory.CreateUpdateQuery(mappings, Command, tableName, where.ToString());
+            var dialect = QGen.QueryFactory.CreateDialect(this);
+            var where = new WhereBuilder<T>(Command, dialect, filter, false);
+            IQuery query = QueryFactory.CreateUpdateQuery(mappings, this, tableName, where.ToString());
             Command.CommandText = query.Generate();
 
             int rowsAffected = 0;
@@ -708,7 +715,7 @@ namespace Marr.Data
             }
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
             mappingHelper.CreateParameters<T>(entity, mappings, true);
-            IQuery query = QueryFactory.CreateInsertQuery(mappings, Command, tableName);
+            IQuery query = QueryFactory.CreateInsertQuery(mappings, this, tableName);
             Command.CommandText = query.Generate();
 
             int rowsAffected = 0;
@@ -782,7 +789,8 @@ namespace Marr.Data
             {
                 tableName = MapRepository.Instance.GetTableName(typeof(T));
             }
-            var where = new WhereBuilder<T>(Command, filter, false);
+            var dialect = QGen.QueryFactory.CreateDialect(this);
+            var where = new WhereBuilder<T>(Command, dialect, filter, false);
             IQuery query = QueryFactory.CreateDeleteQuery(tableName, where.ToString());
             Command.CommandText = query.Generate();
 

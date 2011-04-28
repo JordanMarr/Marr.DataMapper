@@ -9,6 +9,7 @@ using Rhino.Mocks;
 using Marr.Data.Mapping;
 using Marr.Data;
 using System.Data.Common;
+using Marr.Data.QGen.Dialects;
 
 namespace Marr.Data.UnitTests
 {
@@ -36,24 +37,24 @@ namespace Marr.Data.UnitTests
             mappingHelper.CreateParameters<Person>(person, columns, true);
 
             int idValue = 7;
-            var where = new WhereBuilder<Person>(command, p => p.ID == person.ID || p.ID == idValue || p.Name == person.Name && p.Name == "Bob", false);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.ID == person.ID || p.ID == idValue || p.Name == person.Name && p.Name == "Bob", false);
 
-            IQuery query = new UpdateQuery(columns, command, "dbo.People", where.ToString());
+            IQuery query = new UpdateQuery(new SqlServerDialect(), columns, command, "dbo.People", where.ToString());
 
             // Act
             string queryText = query.Generate();
 
             // Assert
             Assert.IsNotNull(queryText);
-            Assert.IsTrue(queryText.Contains("UPDATE dbo.People"));
-            Assert.IsTrue(queryText.Contains("Name"));
-            Assert.IsTrue(queryText.Contains("Age"));
-            Assert.IsTrue(queryText.Contains("IsHappy"));
-            Assert.IsTrue(queryText.Contains("BirthDate"));
-            Assert.IsTrue(queryText.Contains("ID = @P4"));
-            Assert.IsTrue(queryText.Contains("ID = @P5"));
-            Assert.IsTrue(queryText.Contains("Name = @P6"));
-            Assert.IsTrue(queryText.Contains("Name = @P7"));
+            Assert.IsTrue(queryText.Contains("UPDATE [dbo].[People]"));
+            Assert.IsTrue(queryText.Contains("[Name]"));
+            Assert.IsTrue(queryText.Contains("[Age]"));
+            Assert.IsTrue(queryText.Contains("[IsHappy]"));
+            Assert.IsTrue(queryText.Contains("[BirthDate]"));
+            Assert.IsTrue(queryText.Contains("[ID] = @P4"));
+            Assert.IsTrue(queryText.Contains("[ID] = @P5"));
+            Assert.IsTrue(queryText.Contains("[Name] = @P6"));
+            Assert.IsTrue(queryText.Contains("[Name] = @P7"));
             Assert.AreEqual(command.Parameters["@P4"].Value, 1);
             Assert.AreEqual(command.Parameters["@P5"].Value, 7);
             Assert.AreEqual(command.Parameters["@P6"].Value, "Jordan");
@@ -77,16 +78,16 @@ namespace Marr.Data.UnitTests
 
             mappingHelper.CreateParameters<Person>(person, columns, true);
 
-            IQuery query = new SqlServerInsertQuery(columns, command, "dbo.People");
+            IQuery query = new InsertQuery(new SqlServerDialect(), columns, command, "dbo.People");
 
             // Act
             string queryText = query.Generate();
 
             // Assert
             Assert.IsNotNull(queryText);
-            Assert.IsTrue(queryText.Contains("INSERT INTO dbo.People"));
+            Assert.IsTrue(queryText.Contains("INSERT INTO [dbo].[People]"));
             Assert.IsFalse(queryText.Contains("@ID"), "Should not contain ID column since it is marked as AutoIncrement");
-            Assert.IsTrue(queryText.Contains("Name"), "Should contain the name column");
+            Assert.IsTrue(queryText.Contains("[Name]"), "Should contain the name column");
         }
 
         [TestMethod]
@@ -94,7 +95,7 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
-            var where = new WhereBuilder<Person>(command, p => p.ID == 5, false);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.ID == 5, false);
             IQuery query = new DeleteQuery("dbo.People", where.ToString());
 
             // Act
@@ -103,7 +104,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.IsTrue(queryText.Contains("DELETE FROM dbo.People"));
-            Assert.IsTrue(queryText.Contains("WHERE ((ID = @P0))"));
+            Assert.IsTrue(queryText.Contains("WHERE (([ID] = @P0))"));
             Assert.AreEqual(command.Parameters["@P0"].Value, 5);
         }
 
@@ -124,8 +125,8 @@ namespace Marr.Data.UnitTests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereBuilder<Person>(command, p => p.Name == "John" && p.Age > 15 || p.Age < 5 && p.Age > 1, false);
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "", false);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name == "John" && p.Age > 15 || p.Age < 5 && p.Age > 1, false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -136,8 +137,8 @@ namespace Marr.Data.UnitTests
             Assert.AreEqual(command.Parameters["@P1"].Value, 15);
             Assert.AreEqual(command.Parameters["@P2"].Value, 5);
             Assert.AreEqual(command.Parameters["@P3"].Value, 1);
-            Assert.IsTrue(queryText.Contains("(Name = @P0) AND (Age > @P1))"));
-            Assert.IsTrue(queryText.Contains("(Age < @P2) AND (Age > @P3))"));
+            Assert.IsTrue(queryText.Contains("([Name] = @P0) AND ([Age] > @P1))"));
+            Assert.IsTrue(queryText.Contains("([Age] < @P2) AND ([Age] > @P3))"));
         }
 
         [TestMethod]
@@ -157,8 +158,8 @@ namespace Marr.Data.UnitTests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereBuilder<Person>(command, p => p.Name.Contains("John"), false);
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "", false);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name.Contains("John"), false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -166,7 +167,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.AreEqual(command.Parameters["@P0"].Value, "John");
-            Assert.IsTrue(queryText.Contains("Name LIKE '%' + @P0 + '%'"));
+            Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P0 + '%'"));
         }
 
         [TestMethod]
@@ -188,8 +189,8 @@ namespace Marr.Data.UnitTests
 
             string john = "John";
 
-            var where = new WhereBuilder<Person>(command, p => p.Name.Contains(john), false);
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "", false);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name.Contains(john), false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -197,7 +198,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.AreEqual(command.Parameters["@P0"].Value, "John");
-            Assert.IsTrue(queryText.Contains("Name LIKE '%' + @P0 + '%'"));
+            Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P0 + '%'"));
         }
 
 
@@ -218,8 +219,8 @@ namespace Marr.Data.UnitTests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereBuilder<Person>(command, p => p.Name.StartsWith("John"), false);
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "", false);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name.StartsWith("John"), false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -227,7 +228,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.AreEqual(command.Parameters["@P0"].Value, "John");
-            Assert.IsTrue(queryText.Contains("Name LIKE @P0 + '%'"));
+            Assert.IsTrue(queryText.Contains("[Name] LIKE @P0 + '%'"));
         }
 
         [TestMethod]
@@ -249,8 +250,8 @@ namespace Marr.Data.UnitTests
 
             string john = "John";
 
-            var where = new WhereBuilder<Person>(command, p => p.Name.StartsWith(john), false);
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "", false);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name.StartsWith(john), false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -258,7 +259,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.AreEqual(command.Parameters["@P0"].Value, "John");
-            Assert.IsTrue(queryText.Contains("Name LIKE @P0 + '%'"));
+            Assert.IsTrue(queryText.Contains("[Name] LIKE @P0 + '%'"));
         }
 
         [TestMethod]
@@ -278,8 +279,8 @@ namespace Marr.Data.UnitTests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereBuilder<Person>(command, p => p.Name.EndsWith("John"), false);
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "", false);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name.EndsWith("John"), false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -287,7 +288,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.AreEqual(command.Parameters["@P0"].Value, "John");
-            Assert.IsTrue(queryText.Contains("Name LIKE '%' + @P0"));
+            Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P0"));
         }
 
         [TestMethod]
@@ -309,8 +310,8 @@ namespace Marr.Data.UnitTests
 
             string john = "John";
 
-            var where = new WhereBuilder<Person>(command, p => p.Name.EndsWith(john), false);
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "", false);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name.EndsWith(john), false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -318,7 +319,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.AreEqual(command.Parameters["@P0"].Value, "John");
-            Assert.IsTrue(queryText.Contains("Name LIKE '%' + @P0"));
+            Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P0"));
         }
 
         [TestMethod]
@@ -338,8 +339,8 @@ namespace Marr.Data.UnitTests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereBuilder<Person>(command, p => p.Age > 5 && p.Name.Contains("John"), false);
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "", false);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Age > 5 && p.Name.Contains("John"), false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -348,8 +349,8 @@ namespace Marr.Data.UnitTests
             Assert.IsNotNull(queryText);
             Assert.AreEqual(command.Parameters["@P0"].Value, 5);
             Assert.AreEqual(command.Parameters["@P1"].Value, "John");
-            Assert.IsTrue(queryText.Contains("Age > @P0"));
-            Assert.IsTrue(queryText.Contains("Name LIKE '%' + @P1 + '%'"));
+            Assert.IsTrue(queryText.Contains("[Age] > @P0"));
+            Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P1 + '%'"));
         }
 
         [TestMethod]
@@ -369,8 +370,8 @@ namespace Marr.Data.UnitTests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereBuilder<Person>(command, p => p.Name.Contains("John") && p.Age > 5, false);
-            IQuery query = new SelectQuery(columns, "dbo.People", where.ToString(), "", false);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name.Contains("John") && p.Age > 5, false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -379,8 +380,8 @@ namespace Marr.Data.UnitTests
             Assert.IsNotNull(queryText);
             Assert.AreEqual(command.Parameters["@P0"].Value, "John");
             Assert.AreEqual(command.Parameters["@P1"].Value, 5);
-            Assert.IsTrue(queryText.Contains("Name LIKE '%' + @P0 + '%'"));
-            Assert.IsTrue(queryText.Contains("Age > @P1"));            
+            Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P0 + '%'"));
+            Assert.IsTrue(queryText.Contains("[Age] > @P1"));            
         }
         
     }

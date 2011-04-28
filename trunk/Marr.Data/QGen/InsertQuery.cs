@@ -4,17 +4,20 @@ using System.Linq;
 using System.Text;
 using Marr.Data.Mapping;
 using System.Data.Common;
+using Marr.Data.QGen.Dialects;
 
 namespace Marr.Data.QGen
 {
     public class InsertQuery : IQuery
     {
+        protected Dialect Dialect { get; set; }
         protected string Target { get; set; }
         protected ColumnMapCollection Columns { get; set; }
         protected DbCommand Command { get; set; }
 
-        public InsertQuery(ColumnMapCollection columns, DbCommand command, string target)
+        public InsertQuery(Dialect dialect, ColumnMapCollection columns, DbCommand command, string target)
         {
+            Dialect = dialect;
             Target = target;
             Columns = columns;
             Command = command;
@@ -25,7 +28,7 @@ namespace Marr.Data.QGen
             StringBuilder sql = new StringBuilder();
             StringBuilder values = new StringBuilder(") VALUES (");
 
-            sql.AppendFormat("INSERT INTO {0} (", Target);
+            sql.AppendFormat("INSERT INTO {0} (", Dialect.CreateToken(Target));
 
             int sqlStartIndex = sql.Length;
             int valuesStartIndex = values.Length;
@@ -45,14 +48,7 @@ namespace Marr.Data.QGen
 
                 if (!c.ColumnInfo.IsAutoIncrement)
                 {
-                    string columnName = c.ColumnInfo.Name;
-                    bool hasSpaces = columnName.Contains(' ');
-
-                    if (hasSpaces)
-                        sql.AppendFormat("[{0}]", columnName);
-                    else
-                        sql.AppendFormat("{0}", columnName);
-
+                    sql.AppendFormat(Dialect.CreateToken(c.ColumnInfo.Name));
                     values.AppendFormat("{0}{1}", Command.ParameterPrefix(), p.ParameterName);
                 }
             }
@@ -60,7 +56,13 @@ namespace Marr.Data.QGen
             values.Append(")");
 
             sql.Append(values);
-            
+
+            // If identity query exists and there is a return value column
+            if (!string.IsNullOrEmpty(Dialect.IdentityQuery) && Columns.ReturnValues.Count() > 0)
+            {
+                sql.Append(Dialect.IdentityQuery);
+            }
+
             return sql.ToString();
         }
     }

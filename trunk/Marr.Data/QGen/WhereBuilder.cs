@@ -8,6 +8,7 @@ using Marr.Data.Mapping;
 using System.Data.Common;
 using Marr.Data.Parameters;
 using System.Reflection;
+using Marr.Data.QGen.Dialects;
 
 namespace Marr.Data.QGen
 {
@@ -15,15 +16,17 @@ namespace Marr.Data.QGen
     {
         private MapRepository _repos;
         private DbCommand _command;
+        private Dialect _dialect;
         private StringBuilder _sb;
         private string _paramPrefix;
         private bool _useAltName;
         private bool isLeftSide = true;
 
-        public WhereBuilder(DbCommand command, Expression<Func<T, bool>> filter, bool useAltName)
+        public WhereBuilder(DbCommand command, Dialect dialect, Expression<Func<T, bool>> filter, bool useAltName)
         {
             _repos = MapRepository.Instance;
             _command = command;
+            _dialect = dialect;
             _paramPrefix = command.ParameterPrefix();
             _sb = new StringBuilder();
             _useAltName = useAltName;
@@ -85,13 +88,7 @@ namespace Marr.Data.QGen
             if (isLeftSide)
             {
                 string columnName = expression.Member.GetColumnName(_useAltName);
-
-                bool hasSpaces = columnName.Contains(' ');
-
-                if (hasSpaces)
-                    _sb.AppendFormat("[{0}]", columnName);
-                else
-                    _sb.Append(columnName);
+                _sb.Append(_dialect.CreateToken(columnName));
             }
             else
             {
@@ -173,12 +170,7 @@ namespace Marr.Data.QGen
             var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
             string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
-            bool hasSpaces = columnName.Contains(' ');
-
-            if (hasSpaces)
-                _sb.AppendFormat("[{0}] LIKE '%' + {1} + '%'", columnName, paramName);
-            else
-                _sb.AppendFormat("{0} LIKE '%' + {1} + '%'", columnName, paramName);
+            _sb.AppendFormat("{0} LIKE '%' + {1} + '%'", _dialect.CreateToken(columnName), paramName);
         }
 
         private void Write_StartsWith(MethodCallExpression body)
@@ -189,12 +181,7 @@ namespace Marr.Data.QGen
             var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
             string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
-            bool hasSpaces = columnName.Contains(' ');
-
-            if (hasSpaces)
-                _sb.AppendFormat("[{0}] LIKE {1} + '%'", columnName, paramName);
-            else
-                _sb.AppendFormat("{0} LIKE {1} + '%'", columnName, paramName);
+            _sb.AppendFormat("{0} LIKE {1} + '%'", _dialect.CreateToken(columnName), paramName);
         }
 
         private void Write_EndsWith(MethodCallExpression body)
@@ -205,12 +192,7 @@ namespace Marr.Data.QGen
             var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
             string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
-            bool hasSpaces = columnName.Contains(' ');
-
-            if (hasSpaces)
-                _sb.AppendFormat("[{0}] LIKE '%' + {1}", columnName, paramName);
-            else
-                _sb.AppendFormat("{0} LIKE '%' + {1}", columnName, paramName);
+            _sb.AppendFormat("{0} LIKE '%' + {1}", _dialect.CreateToken(columnName), paramName);
         }
 
         public override string ToString()

@@ -4,18 +4,21 @@ using System.Linq;
 using System.Text;
 using System.Linq.Expressions;
 using System.Reflection;
+using Marr.Data.QGen.Dialects;
 
 namespace Marr.Data.QGen
 {
     public class SortBuilder<T> : IEnumerable<T>
     {
         private QueryBuilder<T> _baseBuilder;
+        private Dialect _dialect;
         private List<SortColumn<T>> _sortExpressions;
         private bool _useAltName;
 
-        public SortBuilder(QueryBuilder<T> baseBuilder, bool useAltName)
+        public SortBuilder(QueryBuilder<T> baseBuilder, Dialect dialect, bool useAltName)
         {
             _baseBuilder = baseBuilder;
+            _dialect = dialect;
             _sortExpressions = new List<SortColumn<T>>();
             _useAltName = useAltName;
         }
@@ -71,12 +74,7 @@ namespace Marr.Data.QGen
                     sb.Append(",");
 
                 string columnName = sort.Member.GetColumnName(_useAltName);
-                bool hasSpaces = columnName.Contains(' ');
-
-                if (hasSpaces)
-                    sb.AppendFormat("[{0}]", sort.Member.GetColumnName(_useAltName));
-                else
-                    sb.AppendFormat("{0}", sort.Member.GetColumnName(_useAltName));
+                sb.Append(_dialect.CreateToken(columnName));
 
                 if (sort.Direction == SortDirection.Desc)
                     sb.Append(" DESC");

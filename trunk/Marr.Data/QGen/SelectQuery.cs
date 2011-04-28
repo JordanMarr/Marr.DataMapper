@@ -5,22 +5,25 @@ using System.Text;
 using Marr.Data;
 using Marr.Data.Mapping;
 using System.Data.Common;
+using Marr.Data.QGen.Dialects;
 
 namespace Marr.Data.QGen
 {
     public class SelectQuery : IQuery
     {
+        protected Dialect Dialect { get; set; }
         protected string Target { get; set; }
         protected string WhereClause { get; set; }
         protected string OrderBy { get; set; }
         protected ColumnMapCollection Columns { get; set; }
         protected bool UseAltName;
 
-        public SelectQuery(ColumnMapCollection columns, string target, string whereClause, string orderBy, bool useAltName)
+        public SelectQuery(Dialect dialect, ColumnMapCollection columns, string target, string whereClause, string orderBy, bool useAltName)
         {
             if (string.IsNullOrEmpty(target))
                 throw new ArgumentNullException(target);
 
+            Dialect = dialect;
             Columns = columns;
             Target = target;
             WhereClause = whereClause;
@@ -42,15 +45,10 @@ namespace Marr.Data.QGen
                     sql.Append(",");
 
                 string columnName = c.ColumnInfo.GetColumName(UseAltName);
-                bool hasSpaces = columnName.Contains(' ');
-
-                if (hasSpaces)
-                    sql.AppendFormat("[{0}]", columnName);
-                else
-                    sql.Append(columnName);
+                sql.Append(Dialect.CreateToken(columnName));
             }
 
-            sql.AppendFormat(" FROM {0} ", Target);
+            sql.AppendFormat(" FROM {0} ", Dialect.CreateToken(Target));
 
             sql.Append(WhereClause);
 

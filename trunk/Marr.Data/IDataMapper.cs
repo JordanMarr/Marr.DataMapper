@@ -26,6 +26,7 @@ namespace Marr.Data
 {
     public interface IDataMapper : IDisposable
     {
+        string ProviderString { get; }
         ParameterChainMethods AddParameter(string name, object value);
         IDbDataParameter AddParameter(IDbDataParameter parameter);
         int Update<T>(T entity, Expression<Func<T, bool>> filter);

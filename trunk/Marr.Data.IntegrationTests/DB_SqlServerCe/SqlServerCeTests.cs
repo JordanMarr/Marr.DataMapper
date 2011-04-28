@@ -25,19 +25,31 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
         {
             using (var db = CreateSqlServerCeDB())
             {
-                Order order1 = new Order { OrderName = "Test1" };
-                db.Insert(order1);
+                try
+                {
+                    db.SqlMode = SqlModes.Text;
+                    db.BeginTransaction();
 
-                Order order2 = new Order { OrderName = "Test2" };
-                db.Insert(order2);
+                    Order order1 = new Order { OrderName = "Test1" };
+                    db.Insert(order1);
 
-                var results = (from o in db.Query<Order>()
-                               orderby o.OrderName ascending
-                               select o).ToList();
+                    Order order2 = new Order { OrderName = "Test2" };
+                    db.Insert(order2);
 
-                Assert.IsTrue(results.Count == 2);
-                Assert.AreEqual(results[0].OrderName, "Test1");
-                Assert.AreEqual(results[1].OrderName, "Test2");
+                    var results = (from o in db.Query<Order>()
+                                   orderby o.OrderName
+                                   select o).ToList();
+
+                    Assert.IsTrue(results.Count == 2);
+                    Assert.AreEqual(results[0].OrderName, "Test1");
+                    Assert.AreEqual(results[1].OrderName, "Test2");
+
+                    db.Commit();
+                }
+                catch
+                {
+                    db.RollBack();
+                }
             }
             
         }
