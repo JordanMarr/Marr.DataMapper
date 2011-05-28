@@ -35,7 +35,7 @@ namespace Marr.Data.Mapping
         {
             get
             {
-                return this.Find(m => m.FieldName == fieldName);
+                return this.Find(m => m.ColumnInfo.Name == fieldName);
             }
         }
 

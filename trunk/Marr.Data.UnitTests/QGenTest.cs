@@ -10,6 +10,7 @@ using Marr.Data.Mapping;
 using Marr.Data;
 using System.Data.Common;
 using Marr.Data.QGen.Dialects;
+using Marr.Data.Tests.Entities;
 
 namespace Marr.Data.UnitTests
 {
@@ -383,6 +384,31 @@ namespace Marr.Data.UnitTests
             Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P0 + '%'"));
             Assert.IsTrue(queryText.Contains("[Age] > @P1"));            
         }
-        
+
+        /// <summary>
+        /// Ref: bug fix for work item #34 submitted by vitidev
+        /// </summary>
+        [TestMethod]
+        public void WhenColumnNameDiffersFromProperty_InsertQueryShouldUseColumnName()
+        {
+            // Arrange
+            Person2 person = new Person2 { Name = "Bob", Age = 40, BirthDate = DateTime.Now };
+            Dialect dialect = new SqlServerDialect();
+            ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(Person2));
+            DbCommand command = new System.Data.SqlClient.SqlCommand();
+            var mappingHelper = new MappingHelper(command);
+            mappingHelper.CreateParameters<Person2>(person, mappings, true);
+            string targetTable = "PersonTable";
+            InsertQuery query = new InsertQuery(dialect, mappings, command, targetTable);
+
+            // Act
+            string queryText = query.Generate();
+
+            // Assert
+            Assert.IsTrue(queryText.Contains("[PersonName]"), "Query should contain column name");
+            Assert.IsTrue(queryText.Contains("[PersonAge]"), "Query should contain column name");
+            Assert.IsTrue(queryText.Contains("[BirthDate]"), "Query should contain property name");
+            Assert.IsTrue(queryText.Contains("[IsHappy]"), "Query should contain property name");
+        }
     }
 }
