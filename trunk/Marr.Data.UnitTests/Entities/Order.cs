@@ -25,6 +25,9 @@ namespace Marr.Data.UnitTests.Entities
         public int ID { get; set; }
 
         [Column]
+        public int OrderID { get; set; }
+
+        [Column]
         public string ItemDescription { get; set; }
 
         [Column]

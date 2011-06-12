@@ -11,6 +11,7 @@ using Marr.Data;
 using System.Data.Common;
 using Marr.Data.QGen.Dialects;
 using Marr.Data.Tests.Entities;
+using System.Linq.Expressions;
 
 namespace Marr.Data.UnitTests
 {
@@ -38,7 +39,9 @@ namespace Marr.Data.UnitTests
             mappingHelper.CreateParameters<Person>(person, columns, true);
 
             int idValue = 7;
-            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.ID == person.ID || p.ID == idValue || p.Name == person.Name && p.Name == "Bob", false);
+            TableCollection tables = new TableCollection { new Table(typeof(Person)) };
+            Expression<Func<Person, bool>> filter =  p => p.ID == person.ID || p.ID == idValue || p.Name == person.Name && p.Name == "Bob";
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
 
             IQuery query = new UpdateQuery(new SqlServerDialect(), columns, command, "dbo.People", where.ToString());
 
@@ -96,16 +99,18 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
-            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.ID == 5, false);
-            IQuery query = new DeleteQuery("dbo.People", where.ToString());
+            TableCollection tables = new TableCollection { new Table(typeof(Person)) };
+            Expression<Func<Person, bool>> filter = p => p.ID == 5;
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
+            IQuery query = new DeleteQuery(new Dialect(), tables[0], where.ToString());
 
             // Act
             string queryText = query.Generate();
 
             // Assert
             Assert.IsNotNull(queryText);
-            Assert.IsTrue(queryText.Contains("DELETE FROM dbo.People"));
-            Assert.IsTrue(queryText.Contains("WHERE (([ID] = @P0))"));
+            Assert.IsTrue(queryText.Contains("DELETE FROM [PersonTable]"));
+            Assert.IsTrue(queryText.Contains("WHERE (([t0].[ID] = @P0))"));
             Assert.AreEqual(command.Parameters["@P0"].Value, 5);
         }
 
@@ -126,8 +131,10 @@ namespace Marr.Data.UnitTests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name == "John" && p.Age > 15 || p.Age < 5 && p.Age > 1, false);
-            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
+            TableCollection tables = new TableCollection { new Table(typeof(Person)) };
+            Expression<Func<Person, bool>> filter = p => p.Name == "John" && p.Age > 15 || p.Age < 5 && p.Age > 1;
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -138,8 +145,8 @@ namespace Marr.Data.UnitTests
             Assert.AreEqual(command.Parameters["@P1"].Value, 15);
             Assert.AreEqual(command.Parameters["@P2"].Value, 5);
             Assert.AreEqual(command.Parameters["@P3"].Value, 1);
-            Assert.IsTrue(queryText.Contains("([Name] = @P0) AND ([Age] > @P1))"));
-            Assert.IsTrue(queryText.Contains("([Age] < @P2) AND ([Age] > @P3))"));
+            Assert.IsTrue(queryText.Contains("([t0].[Name] = @P0) AND ([t0].[Age] > @P1))"));
+            Assert.IsTrue(queryText.Contains("([t0].[Age] < @P2) AND ([t0].[Age] > @P3))"));
         }
 
         [TestMethod]
@@ -159,8 +166,10 @@ namespace Marr.Data.UnitTests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name.Contains("John"), false);
-            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
+            TableCollection tables = new TableCollection { new Table(typeof(Person)) };
+            Expression<Func<Person, bool>> filter = p => p.Name.Contains("John");
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -190,8 +199,10 @@ namespace Marr.Data.UnitTests
 
             string john = "John";
 
-            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name.Contains(john), false);
-            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
+            TableCollection tables = new TableCollection { new Table(typeof(Person)) };
+            Expression<Func<Person, bool>> filter = p => p.Name.Contains(john);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -220,8 +231,10 @@ namespace Marr.Data.UnitTests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name.StartsWith("John"), false);
-            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
+            TableCollection tables = new TableCollection { new Table(typeof(Person)) };
+            Expression<Func<Person, bool>> filter = p => p.Name.StartsWith("John");
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -251,8 +264,10 @@ namespace Marr.Data.UnitTests
 
             string john = "John";
 
-            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name.StartsWith(john), false);
-            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
+            TableCollection tables = new TableCollection { new Table(typeof(Person)) };
+            Expression<Func<Person, bool>> filter = p => p.Name.StartsWith(john);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -280,8 +295,10 @@ namespace Marr.Data.UnitTests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name.EndsWith("John"), false);
-            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
+            TableCollection tables = new TableCollection { new Table(typeof(Person)) };
+            Expression<Func<Person, bool>> filter = p => p.Name.EndsWith("John");
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -311,8 +328,10 @@ namespace Marr.Data.UnitTests
 
             string john = "John";
 
-            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name.EndsWith(john), false);
-            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
+            TableCollection tables = new TableCollection { new Table(typeof(Person)) };
+            Expression<Func<Person, bool>> filter = p => p.Name.EndsWith(john);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -340,8 +359,10 @@ namespace Marr.Data.UnitTests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Age > 5 && p.Name.Contains("John"), false);
-            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
+            TableCollection tables = new TableCollection { new Table(typeof(Person)) };
+            Expression<Func<Person, bool>> filter = p => p.Age > 5 && p.Name.Contains("John");
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -371,8 +392,10 @@ namespace Marr.Data.UnitTests
 
             List<Person> list = new List<Person>();
 
-            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), p => p.Name.Contains("John") && p.Age > 5, false);
-            IQuery query = new SelectQuery(new SqlServerDialect(), columns, "dbo.People", where.ToString(), "", false);
+            TableCollection tables = new TableCollection { new Table(typeof(Person)) };
+            Expression<Func<Person, bool>> filter = p => p.Name.Contains("John") && p.Age > 5;
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
 
             // Act
             string queryText = query.Generate();
@@ -382,7 +405,7 @@ namespace Marr.Data.UnitTests
             Assert.AreEqual(command.Parameters["@P0"].Value, "John");
             Assert.AreEqual(command.Parameters["@P1"].Value, 5);
             Assert.IsTrue(queryText.Contains("[Name] LIKE '%' + @P0 + '%'"));
-            Assert.IsTrue(queryText.Contains("[Age] > @P1"));            
+            Assert.IsTrue(queryText.Contains("[Age] > @P1"));
         }
 
         /// <summary>

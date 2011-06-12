@@ -7,6 +7,9 @@ using Marr.Data.QGen.Dialects;
 
 namespace Marr.Data.QGen
 {
+    /// <summary>
+    /// This class contains the factory logic that determines which type of IQuery object should be created.
+    /// </summary>
     internal class QueryFactory
     {
         private const string DB_SqlClient = "System.Data.SqlClient";
@@ -28,15 +31,15 @@ namespace Marr.Data.QGen
             return new InsertQuery(dialect, columns, dataMapper.Command, target);
         }
 
-        public static IQuery CreateDeleteQuery(string target, string whereClause)
+        public static IQuery CreateDeleteQuery(Dialects.Dialect dialect, Table targetTable, string whereClause)
         {
-            return new DeleteQuery(target, whereClause);
+            return new DeleteQuery(dialect, targetTable, whereClause);
         }
 
-        public static IQuery CreateSelectQuery(Mapping.ColumnMapCollection columns, IDataMapper dataMapper, string target, string where, string orderBy, bool useAltName)
+        public static IQuery CreateSelectQuery(TableCollection tables, IDataMapper dataMapper, string where, string orderBy, bool useAltName)
         {
             Dialect dialect = CreateDialect(dataMapper);
-            return new SelectQuery(dialect, columns, target, where, orderBy, useAltName);
+            return new SelectQuery(dialect, tables, where, orderBy, useAltName);
         }
 
         public static Dialects.Dialect CreateDialect(IDataMapper dataMapper)

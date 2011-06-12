@@ -8,6 +8,9 @@ using Marr.Data.QGen.Dialects;
 
 namespace Marr.Data.QGen
 {
+    /// <summary>
+    /// This class creates an insert query.
+    /// </summary>
     public class InsertQuery : IQuery
     {
         protected Dialect Dialect { get; set; }
@@ -17,6 +20,11 @@ namespace Marr.Data.QGen
 
         public InsertQuery(Dialect dialect, ColumnMapCollection columns, DbCommand command, string target)
         {
+
+            if (string.IsNullOrEmpty(target))
+            {
+                throw new DataMappingException("A target table must be passed in or set in a TableAttribute.");
+            }
             Dialect = dialect;
             Target = target;
             Columns = columns;

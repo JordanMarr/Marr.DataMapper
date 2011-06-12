@@ -11,25 +11,30 @@ using System.Collections;
 
 namespace Marr.Data.QGen
 {
+    /// <summary>
+    /// This class is responsible for building a select query.
+    /// It uses chaining methods to provide a fluent interface for creating select queries.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class QueryBuilder<T> : ExpressionVisitor, IEnumerable<T>
     {
         #region - Private Members -
 
         private Dialects.Dialect _dialect;
         private DataMapper _db;
+        private TableCollection _tables;
         private WhereBuilder<T> _whereBuilder;
         private SortBuilder<T> _sortBuilder;
-        private string _tableName;
         private bool _useAltName = false;
         internal string _queryText;
-        private string[] _childrenToLoad;
+        private List<string> _childrenToLoad;
         private SortBuilder<T> SortBuilder
         {
             get
             {
                 // Lazy load
                 if (_sortBuilder == null)
-                    _sortBuilder = new SortBuilder<T>(this, _dialect, _useAltName);
+                    _sortBuilder = new SortBuilder<T>(this, _dialect, _tables, _useAltName);
 
                 return _sortBuilder;
             }
@@ -43,6 +48,9 @@ namespace Marr.Data.QGen
         {
             _db = db;
             _dialect = dialect;
+            _tables = new TableCollection();
+            _tables.Add(new Table(typeof(T)));
+            _childrenToLoad = new List<string>();
         }
 
         #endregion
@@ -54,7 +62,8 @@ namespace Marr.Data.QGen
             if (string.IsNullOrEmpty(tableName))
                 throw new DataMappingException("A target table must be passed in or set in a TableAttribute.");
 
-            _tableName = tableName;
+            // Override the base table name
+            _tables[0].Name = tableName;
             return this;
         }
 
@@ -71,10 +80,41 @@ namespace Marr.Data.QGen
 
         public QueryBuilder<T> Graph(params string[] childrenToLoad)
         {
+            EntityGraph graph = new EntityGraph(typeof(T), null);
+            TableCollection tablesInView = new TableCollection();
+
             if (childrenToLoad.Length > 0)
-                _childrenToLoad = childrenToLoad;
+            {
+                // Add base table
+                tablesInView.Add(_tables[0]);
+
+                // Add user specified child tables
+                foreach (string child in childrenToLoad)
+                {
+                    var node = graph.Where(g => g.Member != null && g.Member.Name == child).FirstOrDefault();
+                    if (node != null)
+                    {
+                        tablesInView.Add(new Table(node.EntityType, JoinType.None));
+                    }
+
+                    if (!_childrenToLoad.Contains(child))
+                    {
+                        _childrenToLoad.Add(child);
+                    }
+                }
+            }
             else
-                _childrenToLoad = null;
+            {
+                // Add all tables in the graph
+                foreach (var node in graph)
+                {
+                    tablesInView.Add(new Table(node.EntityType, JoinType.None));
+                }
+            }
+
+            // Replace the base table with a view with tables
+            View view = new View(_tables[0].Name, tablesInView.ToArray());
+            _tables.ReplaceBaseTable(view);
 
             _useAltName = true;
             return this;
@@ -87,7 +127,9 @@ namespace Marr.Data.QGen
             // Parse relationship member names from expression array
             foreach (var exp in childrenToLoad)
             {
-                entitiesToLoad.Add((exp.Body as MemberExpression).Member.Name);
+                MemberInfo member = (exp.Body as MemberExpression).Member;
+                entitiesToLoad.Add(member.Name);
+                
             }
 
             return entitiesToLoad.ToArray();
@@ -141,17 +183,10 @@ namespace Marr.Data.QGen
 
         internal void BuildQuery()
         {
-            if (_tableName == null)
-                _tableName = MapRepository.Instance.GetTableName(typeof(T));
-
-            if (string.IsNullOrEmpty(_tableName))
-                throw new DataMappingException("A target table must be passed in or set in a TableAttribute.");
-
             // Generate a query
-            var columns = GetColumns(_childrenToLoad);
             string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
             string sort = SortBuilder.ToString();
-            IQuery query = QueryFactory.CreateSelectQuery(columns, _db, _tableName, where, sort, _useAltName);
+            IQuery query = QueryFactory.CreateSelectQuery(_tables, _db, where, sort, _useAltName);
             _queryText = query.Generate();
         }
 
@@ -195,9 +230,15 @@ namespace Marr.Data.QGen
 
         #region - Linq Support -
 
+        public SortBuilder<T> Where<TObj>(Expression<Func<TObj, bool>> filterExpression)
+        {
+            _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, _useAltName, true);
+            return SortBuilder;
+        }
+
         public SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
         {
-            _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _useAltName);
+            _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, _useAltName, true);
             return SortBuilder;
         }
 
@@ -267,6 +308,17 @@ namespace Marr.Data.QGen
             return base.VisitMethodCall(expression);
         }
 
+        public QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, Expression<Func<TLeft, TRight, bool>> filterExpression)
+        {
+            Graph(typeof(TLeft).Name);
+            Graph(typeof(TRight).Name);
+            Table table = new Table(typeof(TRight), joinType);
+            _tables.Add(table);
+            var builder = new JoinBuilder<TLeft,TRight>(_db.Command, _dialect, filterExpression, _tables);
+            table.JoinClause = builder.ToString();
+            return this;
+        }
+
         #endregion
 
         #region IEnumerable<T> Members
@@ -289,4 +341,7 @@ namespace Marr.Data.QGen
 
         #endregion
     }
+
+
+
 }

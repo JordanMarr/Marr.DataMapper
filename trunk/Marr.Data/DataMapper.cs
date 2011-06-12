@@ -31,6 +31,9 @@ using System.Diagnostics;
 
 namespace Marr.Data
 {
+    /// <summary>
+    /// This class is the main access point for making database related calls.
+    /// </summary>
     public class DataMapper : IDataMapper
     {
 
@@ -565,7 +568,7 @@ namespace Marr.Data
         /// <param name="entityList"></param>
         /// <param name="entityGraph">Coordinates loading all objects in the graph..</param>
         /// <returns></returns>
-        internal ICollection<T> QueryToGraph<T>(string sql, EntityGraph graph, IEnumerable<string> childrenToLoad)
+        internal ICollection<T> QueryToGraph<T>(string sql, EntityGraph graph, List<string> childrenToLoad)
         {
             if (string.IsNullOrEmpty(sql))
                 throw new ArgumentNullException("sql");
@@ -587,7 +590,7 @@ namespace Marr.Data
                         {
                             // If is child relationship entity, and childrenToLoad are specified, and entity is not listed,
                             // then skip this entity.
-                            if (childrenToLoad != null && !lvl.IsRoot && !childrenToLoad.Contains(lvl.Member.Name))
+                            if (childrenToLoad.Count > 0 && !lvl.IsRoot && !childrenToLoad.Contains(lvl.Member.Name)) // lvl.Member.Name
                             {
                                 continue;
                             }
@@ -639,7 +642,9 @@ namespace Marr.Data
             mappingHelper.CreateParameters<T>(entity, mappings, true);
             // Create where clause and add where parameters
             var dialect = QGen.QueryFactory.CreateDialect(this);
-            var where = new WhereBuilder<T>(Command, dialect, filter, false);
+            TableCollection tables = new TableCollection();
+            tables.Add(new Table(typeof(T)));
+            var where = new WhereBuilder<T>(Command, dialect, filter, tables, false, false);
             IQuery query = QueryFactory.CreateUpdateQuery(mappings, this, tableName, where.ToString());
             Command.CommandText = query.Generate();
 
@@ -790,8 +795,10 @@ namespace Marr.Data
                 tableName = MapRepository.Instance.GetTableName(typeof(T));
             }
             var dialect = QGen.QueryFactory.CreateDialect(this);
-            var where = new WhereBuilder<T>(Command, dialect, filter, false);
-            IQuery query = QueryFactory.CreateDeleteQuery(tableName, where.ToString());
+            TableCollection tables = new TableCollection();
+            tables.Add(new Table(typeof(T)));
+            var where = new WhereBuilder<T>(Command, dialect, filter, tables, false, false);
+            IQuery query = QueryFactory.CreateDeleteQuery(dialect, tables[0], where.ToString());
             Command.CommandText = query.Generate();
 
             int rowsAffected = 0;

@@ -106,13 +106,17 @@
     <Compile Include="QGen\ExpressionVisitor.cs" />
     <Compile Include="QGen\InsertQuery.cs" />
     <Compile Include="QGen\IQuery.cs" />
+    <Compile Include="QGen\JoinBuilder.cs" />
     <Compile Include="QGen\QueryBuilder.cs" />
     <Compile Include="QGen\QueryFactory.cs" />
     <Compile Include="QGen\QueryQueueItem.cs" />
     <Compile Include="QGen\SelectQuery.cs" />
     <Compile Include="QGen\SortBuilder.cs" />
     <Compile Include="QGen\SortColumn.cs" />
+    <Compile Include="QGen\Table.cs" />
+    <Compile Include="QGen\TableCollection.cs" />
     <Compile Include="QGen\UpdateQuery.cs" />
+    <Compile Include="QGen\View.cs" />
     <Compile Include="QGen\WhereBuilder.cs" />
     <Compile Include="Reflection\IReflectionStrategy.cs" />
     <Compile Include="Reflection\SimpleReflectionStrategy.cs" />

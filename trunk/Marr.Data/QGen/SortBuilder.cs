@@ -8,19 +8,27 @@ using Marr.Data.QGen.Dialects;
 
 namespace Marr.Data.QGen
 {
+    /// <summary>
+    /// This class is responsible for creating an "ORDER BY" clause.
+    /// It uses chaining methods to provide a fluent interface.
+    /// It also has some methods that coincide with Linq methods, to provide Linq compatibility.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class SortBuilder<T> : IEnumerable<T>
     {
         private QueryBuilder<T> _baseBuilder;
         private Dialect _dialect;
         private List<SortColumn<T>> _sortExpressions;
         private bool _useAltName;
+        private TableCollection _tables;
 
-        public SortBuilder(QueryBuilder<T> baseBuilder, Dialect dialect, bool useAltName)
+        public SortBuilder(QueryBuilder<T> baseBuilder, Dialect dialect, TableCollection tables, bool useAltName)
         {
             _baseBuilder = baseBuilder;
             _dialect = dialect;
             _sortExpressions = new List<SortColumn<T>>();
             _useAltName = useAltName;
+            _tables = tables;
         }
 
         internal SortBuilder<T> Order(MemberInfo member)
@@ -73,8 +81,19 @@ namespace Marr.Data.QGen
                 if (sb.Length > 0)
                     sb.Append(",");
 
+                Table table = _tables.FindTable(sort.Member);
+
+                if (table == null)
+                {
+                    string msg = string.Format("The property '{0} -> {1}' you are trying to reference in the 'ORDER BY' statement belongs to an entity that has not been joined in your query.  To reference this property, you must join the '{0}' entity using the Join method.",
+                        sort.Member.DeclaringType.Name,
+                        sort.Member.Name);
+
+                    throw new DataMappingException(msg);
+                }
+
                 string columnName = sort.Member.GetColumnName(_useAltName);
-                sb.Append(_dialect.CreateToken(columnName));
+                sb.Append(_dialect.CreateToken(string.Format("{0}.{1}", table.Alias, columnName)));
 
                 if (sort.Direction == SortDirection.Desc)
                     sb.Append(" DESC");

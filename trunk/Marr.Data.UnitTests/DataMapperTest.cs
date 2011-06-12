@@ -100,12 +100,12 @@ namespace Marr.Data.UnitTests
         public void QueryToGraph_WithNestedRelationships_ShouldMapToGraph()
         {
             // Arrange
-            StubResultSet rs = new StubResultSet("ID", "OrderName", "OrderItemID", "ItemDescription", "Price", "AmountPaid");
-            rs.AddRow(1, "Order1", 50, "Red car", 100.35m, DBNull.Value);
-            rs.AddRow(1, "Order1", 51, "Blue wagon", 44.87m, DBNull.Value);
-            rs.AddRow(2, "Order2", 60, "Guitar", 1500.50m, 1500.50m);
-            rs.AddRow(2, "Order2", 61, "Bass", 2380.00m, 50.00m);
-            rs.AddRow(3, "Order3", DBNull.Value, DBNull.Value, DBNull.Value, DBNull.Value);
+            StubResultSet rs = new StubResultSet("ID", "OrderName", "OrderItemID", "OrderID", "ItemDescription", "Price", "AmountPaid");
+            rs.AddRow(1, "Order1", 50, 1, "Red car", 100.35m, DBNull.Value);
+            rs.AddRow(1, "Order1", 51, 1, "Blue wagon", 44.87m, DBNull.Value);
+            rs.AddRow(2, "Order2", 60, 2, "Guitar", 1500.50m, 1500.50m);
+            rs.AddRow(2, "Order2", 61, 3, "Bass", 2380.00m, 50.00m);
+            rs.AddRow(3, "Order3", DBNull.Value, DBNull.Value, DBNull.Value, DBNull.Value, DBNull.Value);
             
             // Act
             var db = CreateDB_ForQuery(rs);
@@ -153,14 +153,14 @@ namespace Marr.Data.UnitTests
         public void QueryToGraph_WithNestedRelationships_UnsortedResults_ShouldMapToGraph()
         {
             // Arrange
-            StubResultSet rs = new StubResultSet("ID", "OrderName", "OrderItemID", "ItemDescription", "Price", "AmountPaid");
+            StubResultSet rs = new StubResultSet("ID", "OrderName", "OrderItemID", "OrderID", "ItemDescription", "Price", "AmountPaid");
 
             // For this test, results are purposefully out of order
-            rs.AddRow(3, "Order3", DBNull.Value, DBNull.Value, DBNull.Value, DBNull.Value);
-            rs.AddRow(1, "Order1", 50, "Red car", 100.35m, DBNull.Value);
-            rs.AddRow(2, "Order2", 60, "Guitar", 1500.50m, 1500.50m);
-            rs.AddRow(1, "Order1", 51, "Blue wagon", 44.87m, DBNull.Value);
-            rs.AddRow(2, "Order2", 61, "Bass", 2380.00m, 50.00m);
+            rs.AddRow(3, "Order3", DBNull.Value, DBNull.Value, DBNull.Value, DBNull.Value, DBNull.Value);
+            rs.AddRow(1, "Order1", 50, 1, "Red car", 100.35m, DBNull.Value);
+            rs.AddRow(2, "Order2", 60, 2, "Guitar", 1500.50m, 1500.50m);
+            rs.AddRow(1, "Order1", 51, 1, "Blue wagon", 44.87m, DBNull.Value);
+            rs.AddRow(2, "Order2", 61, 2, "Bass", 2380.00m, 50.00m);
 
             // Act
             var db = CreateDB_ForQuery(rs);

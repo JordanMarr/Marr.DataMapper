@@ -23,6 +23,9 @@ using Marr.Data.Mapping;
 
 namespace Marr.Data
 {
+    /// <summary>
+    /// This class contains misc. extension methods that are used throughout the project.
+    /// </summary>
     internal static class DataHelper
     {
         public static bool HasColumn(this IDataReader dr, string columnName) 
@@ -63,6 +66,41 @@ namespace Marr.Data
             }
 
             return columnName;
+        }
+
+        /// <summary>
+        /// Returns the TableAttribute name (if attribute exists), or the member name.
+        /// </summary>
+        /// <param name="member"></param>
+        /// <returns></returns>
+        public static string GetTableName(this MemberInfo member)
+        {
+            string tableName = member.DeclaringType.Name;
+
+            // If table name is overridden at TableAttribute level, use that name instead
+            object[] attributes = member.DeclaringType.GetCustomAttributes(typeof(TableAttribute), false);
+            if (attributes.Length > 0)
+            {
+                TableAttribute table = (attributes[0] as TableAttribute);
+                tableName = table.Name;
+            }
+
+            return tableName;
+        }
+
+        public static string GetTableName(this Type memberType)
+        {
+            string tableName = memberType.Name;
+
+            // If column name is overridden at TableAttribute level, use that name instead
+            object[] attributes = memberType.GetCustomAttributes(typeof(TableAttribute), false);
+            if (attributes.Length > 0)
+            {
+                TableAttribute table = (attributes[0] as TableAttribute);
+                tableName = table.Name;
+            }
+
+            return tableName;
         }
 
         public static string GetColumName(this IColumnInfo col, bool useAltName)

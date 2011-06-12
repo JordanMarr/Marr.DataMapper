@@ -12,17 +12,25 @@ using Marr.Data.QGen.Dialects;
 
 namespace Marr.Data.QGen
 {
+    /// <summary>
+    /// This class utilizes the ExpressionVisitor base class, and it is responsible for creating the "WHERE" clause.
+    /// It builds a protected StringBuilder class whose output is created when the ToString method is called.
+    /// It also has some methods that coincide with Linq methods, to provide Linq compatibility.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class WhereBuilder<T> : ExpressionVisitor
     {
         private MapRepository _repos;
         private DbCommand _command;
-        private Dialect _dialect;
-        private StringBuilder _sb;
         private string _paramPrefix;
-        private bool _useAltName;
         private bool isLeftSide = true;
+        protected bool _useAltName;
+        protected Dialect _dialect;
+        protected StringBuilder _sb;
+        protected TableCollection _tables;
+        protected bool _tablePrefix;
 
-        public WhereBuilder(DbCommand command, Dialect dialect, Expression<Func<T, bool>> filter, bool useAltName)
+        public WhereBuilder(DbCommand command, Dialect dialect, Expression filter, TableCollection tables, bool useAltName, bool tablePrefix)
         {
             _repos = MapRepository.Instance;
             _command = command;
@@ -30,15 +38,25 @@ namespace Marr.Data.QGen
             _paramPrefix = command.ParameterPrefix();
             _sb = new StringBuilder();
             _useAltName = useAltName;
+            _tables = tables;
+            _tablePrefix = tablePrefix;
 
             if (filter != null)
             {
-                _sb.Append("WHERE (");
+                _sb.AppendFormat("{0} (", PrefixText);
 
-                base.Visit(filter.Body);
+                base.Visit(filter);
 
                 _sb.Append(")");
             }            
+        }
+
+        protected virtual string PrefixText
+        {
+            get
+            {
+                return "WHERE";
+            }
         }
 
         protected override Expression VisitBinary(BinaryExpression expression)
@@ -87,8 +105,8 @@ namespace Marr.Data.QGen
         {
             if (isLeftSide)
             {
-                string columnName = expression.Member.GetColumnName(_useAltName);
-                _sb.Append(_dialect.CreateToken(columnName));
+                string fqColumn = GetFullyQualifiedColumnName(expression.Member);
+                _sb.Append(fqColumn);
             }
             else
             {
@@ -144,6 +162,31 @@ namespace Marr.Data.QGen
             return rightValue;
         }
 
+        protected string GetFullyQualifiedColumnName(MemberInfo member)
+        {
+            if (_tablePrefix)
+            {
+                Table table = _tables.FindTable(member);
+
+                if (table == null)
+                {
+                    string msg = string.Format("The property '{0} -> {1}' you are trying to reference in the 'WHERE' statement belongs to an entity that has not been joined in your query.  To reference this property, you must join the '{0}' entity using the Join method.", 
+                        member.DeclaringType.Name,
+                        member.Name);
+
+                    throw new DataMappingException(msg);
+                }
+
+                string columnName = member.GetColumnName(_useAltName);
+                return _dialect.CreateToken(string.Format("{0}.{1}", table.Alias, columnName));
+            }
+            else
+            {
+                string columnName = member.GetColumnName(_useAltName);
+                return _dialect.CreateToken(columnName);
+            }
+        }
+
         private string Decode(ExpressionType expType)
         {
             switch (expType)
@@ -169,8 +212,8 @@ namespace Marr.Data.QGen
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
             var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
-            string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
-            _sb.AppendFormat("{0} LIKE '%' + {1} + '%'", _dialect.CreateToken(columnName), paramName);
+            string fqColumn = GetFullyQualifiedColumnName((body.Object as MemberExpression).Member);
+            _sb.AppendFormat("{0} LIKE '%' + {1} + '%'", fqColumn, paramName);
         }
 
         private void Write_StartsWith(MethodCallExpression body)
@@ -180,8 +223,8 @@ namespace Marr.Data.QGen
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
             var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
-            string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
-            _sb.AppendFormat("{0} LIKE {1} + '%'", _dialect.CreateToken(columnName), paramName);
+            string fqColumn = GetFullyQualifiedColumnName((body.Object as MemberExpression).Member);
+            _sb.AppendFormat("{0} LIKE {1} + '%'", fqColumn, paramName);
         }
 
         private void Write_EndsWith(MethodCallExpression body)
@@ -191,8 +234,8 @@ namespace Marr.Data.QGen
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
             var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
-            string columnName = (body.Object as MemberExpression).Member.GetColumnName(_useAltName);
-            _sb.AppendFormat("{0} LIKE '%' + {1}", _dialect.CreateToken(columnName), paramName);
+            string fqColumn = GetFullyQualifiedColumnName((body.Object as MemberExpression).Member);
+            _sb.AppendFormat("{0} LIKE '%' + {1}", fqColumn, paramName);
         }
 
         public override string ToString()

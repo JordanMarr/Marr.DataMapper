@@ -19,10 +19,14 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe.Entities
         public List<OrderItem> OrderItems { get; set; }
     }
 
+    [Table("OrderItem")]
     public class OrderItem
     {
-        [Column("ID", AltName = "OrderItemID", IsPrimaryKey = true)]
+        [Column("ID", AltName = "OrderItemID", IsPrimaryKey = true, IsAutoIncrement=true)]
         public int ID { get; set; }
+
+        [Column]
+        public int OrderID { get; set; }
 
         [Column]
         public string ItemDescription { get; set; }
@@ -34,8 +38,12 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe.Entities
         public Receipt ItemReceipt { get; set; }
     }
 
+    [Table("Receipt")]
     public class Receipt
     {
+        [Column]
+        public int OrderItemID { get; set; }
+
         [Column]
         public decimal? AmountPaid { get; set; }
     }
