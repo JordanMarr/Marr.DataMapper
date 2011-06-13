@@ -15,6 +15,37 @@ namespace Marr.Data.UnitTests
     [TestClass]
     public class MapBuilderTest
     {
+        private Type _personType;
+        private MapRepository _mapRepository;
+
+        [TestInitialize]
+        public void Init()
+        {
+            _mapRepository = MapRepository.Instance;
+            _personType = typeof(UnmappedPerson);
+
+            InitMappings();
+        }
+
+        public void InitMappings()
+        {
+            MapBuilder builder = new MapBuilder();
+
+            builder.SetTableName<Person>("PersonTable");
+
+            builder.BuildColumns<Person>()
+                .SetReturnValue("ID")
+                .SetPrimaryKey("ID")
+                .SetAutoIncrement("ID");
+
+            builder.BuildRelationships<Person>();
+
+            builder.BuildColumns<Pet>()
+                .SetPrimaryKey("ID")
+                .SetAltName("ID", "Pet_ID")
+                .SetAltName("Name", "Pet_Name");
+        }
+
         #region - Columns -
 
         [TestMethod]
@@ -22,7 +53,8 @@ namespace Marr.Data.UnitTests
         {
             var mapBuilder = new MapBuilder();
             var maps = mapBuilder.BuildColumns<UnmappedPerson>();
-            Assert.IsTrue(maps.Count == 6);
+            Assert.IsTrue(maps.Count == 5);
+            Assert.IsTrue(_mapRepository.Columns[_personType].Count == 5);
         }
 
         [TestMethod]
@@ -30,7 +62,8 @@ namespace Marr.Data.UnitTests
         {
             var mapBuilder = new MapBuilder(false);
             var maps = mapBuilder.BuildColumns<UnmappedPerson>();
-            Assert.IsTrue(maps.Count == 7);
+            Assert.IsTrue(maps.Count == 6);
+            Assert.IsTrue(_mapRepository.Columns[_personType].Count == 6);
         }
 
         [TestMethod]
@@ -43,6 +76,10 @@ namespace Marr.Data.UnitTests
             Assert.IsNotNull(maps["BirthDate"]);
             Assert.IsNotNull(maps["IsHappy"]);
             Assert.IsNotNull(maps["Pets"]);
+            Assert.IsNotNull(_mapRepository.Columns[_personType]["Age"]);
+            Assert.IsNotNull(_mapRepository.Columns[_personType]["BirthDate"]);
+            Assert.IsNotNull(_mapRepository.Columns[_personType]["IsHappy"]);
+            Assert.IsNotNull(_mapRepository.Columns[_personType]["Pets"]);
         }
 
         [TestMethod]
@@ -76,6 +113,8 @@ namespace Marr.Data.UnitTests
             var maps = mapBuilder.BuildRelationships<UnmappedPerson>();
             Assert.IsTrue(maps.Count == 1);
             Assert.IsNotNull(maps["Pets"]);
+            Assert.IsTrue(_mapRepository.Relationships[_personType].Count == 1);
+            Assert.IsNotNull(_mapRepository.Relationships[_personType]["Pets"]);
         }
 
         [TestMethod]

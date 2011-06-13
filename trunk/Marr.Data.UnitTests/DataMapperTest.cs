@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Data.Common;
 using Rhino.Mocks;
 using Marr.Data.UnitTests.Entities;
+using Marr.Data.Mapping;
 
 namespace Marr.Data.UnitTests
 {
@@ -15,6 +16,31 @@ namespace Marr.Data.UnitTests
     [TestClass]
     public class DataMapperTest : TestBase
     {
+        [TestInitialize]
+        public void Init()
+        {
+            InitMappings();
+        }
+
+        public void InitMappings()
+        {
+            MapBuilder builder = new MapBuilder();
+
+            builder.SetTableName<Person>("PersonTable");
+
+            builder.BuildColumns<Person>()
+                .SetReturnValue("ID")
+                .SetPrimaryKey("ID")
+                .SetAutoIncrement("ID");
+
+            builder.BuildRelationships<Person>();
+
+            builder.BuildColumns<Pet>()
+                .SetPrimaryKey("ID")
+                .SetAltName("ID", "Pet_ID")
+                .SetAltName("Name", "Pet_Name");
+        }
+
         [TestMethod]
         public void Find_ShouldMapToEntity()
         {

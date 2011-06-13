@@ -21,6 +21,31 @@ namespace Marr.Data.UnitTests
     [TestClass]
     public class QGenTest : TestBase
     {
+        [TestInitialize]
+        public void Init()
+        {
+            InitMappings();
+        }
+
+        public void InitMappings()
+        {
+            MapBuilder builder = new MapBuilder();
+
+            builder.SetTableName<Person>("PersonTable");
+
+            builder.BuildColumns<Person>()
+                .SetReturnValue("ID")
+                .SetPrimaryKey("ID")
+                .SetAutoIncrement("ID");
+
+            builder.BuildRelationships<Person>();
+
+            builder.BuildColumns<Pet>()
+                .SetPrimaryKey("ID")
+                .SetAltName("ID", "Pet_ID")
+                .SetAltName("Name", "Pet_Name");
+        }
+
         [TestMethod]
         public void SqlServerUpdateQuery_ShouldGenQuery()
         {
@@ -101,7 +126,7 @@ namespace Marr.Data.UnitTests
             var command = new System.Data.SqlClient.SqlCommand();
             TableCollection tables = new TableCollection { new Table(typeof(Person)) };
             Expression<Func<Person, bool>> filter = p => p.ID == 5;
-            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
+            var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, false);
             IQuery query = new DeleteQuery(new Dialect(), tables[0], where.ToString());
 
             // Act
@@ -110,7 +135,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.IsTrue(queryText.Contains("DELETE FROM [PersonTable]"));
-            Assert.IsTrue(queryText.Contains("WHERE (([t0].[ID] = @P0))"));
+            Assert.IsTrue(queryText.Contains("WHERE (([ID] = @P0))"));
             Assert.AreEqual(command.Parameters["@P0"].Value, 5);
         }
 

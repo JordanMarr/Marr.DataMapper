@@ -34,5 +34,15 @@ namespace Marr.Data.Mapping
             }
         }
 
+        #region - Fluent Methods -
+
+        public RelationshipCollection SetOneToOne(string propertyName)
+        {
+            this[propertyName].RelationshipInfo.RelationType = RelationshipTypes.One;
+            return this;
+        }
+
+        #endregion
+
     }
 }

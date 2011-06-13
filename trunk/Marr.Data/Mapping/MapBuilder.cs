@@ -25,13 +25,14 @@ namespace Marr.Data.Mapping
 
         /// <summary>
         /// Creates column mappings for the given type.
-        /// Maps all properties.
+        /// Maps all properties except ICollection properties.
         /// </summary>
         /// <typeparam name="T">The type that is being built.</typeparam>
         /// <returns><see cref="ColumnMapCollection"/></returns>
         public ColumnMapCollection BuildColumns<T>()
         {
-            return BuildColumns<T>(m => m.MemberType == MemberTypes.Property);
+            return BuildColumns<T>(m => m.MemberType == MemberTypes.Property &&
+                !typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType));
         }
 
         /// <summary>
@@ -70,9 +71,12 @@ namespace Marr.Data.Mapping
         /// <returns><see cref="ColumnMapCollection"/></returns>
         public ColumnMapCollection BuildColumns<T>(Func<MemberInfo, bool> predicate)
         {
+            Type entityType = typeof(T);
             ConventionMapStrategy strategy = new ConventionMapStrategy(_publicOnly);
             strategy.ColumnPredicate = predicate;
-            return strategy.MapColumns(typeof(T));
+            ColumnMapCollection columns = strategy.MapColumns(entityType);
+            MapRepository.Instance.Columns[entityType] = columns;
+            return columns;
         }
         
         #endregion
@@ -115,12 +119,28 @@ namespace Marr.Data.Mapping
         /// <returns><see cref="ColumnMapCollection"/></returns>
         public RelationshipCollection BuildRelationships<T>(Func<MemberInfo, bool> predicate)
         {
+            Type entityType = typeof(T);
             ConventionMapStrategy strategy = new ConventionMapStrategy(_publicOnly);
             strategy.RelationshipPredicate = predicate;
-            return strategy.MapRelationships(typeof(T));
+            RelationshipCollection relationships = strategy.MapRelationships(entityType);
+            MapRepository.Instance.Relationships[entityType] = relationships;
+            return relationships;
         }
         
         #endregion
 
+        #region - Tables -
+
+        /// <summary>
+        /// Sets the table name for a given type.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="tableName"></param>
+        public void SetTableName<T>(string tableName)
+        {
+            MapRepository.Instance.Tables[typeof(T)] = tableName;
+        }
+
+        #endregion
     }
 }

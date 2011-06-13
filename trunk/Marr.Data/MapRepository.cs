@@ -28,12 +28,12 @@ namespace Marr.Data
 {
     public class MapRepository
     {
-        private Dictionary<Type, string> _tables;
         private IDbTypeBuilder _dbTypeBuilder;
         private Dictionary<Type, IMapStrategy> _columnMapStrategies;
 
-        internal Dictionary<Type, ColumnMapCollection> Columns;
-        internal Dictionary<Type, RelationshipCollection> Relationships;
+        internal Dictionary<Type, string> Tables { get; set; }
+        internal Dictionary<Type, ColumnMapCollection> Columns { get; set; }
+        internal Dictionary<Type, RelationshipCollection> Relationships { get; set; }
         internal Dictionary<Type, IConverter> TypeConverters { get; set; }
 
         // Explicit static constructor to tell C# compiler
@@ -43,7 +43,7 @@ namespace Marr.Data
 
         private MapRepository()
         {
-            _tables = new Dictionary<Type, string>();
+            Tables = new Dictionary<Type, string>();
             Columns = new Dictionary<Type, ColumnMapCollection>();
             Relationships = new Dictionary<Type, RelationshipCollection>();
             TypeConverters = new Dictionary<Type, IConverter>();
@@ -117,14 +117,14 @@ namespace Marr.Data
 
         internal string GetTableName(Type entityType)
         {
-            if (_tables.ContainsKey(entityType))
+            if (Tables.ContainsKey(entityType))
             {
-                return _tables[entityType];
+                return Tables[entityType];
             }
             else
             {
                 string tableName = GetMapStrategy(entityType).MapTable(entityType);
-                _tables.Add(entityType, tableName);
+                Tables.Add(entityType, tableName);
                 return tableName;
             }
         }

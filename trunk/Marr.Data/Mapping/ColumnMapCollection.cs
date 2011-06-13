@@ -135,5 +135,58 @@ namespace Marr.Data.Mapping
 
 
         #endregion
+
+        #region - Fluent Methods -
+
+        public ColumnMapCollection SetPrimaryKey(string propertyName)
+        {
+            this[propertyName].ColumnInfo.IsPrimaryKey = true;
+            return this;
+        }
+
+        public ColumnMapCollection SetAutoIncrement(string propertyName)
+        {
+            this[propertyName].ColumnInfo.IsAutoIncrement = true;
+            return this;
+        }
+
+        public ColumnMapCollection SetColumnName(string propertyName, string columnName)
+        {
+            this[propertyName].ColumnInfo.Name = columnName;
+            return this;
+        }
+
+        public ColumnMapCollection SetReturnValue(string propertyName)
+        {
+            this[propertyName].ColumnInfo.ReturnValue = true;
+            return this;
+        }
+
+        public ColumnMapCollection SetSize(string propertyName, int size)
+        {
+            this[propertyName].ColumnInfo.Size = size;
+            return this;
+        }
+
+        public ColumnMapCollection SetAltName(string propertyName, string altName)
+        {
+            this[propertyName].ColumnInfo.AltName = altName;
+            return this;
+        }
+
+        public ColumnMapCollection SetParamDirection(string propertyName, ParameterDirection direction)
+        {
+            this[propertyName].ColumnInfo.ParamDirection = direction;
+            return this;
+        }
+
+        public ColumnMapCollection RemoveColumnMap(string propertyName)
+        {
+            var columnMap = this[propertyName];
+            this.Remove(columnMap);
+            return this;
+        }
+
+        #endregion
     }
 }

@@ -90,17 +90,7 @@ namespace Marr.Data
 
         public static string GetTableName(this Type memberType)
         {
-            string tableName = memberType.Name;
-
-            // If column name is overridden at TableAttribute level, use that name instead
-            object[] attributes = memberType.GetCustomAttributes(typeof(TableAttribute), false);
-            if (attributes.Length > 0)
-            {
-                TableAttribute table = (attributes[0] as TableAttribute);
-                tableName = table.Name;
-            }
-
-            return tableName;
+            return MapRepository.Instance.GetTableName(memberType);
         }
 
         public static string GetColumName(this IColumnInfo col, bool useAltName)
