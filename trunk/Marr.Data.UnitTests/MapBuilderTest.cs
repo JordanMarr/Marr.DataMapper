@@ -45,6 +45,7 @@ namespace Marr.Data.UnitTests
                 .For(p => p.ID)
                     .SetPrimaryKey()
                     .SetAltName("Pet_ID")
+                .For(p => p.Name)
                     .SetAltName("Pet_Name");
         }
 
