@@ -557,7 +557,7 @@ namespace Marr.Data
         public ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList)
         {
             EntityGraph graph = new EntityGraph(typeof(T), (IList)entityList);
-            return QueryToGraph<T>(sql, graph, null);
+            return QueryToGraph<T>(sql, graph, new List<string>());
         }
 
         /// <summary>
