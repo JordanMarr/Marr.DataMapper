@@ -3,7 +3,7 @@
   <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <id>MarrDataMapper</id>
     <version>
-      3.7.4181.42657
+      3.8.4182.32027
     </version>
     <authors>Jordan Marr, Rick Schott(NuGet)</authors>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>

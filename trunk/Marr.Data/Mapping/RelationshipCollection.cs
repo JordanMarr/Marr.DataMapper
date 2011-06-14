@@ -33,16 +33,5 @@ namespace Marr.Data.Mapping
                 return this.Find(m => m.Member.Name == fieldName);
             }
         }
-
-        #region - Fluent Methods -
-
-        public RelationshipCollection SetOneToOne(string propertyName)
-        {
-            this[propertyName].RelationshipInfo.RelationType = RelationshipTypes.One;
-            return this;
-        }
-
-        #endregion
-
     }
 }

@@ -31,19 +31,21 @@ namespace Marr.Data.UnitTests
         {
             MapBuilder builder = new MapBuilder();
 
-            builder.SetTableName<Person>("PersonTable");
+            builder.BuildTable<Person>("PersonTable");
 
             builder.BuildColumns<Person>()
-                .SetReturnValue("ID")
-                .SetPrimaryKey("ID")
-                .SetAutoIncrement("ID");
+                .For(p => p.ID)
+                    .SetPrimaryKey()
+                    .SetReturnValue()
+                    .SetAutoIncrement();
 
             builder.BuildRelationships<Person>();
 
             builder.BuildColumns<Pet>()
-                .SetPrimaryKey("ID")
-                .SetAltName("ID", "Pet_ID")
-                .SetAltName("Name", "Pet_Name");
+                .For(p => p.ID)
+                    .SetPrimaryKey()
+                    .SetAltName("Pet_ID")
+                    .SetAltName("Pet_Name");
         }
 
         #region - Columns -
@@ -53,7 +55,7 @@ namespace Marr.Data.UnitTests
         {
             var mapBuilder = new MapBuilder();
             var maps = mapBuilder.BuildColumns<UnmappedPerson>();
-            Assert.IsTrue(maps.Count == 5);
+            Assert.IsTrue(maps.Columns.Count == 5);
             Assert.IsTrue(_mapRepository.Columns[_personType].Count == 5);
         }
 
@@ -62,7 +64,7 @@ namespace Marr.Data.UnitTests
         {
             var mapBuilder = new MapBuilder(false);
             var maps = mapBuilder.BuildColumns<UnmappedPerson>();
-            Assert.IsTrue(maps.Count == 6);
+            Assert.IsTrue(maps.Columns.Count == 6);
             Assert.IsTrue(_mapRepository.Columns[_personType].Count == 6);
         }
 
@@ -71,15 +73,15 @@ namespace Marr.Data.UnitTests
         {
             var mapBuilder = new MapBuilder();
             var maps = mapBuilder.BuildColumnsExcept<UnmappedPerson>("ID", "Name");
-            Assert.IsTrue(maps.Count == 4);
-            Assert.IsNotNull(maps["Age"]);
-            Assert.IsNotNull(maps["BirthDate"]);
-            Assert.IsNotNull(maps["IsHappy"]);
-            Assert.IsNotNull(maps["Pets"]);
-            Assert.IsNotNull(_mapRepository.Columns[_personType]["Age"]);
-            Assert.IsNotNull(_mapRepository.Columns[_personType]["BirthDate"]);
-            Assert.IsNotNull(_mapRepository.Columns[_personType]["IsHappy"]);
-            Assert.IsNotNull(_mapRepository.Columns[_personType]["Pets"]);
+            Assert.IsTrue(maps.Columns.Count == 4);
+            Assert.IsNotNull(maps.Columns.GetByColumnName("Age"));
+            Assert.IsNotNull(maps.Columns.GetByColumnName("BirthDate"));
+            Assert.IsNotNull(maps.Columns.GetByColumnName("IsHappy"));
+            Assert.IsNotNull(maps.Columns.GetByColumnName("Pets"));
+            Assert.IsNotNull(_mapRepository.Columns[_personType].GetByColumnName("Age"));
+            Assert.IsNotNull(_mapRepository.Columns[_personType].GetByColumnName("BirthDate"));
+            Assert.IsNotNull(_mapRepository.Columns[_personType].GetByColumnName("IsHappy"));
+            Assert.IsNotNull(_mapRepository.Columns[_personType].GetByColumnName("Pets"));
         }
 
         [TestMethod]
@@ -87,8 +89,8 @@ namespace Marr.Data.UnitTests
         {
             var mapBuilder = new MapBuilder();
             var maps = mapBuilder.BuildColumns<UnmappedPerson>("Name");
-            Assert.IsTrue(maps.Count == 1);
-            Assert.IsNotNull(maps["Name"]);
+            Assert.IsTrue(maps.Columns.Count == 1);
+            Assert.IsNotNull(maps.Columns.GetByColumnName("Name"));
         }
 
         [TestMethod]
@@ -97,9 +99,9 @@ namespace Marr.Data.UnitTests
             var mapBuilder = new MapBuilder();
             var maps = mapBuilder.BuildColumns<UnmappedPerson>(m => 
                 m.MemberType == MemberTypes.Property && (m as PropertyInfo).PropertyType == typeof(DateTime));
-            
-            Assert.IsTrue(maps.Count == 1);
-            Assert.IsTrue(maps[0].FieldType == typeof(DateTime));
+
+            Assert.IsTrue(maps.Columns.Count == 1);
+            Assert.IsTrue(maps.Columns[0].FieldType == typeof(DateTime));
         }
 
         #endregion
@@ -111,8 +113,8 @@ namespace Marr.Data.UnitTests
         {
             var mapBuilder = new MapBuilder();
             var maps = mapBuilder.BuildRelationships<UnmappedPerson>();
-            Assert.IsTrue(maps.Count == 1);
-            Assert.IsNotNull(maps["Pets"]);
+            Assert.IsTrue(maps.Relationships.Count == 1);
+            Assert.IsNotNull(maps.Relationships["Pets"]);
             Assert.IsTrue(_mapRepository.Relationships[_personType].Count == 1);
             Assert.IsNotNull(_mapRepository.Relationships[_personType]["Pets"]);
         }
@@ -122,8 +124,8 @@ namespace Marr.Data.UnitTests
         {
             var mapBuilder = new MapBuilder();
             var maps = mapBuilder.BuildRelationships<UnmappedPerson>("Pets");
-            Assert.IsTrue(maps.Count == 1);
-            Assert.IsNotNull(maps["Pets"]);
+            Assert.IsTrue(maps.Relationships.Count == 1);
+            Assert.IsNotNull(maps.Relationships["Pets"]);
         }
 
         #endregion

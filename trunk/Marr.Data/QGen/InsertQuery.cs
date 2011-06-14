@@ -43,7 +43,7 @@ namespace Marr.Data.QGen
 
             foreach (DbParameter p in Command.Parameters)
             {
-                var c = Columns[p.ParameterName];
+                var c = Columns.GetByColumnName(p.ParameterName);
 
                 if (c == null)
                     break; // All insert columns have been added

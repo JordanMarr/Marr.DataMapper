@@ -31,7 +31,7 @@ namespace Marr.Data.UnitTests
         {
             MapBuilder builder = new MapBuilder();
 
-            builder.SetTableName<Person>("PersonTable");
+            builder.BuildTable<Person>("PersonTable");
 
             builder.BuildColumns<Person>()
                 .SetReturnValue("ID")

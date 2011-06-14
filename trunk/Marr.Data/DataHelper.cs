@@ -20,6 +20,7 @@ using System.Text;
 using System.Data;
 using System.Reflection;
 using Marr.Data.Mapping;
+using System.Linq.Expressions;
 
 namespace Marr.Data
 {
@@ -99,6 +100,24 @@ namespace Marr.Data
                 return col.AltName;
             else
                 return col.Name;
+        }
+
+        /// <summary>
+        /// Determines a property name from a passed in expression.
+        /// Ex:  p => p.FirstName   ->    "FirstName
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="member"></param>
+        /// <returns></returns>
+        public static string GetMemberName<T>(this Expression<Func<T, object>> member)
+        {
+            var memberExpression = (member.Body as MemberExpression);
+            if (memberExpression == null)
+            {
+                memberExpression = (member.Body as UnaryExpression).Operand as MemberExpression;
+            }
+
+            return memberExpression.Member.Name;
         }
 
     }

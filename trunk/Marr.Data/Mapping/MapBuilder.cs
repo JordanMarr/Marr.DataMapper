@@ -29,7 +29,7 @@ namespace Marr.Data.Mapping
         /// </summary>
         /// <typeparam name="T">The type that is being built.</typeparam>
         /// <returns><see cref="ColumnMapCollection"/></returns>
-        public ColumnMapCollection BuildColumns<T>()
+        public ColumnMapBuilder<T> BuildColumns<T>()
         {
             return BuildColumns<T>(m => m.MemberType == MemberTypes.Property &&
                 !typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType));
@@ -42,7 +42,7 @@ namespace Marr.Data.Mapping
         /// <typeparam name="T">The type that is being built.</typeparam>
         /// <param name="propertiesToInclude"></param>
         /// <returns><see cref="ColumnMapCollection"/></returns>
-        public ColumnMapCollection BuildColumns<T>(params string[] propertiesToInclude)
+        public ColumnMapBuilder<T> BuildColumns<T>(params string[] propertiesToInclude)
         {
             return BuildColumns<T>(m =>
                 m.MemberType == MemberTypes.Property &&
@@ -56,7 +56,7 @@ namespace Marr.Data.Mapping
         /// <typeparam name="T">The type that is being built.</typeparam>
         /// <param name="propertiesToExclude"></param>
         /// <returns><see cref="ColumnMapCollection"/></returns>
-        public ColumnMapCollection BuildColumnsExcept<T>(params string[] propertiesToExclude)
+        public ColumnMapBuilder<T> BuildColumnsExcept<T>(params string[] propertiesToExclude)
         {
             return BuildColumns<T>(m => 
                 m.MemberType == MemberTypes.Property &&
@@ -68,15 +68,15 @@ namespace Marr.Data.Mapping
         /// </summary>
         /// <typeparam name="T">The type that is being built.</typeparam>
         /// <param name="predicate">Determines whether a mapping should be created based on the member info.</param>
-        /// <returns><see cref="ColumnMapCollection"/></returns>
-        public ColumnMapCollection BuildColumns<T>(Func<MemberInfo, bool> predicate)
+        /// <returns><see cref="ColumnMapConfigurator"/></returns>
+        public ColumnMapBuilder<T> BuildColumns<T>(Func<MemberInfo, bool> predicate)
         {
             Type entityType = typeof(T);
             ConventionMapStrategy strategy = new ConventionMapStrategy(_publicOnly);
             strategy.ColumnPredicate = predicate;
             ColumnMapCollection columns = strategy.MapColumns(entityType);
             MapRepository.Instance.Columns[entityType] = columns;
-            return columns;
+            return new ColumnMapBuilder<T>(columns);
         }
         
         #endregion
@@ -88,8 +88,8 @@ namespace Marr.Data.Mapping
         /// Maps all properties that implement ICollection.
         /// </summary>
         /// <typeparam name="T">The type that is being built.</typeparam>
-        /// <returns><see cref="ColumnMapCollection"/></returns>
-        public RelationshipCollection BuildRelationships<T>()
+        /// <returns><see cref="RelationshipBuilder"/></returns>
+        public RelationshipBuilder<T> BuildRelationships<T>()
         {
             return BuildRelationships<T>(m => 
                 m.MemberType == MemberTypes.Property && 
@@ -102,8 +102,8 @@ namespace Marr.Data.Mapping
         /// </summary>
         /// <typeparam name="T">The type that is being built.</typeparam>
         /// <param name="propertiesToInclude"></param>
-        /// <returns><see cref="ColumnMapCollection"/></returns>
-        public RelationshipCollection BuildRelationships<T>(params string[] propertiesToInclude)
+        /// <returns><see cref="RelationshipBuilder"/></returns>
+        public RelationshipBuilder<T> BuildRelationships<T>(params string[] propertiesToInclude)
         {
             return BuildRelationships<T>(m => 
                 m.MemberType == MemberTypes.Property && 
@@ -116,15 +116,15 @@ namespace Marr.Data.Mapping
         /// </summary>
         /// <typeparam name="T">The type that is being built.</typeparam>
         /// <param name="predicate">Determines whether a mapping should be created based on the member info.</param>
-        /// <returns><see cref="ColumnMapCollection"/></returns>
-        public RelationshipCollection BuildRelationships<T>(Func<MemberInfo, bool> predicate)
+        /// <returns><see cref="RelationshipBuilder"/></returns>
+        public RelationshipBuilder<T> BuildRelationships<T>(Func<MemberInfo, bool> predicate)
         {
             Type entityType = typeof(T);
             ConventionMapStrategy strategy = new ConventionMapStrategy(_publicOnly);
             strategy.RelationshipPredicate = predicate;
             RelationshipCollection relationships = strategy.MapRelationships(entityType);
             MapRepository.Instance.Relationships[entityType] = relationships;
-            return relationships;
+            return new RelationshipBuilder<T>(relationships);
         }
         
         #endregion
@@ -132,13 +132,23 @@ namespace Marr.Data.Mapping
         #region - Tables -
 
         /// <summary>
+        /// Provides a fluent table mapping interface.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public TableBuilder<T> BuildTable<T>()
+        {
+            return new TableBuilder<T>();
+        }
+
+        /// <summary>
         /// Sets the table name for a given type.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="tableName"></param>
-        public void SetTableName<T>(string tableName)
+        public TableBuilder<T> BuildTable<T>(string tableName)
         {
-            MapRepository.Instance.Tables[typeof(T)] = tableName;
+            return new TableBuilder<T>().SetTableName(tableName);
         }
 
         #endregion

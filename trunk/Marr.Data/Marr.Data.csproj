@@ -73,7 +73,9 @@
     <Compile Include="GroupingKeyCollection.cs" />
     <Compile Include="IDataMapper.cs" />
     <Compile Include="LoadEntityEventArgs.cs" />
+    <Compile Include="Mapping\ColumnMapBuilder.cs" />
     <Compile Include="Mapping\MapBuilder.cs" />
+    <Compile Include="Mapping\RelationshipBuilder.cs" />
     <Compile Include="Mapping\RelationshipInfo.cs" />
     <Compile Include="Mapping\Strategies\AttributeMapStrategy.cs" />
     <Compile Include="Mapping\ColumnAttribute.cs" />
@@ -92,6 +94,7 @@
     <Compile Include="Mapping\RelationshipCollection.cs" />
     <Compile Include="Mapping\Strategies\IMapStrategy.cs" />
     <Compile Include="Mapping\TableAttribute.cs" />
+    <Compile Include="Mapping\TableBuilder.cs" />
     <Compile Include="MapRepository.cs" />
     <Compile Include="Parameters\DbTypeBuilder.cs" />
     <Compile Include="Parameters\IDbTypeBuilder.cs" />

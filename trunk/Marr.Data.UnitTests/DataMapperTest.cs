@@ -26,19 +26,23 @@ namespace Marr.Data.UnitTests
         {
             MapBuilder builder = new MapBuilder();
 
-            builder.SetTableName<Person>("PersonTable");
+            builder.BuildTable<Person>()
+                .SetTableName("PersonTable");
 
             builder.BuildColumns<Person>()
-                .SetReturnValue("ID")
-                .SetPrimaryKey("ID")
-                .SetAutoIncrement("ID");
+                .For(p => p.ID)
+                    .SetPrimaryKey()
+                    .SetReturnValue()
+                    .SetAutoIncrement();
 
             builder.BuildRelationships<Person>();
 
             builder.BuildColumns<Pet>()
-                .SetPrimaryKey("ID")
-                .SetAltName("ID", "Pet_ID")
-                .SetAltName("Name", "Pet_Name");
+                .For(p => p.ID)
+                    .SetPrimaryKey()
+                    .SetAltName("Pet_ID")
+                .For(p => p.Name)
+                    .SetAltName("Pet_Name");
         }
 
         [TestMethod]
