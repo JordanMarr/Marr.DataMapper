@@ -43,7 +43,7 @@ namespace Marr.Data.QGen
         /// </summary>
         public Table FindTable(MemberInfo member)
         {
-            return this.FirstOrDefault(t => t.EntityType == member.DeclaringType);
+            return this.EnumerateViewsAndTables().Where(t => t.EntityType == member.DeclaringType).FirstOrDefault();
         }
 
         public Table this[int index]
@@ -59,6 +59,28 @@ namespace Marr.Data.QGen
             get
             {
                 return _tables.Count;
+            }
+        }
+
+        /// <summary>
+        /// Recursively enumerates through all tables, including tables embedded in views.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<Table> EnumerateViewsAndTables()
+        {
+            foreach (Table table in _tables)
+            {
+                if (table is View)
+                {
+                    foreach (Table viewTable in (table as View))
+                    {
+                        yield return viewTable;
+                    }
+                }
+                else
+                {
+                    yield return table;
+                }
             }
         }
 

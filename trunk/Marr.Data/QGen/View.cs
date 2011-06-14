@@ -9,7 +9,7 @@ namespace Marr.Data.QGen
     /// <summary>
     /// This class represents a View.  A view can hold multiple tables (and their columns).
     /// </summary>
-    public class View : Table
+    public class View : Table, IEnumerable<Table>
     {
         private string _viewName;
         private Table[] _tables;
@@ -20,6 +20,8 @@ namespace Marr.Data.QGen
         {
             _viewName = viewName;
             _tables = tables;
+
+            
         }
 
         public override string Name
@@ -31,6 +33,24 @@ namespace Marr.Data.QGen
             set
             {
                 _viewName = value;
+            }
+        }
+
+        public override string Alias
+        {
+            get
+            {
+                return base.Alias;
+            }
+            set
+            {
+                base.Alias = value;
+
+                // Sync view tables
+                foreach (Table table in _tables)
+                {
+                    table.Alias = value;
+                }
             }
         }
 
@@ -50,6 +70,19 @@ namespace Marr.Data.QGen
 
                 return _columns;
             }
+        }
+
+        public IEnumerator<Table> GetEnumerator()
+        {
+            foreach (Table table in _tables)
+            {
+                yield return table;
+            }
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator();
         }
     }
 }

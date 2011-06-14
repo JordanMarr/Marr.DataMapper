@@ -36,7 +36,7 @@ namespace Marr.Data.QGen
         public virtual string Name { get; set; }
         public JoinType JoinType { get; private set; }
         public virtual ColumnMapCollection Columns { get; private set; }
-        public string Alias { get; set; }
+        public virtual string Alias { get; set; }
         public string JoinClause { get; set; }
     }
 
