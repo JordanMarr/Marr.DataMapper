@@ -78,6 +78,20 @@ namespace Marr.Data.Mapping
             MapRepository.Instance.Columns[entityType] = columns;
             return new ColumnMapBuilder<T>(columns);
         }
+
+        /// <summary>
+        /// Creates a ColumnMapBuilder that starts out with no pre-populated columns.
+        /// All columns must be added manually using the builder.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public ColumnMapBuilder<T> Columns<T>()
+        {
+            Type entityType = typeof(T);
+            ColumnMapCollection columns = new ColumnMapCollection();
+            MapRepository.Instance.Columns[entityType] = columns;
+            return new ColumnMapBuilder<T>(columns);
+        }
         
         #endregion
 
@@ -105,10 +119,19 @@ namespace Marr.Data.Mapping
         /// <returns><see cref="RelationshipBuilder"/></returns>
         public RelationshipBuilder<T> BuildRelationships<T>(params string[] propertiesToInclude)
         {
-            return BuildRelationships<T>(m => 
-                m.MemberType == MemberTypes.Property && 
-                typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType) &&
-                propertiesToInclude.Contains(m.Name));
+            Func<MemberInfo, bool> predicate = m => 
+                (
+                    // ICollection properties
+                    m.MemberType == MemberTypes.Property && 
+                    typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType) &&
+                    propertiesToInclude.Contains(m.Name)
+                ) || ( // Single entity properties
+                    m.MemberType == MemberTypes.Property &&
+                    !typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType) &&
+                    propertiesToInclude.Contains(m.Name)
+                );
+            
+            return BuildRelationships<T>(predicate);
         }
 
         /// <summary>
@@ -123,6 +146,20 @@ namespace Marr.Data.Mapping
             ConventionMapStrategy strategy = new ConventionMapStrategy(_publicOnly);
             strategy.RelationshipPredicate = predicate;
             RelationshipCollection relationships = strategy.MapRelationships(entityType);
+            MapRepository.Instance.Relationships[entityType] = relationships;
+            return new RelationshipBuilder<T>(relationships);
+        }
+
+        /// <summary>
+        /// Creates a RelationshipBuilder that starts out with no pre-populated relationships.
+        /// All relationships must be added manually using the builder.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public RelationshipBuilder<T> Relationships<T>()
+        {
+            Type entityType = typeof(T);
+            RelationshipCollection relationships = new RelationshipCollection();
             MapRepository.Instance.Relationships[entityType] = relationships;
             return new RelationshipBuilder<T>(relationships);
         }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Linq.Expressions;
 using System.Data;
+using Marr.Data.Mapping.Strategies;
 
 namespace Marr.Data.Mapping
 {
@@ -34,7 +35,7 @@ namespace Marr.Data.Mapping
         /// <returns></returns>
         public ColumnMapBuilder<T> For(Expression<Func<T, object>> property)
         {
-            _currentPropertyName = property.GetMemberName();
+            For(property.GetMemberName());
             return this;
         }
 
@@ -46,6 +47,13 @@ namespace Marr.Data.Mapping
         public ColumnMapBuilder<T> For(string propertyName)
         {
             _currentPropertyName = propertyName;
+
+            // Try to add the column map if it doesn't exist
+            if (Columns.GetByFieldName(_currentPropertyName) == null)
+            {
+                TryAddColumnMapForField(_currentPropertyName);
+            }
+
             return this;
         }
 
@@ -146,6 +154,34 @@ namespace Marr.Data.Mapping
             return this;
         }
 
+        /// <summary>
+        /// Tries to add a ColumnMap for the given field name.  
+        /// Throws and exception if field cannot be found.
+        /// </summary>
+        private void TryAddColumnMapForField(string fieldName)
+        {
+            // Set strategy to filter for public or private fields
+            ConventionMapStrategy strategy = new ConventionMapStrategy(false);
+
+            // Find the field that matches the given field name
+            strategy.ColumnPredicate = mi => mi.Name == fieldName;
+            ColumnMap columnMap = strategy.MapColumns(typeof(T)).FirstOrDefault();
+
+            if (columnMap == null)
+            {
+                throw new DataMappingException(string.Format("Could not find the field '{0}' in '{1}'.",
+                    fieldName,
+                    typeof(T).Name));
+            }
+            else
+            {
+                Columns.Add(columnMap);
+            }
+        }
+
+        /// <summary>
+        /// Throws an exception if the "current" property has not been set.
+        /// </summary>
         private void AssertCurrentPropertyIsSet()
         {
             if (string.IsNullOrEmpty(_currentPropertyName))
