@@ -57,6 +57,9 @@ namespace Marr.Data.QGen
 
         #region - Fluent Methods -
 
+        /// <summary>
+        /// Overrides the table name that will be used in the query.
+        /// </summary>
         public QueryBuilder<T> Table(string tableName)
         {
             if (string.IsNullOrEmpty(tableName))
@@ -67,17 +70,30 @@ namespace Marr.Data.QGen
             return this;
         }
 
+        /// <summary>
+        /// Allows you to manually specify the query text.
+        /// </summary>
         public QueryBuilder<T> QueryText(string queryText)
         {
             _queryText = queryText;
             return this;
         }
 
+        /// <summary>
+        /// If no parameters are passed in, this method instructs the DataMapper to load all related entities in the graph.
+        /// If specific entities are passed in, only these relationships will be loaded.
+        /// </summary>
+        /// <param name="childrenToLoad">A list of related child entites to load (passed in as properties / lambda expressions).</param>
         public QueryBuilder<T> Graph(params Expression<Func<T, object>>[] childrenToLoad)
         {
             return Graph(ParseChildrenToLoad(childrenToLoad));
         }
 
+        /// <summary>
+        /// If no parameters are passed in, this method instructs the DataMapper to load all related entities in the graph.
+        /// If specific entities are passed in, only these relationships will be loaded.
+        /// </summary>
+        /// <param name="childrenToLoad">A list of related child entites to load (passed in as property names).</param>
         public QueryBuilder<T> Graph(params string[] childrenToLoad)
         {
             EntityGraph graph = new EntityGraph(typeof(T), null);
@@ -135,13 +151,64 @@ namespace Marr.Data.QGen
             return entitiesToLoad.ToArray();
         }
 
+        /// <summary>
+        /// Allows you to interact with the DbDataReader to manually load entities.
+        /// </summary>
+        /// <param name="readerAction">An action that takes a DbDataReader.</param>
+        public void DataReader(Action<DbDataReader> readerAction)
+        {
+            if (string.IsNullOrEmpty(_queryText))
+                throw new ArgumentNullException("The query text cannot be blank.");
+
+            var mappingHelper = new MappingHelper(_db.Command);
+            _db.Command.CommandText = _queryText;
+
+            try
+            {
+                _db.OpenConnection();
+                using (DbDataReader reader = _db.Command.ExecuteReader())
+                {
+                    readerAction.Invoke(reader);
+                }
+            }
+            finally
+            {
+                _db.CloseConnection();
+            }
+        }
+
+        /// <summary>
+        /// Executes the query and returns a list of results.
+        /// </summary>
+        /// <returns>A list of query results of type T.</returns>
         public List<T> ToList()
         {
             // Remember sql mode
             var previousSqlMode = _db.SqlMode;
 
+            BuildQueryOrAppendClauses();
+
             List<T> results = new List<T>();
 
+            if (_useAltName) // _useAltName is only set to true for graphs
+            {
+                EntityGraph graph = new EntityGraph(typeof(T), results);
+                results = (List<T>)_db.QueryToGraph<T>(_queryText, graph, _childrenToLoad);
+            }
+            else
+            {
+                results = (List<T>)_db.Query<T>(_queryText, results);
+
+            }
+
+            // Return to previous sql mode
+            _db.SqlMode = previousSqlMode;
+
+            return results;
+        }
+
+        private void BuildQueryOrAppendClauses()
+        {
             if (_queryText == null)
             {
                 // Build entire query
@@ -164,21 +231,6 @@ namespace Marr.Data.QGen
                 }
             }
 
-            if (_useAltName) // _useAltName is only set to true for graphs
-            {
-                EntityGraph graph = new EntityGraph(typeof(T), results);
-                results = (List<T>)_db.QueryToGraph<T>(_queryText, graph, _childrenToLoad);
-            }
-            else
-            {
-                results = (List<T>)_db.Query<T>(_queryText, results);
-
-            }
-
-            // Return to previous sql mode
-            _db.SqlMode = previousSqlMode;
-
-            return results;
         }
 
         internal void BuildQuery()
@@ -341,7 +393,4 @@ namespace Marr.Data.QGen
 
         #endregion
     }
-
-
-
 }

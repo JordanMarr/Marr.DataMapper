@@ -329,6 +329,56 @@ namespace Marr.Data.UnitTests
             Assert.AreEqual("Alligator", amyme.Pets[1].Name);
         }
 
+        [TestMethod]
+        public void DataReader_Test()
+        {
+            // Arrange
+            StubResultSet rs = new StubResultSet("ID", "Name", "Age", "IsHappy", "BirthDate");
+            rs.AddRow(1, "Jordan", 33, true, new DateTime(1977, 1, 22));
+            rs.AddRow(2, "Amyme", 31, false, new DateTime(1979, 10, 19));
+            rs.AddRow(3, "Guy", 29, false, new DateTime(1981, 10, 3));
+
+
+            // Act
+            var db = CreateDB_ForQuery(rs);
+
+            List<Person> people = new List<Person>();
+
+            db.Query<Person>()
+                .QueryText("sql...")
+                .DataReader(r =>
+                {
+                    while (r.Read())
+                    {
+                        Person p = new Person();
+                        p.ID = r.GetInt32(r.GetOrdinal("ID"));
+                        p.Name = r.GetString(r.GetOrdinal("Name"));
+                        p.Age = r.GetInt32(r.GetOrdinal("Age"));
+                        p.IsHappy = r.GetBoolean(r.GetOrdinal("IsHappy"));
+                        p.BirthDate = r.GetDateTime(r.GetOrdinal("BirthDate"));
+                        people.Add(p);
+                    }
+                });
+
+            // Assert
+            Assert.IsTrue(people.Count == 3);
+
+            Person jordan = people[0];
+            Assert.AreEqual(1, jordan.ID);
+            Assert.AreEqual("Jordan", jordan.Name);
+            Assert.AreEqual(33, jordan.Age);
+            Assert.AreEqual(true, jordan.IsHappy);
+            Assert.AreEqual(new DateTime(1977, 1, 22), jordan.BirthDate);
+
+            Person amyme = people[1];
+            Assert.AreEqual(2, amyme.ID);
+            Assert.AreEqual("Amyme", amyme.Name);
+            Assert.AreEqual(31, amyme.Age);
+            Assert.AreEqual(false, amyme.IsHappy);
+            Assert.AreEqual(new DateTime(1979, 10, 19), amyme.BirthDate);
+        }
+
+
         //[TestMethod]
         public void MultiEntityTest()
         {

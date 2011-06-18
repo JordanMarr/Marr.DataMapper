@@ -31,6 +31,10 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
                     db.SqlMode = SqlModes.Text;
                     db.BeginTransaction();
 
+                    var orders = db.Query<Order>().Where(o => o.ID > 0).ToList();
+                    int count = orders.Count;
+                    db.Delete<Order>(o => o.ID > 0);
+
                     Order order1 = new Order { OrderName = "Test1" };
                     db.Insert(order1);
 
@@ -39,18 +43,13 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
 
                     var orderItems = new List<OrderItem>();
 
-                    var results = (from o in db.Query<Order>().Graph()
+                    var results = (from o in db.Query<Order>()
                                    where o.OrderName == "Test1"
                                    orderby o.OrderName
                                    select o).ToList();
 
-                    db.Query<Order>()
-                        .Where(o => o.ID == 5);
-
-
-                    //Assert.IsTrue(results.Count == 2);
-                    //Assert.AreEqual(results[0].OrderName, "Test1");
-                    //Assert.AreEqual(results[1].OrderName, "Test2");
+                    Assert.IsTrue(results.Count == 1);
+                    Assert.AreEqual(results[0].OrderName, "Test1");
 
                     db.Commit();
                 }
