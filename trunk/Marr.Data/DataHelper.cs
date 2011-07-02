@@ -120,5 +120,16 @@ namespace Marr.Data
             return memberExpression.Member.Name;
         }
 
+        public static string GetMemberName(this LambdaExpression exp)
+        {
+            var memberExpression = (exp.Body as MemberExpression);
+            if (memberExpression == null)
+            {
+                memberExpression = (exp.Body as UnaryExpression).Operand as MemberExpression;
+            }
+
+            return memberExpression.Member.Name;
+        }
+
     }
 }

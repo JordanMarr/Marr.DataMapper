@@ -39,6 +39,20 @@ namespace Marr.Data.QGen
                 return _sortBuilder;
             }
         }
+        private List<T> _results = new List<T>();
+        private EntityGraph _entityGraph;
+        private EntityGraph EntGraph
+        {
+            get
+            {
+                if (_entityGraph == null)
+                {
+                    _entityGraph = new EntityGraph(typeof(T), _results);
+                }
+
+                return _entityGraph;
+            }
+        }
 
         #endregion
 
@@ -96,7 +110,6 @@ namespace Marr.Data.QGen
         /// <param name="childrenToLoad">A list of related child entites to load (passed in as property names).</param>
         public QueryBuilder<T> Graph(params string[] childrenToLoad)
         {
-            EntityGraph graph = new EntityGraph(typeof(T), null);
             TableCollection tablesInView = new TableCollection();
 
             if (childrenToLoad.Length > 0)
@@ -107,7 +120,7 @@ namespace Marr.Data.QGen
                 // Add user specified child tables
                 foreach (string child in childrenToLoad)
                 {
-                    var node = graph.Where(g => g.Member != null && g.Member.Name == child).FirstOrDefault();
+                    var node = EntGraph.Where(g => g.Member != null && g.Member.Name == child).FirstOrDefault();
                     if (node != null)
                     {
                         tablesInView.Add(new Table(node.EntityType, JoinType.None));
@@ -122,7 +135,7 @@ namespace Marr.Data.QGen
             else
             {
                 // Add all tables in the graph
-                foreach (var node in graph)
+                foreach (var node in EntGraph)
                 {
                     tablesInView.Add(new Table(node.EntityType, JoinType.None));
                 }
@@ -188,23 +201,20 @@ namespace Marr.Data.QGen
 
             BuildQueryOrAppendClauses();
 
-            List<T> results = new List<T>();
-
             if (_useAltName) // _useAltName is only set to true for graphs
             {
-                EntityGraph graph = new EntityGraph(typeof(T), results);
-                results = (List<T>)_db.QueryToGraph<T>(_queryText, graph, _childrenToLoad);
+                _results = (List<T>)_db.QueryToGraph<T>(_queryText, EntGraph, _childrenToLoad);
             }
             else
             {
-                results = (List<T>)_db.Query<T>(_queryText, results);
+                _results = (List<T>)_db.Query<T>(_queryText, _results);
 
             }
 
             // Return to previous sql mode
             _db.SqlMode = previousSqlMode;
 
-            return results;
+            return _results;
         }
 
         private void BuildQueryOrAppendClauses()
@@ -360,16 +370,39 @@ namespace Marr.Data.QGen
             return base.VisitMethodCall(expression);
         }
 
-        public QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, Expression<Func<TLeft, TRight, bool>> filterExpression)
+        public QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, Expression<Func<TLeft, IEnumerable<TRight>>> rightEntity, Expression<Func<TLeft, TRight, bool>> filterExpression)
         {
-            Graph(typeof(TLeft).Name);
-            Graph(typeof(TRight).Name);
+            string rightMemberName = rightEntity.GetMemberName();
+
+            return this.Join(joinType, rightMemberName, filterExpression);
+        }
+
+        public QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, Expression<Func<TLeft, TRight>> rightEntity, Expression<Func<TLeft, TRight, bool>> filterExpression)
+        {
+            string rightMemberName = rightEntity.GetMemberName();
+
+            if (!_childrenToLoad.Contains(rightMemberName))
+                _childrenToLoad.Add(rightMemberName);
+
+            return this.Join(joinType, rightMemberName, filterExpression);
+        }
+
+        public QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, string rightMemberName, Expression<Func<TLeft, TRight, bool>> filterExpression)
+        {
+            _useAltName = true;
+
+            if (!_childrenToLoad.Contains(rightMemberName))
+                _childrenToLoad.Add(rightMemberName);
+
             Table table = new Table(typeof(TRight), joinType);
             _tables.Add(table);
-            var builder = new JoinBuilder<TLeft,TRight>(_db.Command, _dialect, filterExpression, _tables);
+
+            var builder = new JoinBuilder<TLeft, TRight>(_db.Command, _dialect, filterExpression, _tables);
+
             table.JoinClause = builder.ToString();
             return this;
         }
+
 
         #endregion
 

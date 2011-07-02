@@ -87,7 +87,7 @@ namespace Marr.Data.UnitTests
             
             // Act
             builder
-                .Join<Order, OrderItem>(JoinType.Left, (o, oi) => o.ID == oi.OrderID)
+                .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
                 .Where<OrderItem>(oi => oi.OrderID > 0)
                 .OrderBy(o => o.OrderItems[0].ID);
 

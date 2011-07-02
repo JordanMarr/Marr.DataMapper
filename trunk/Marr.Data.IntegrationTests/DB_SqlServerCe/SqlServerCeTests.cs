@@ -71,25 +71,31 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
                     db.SqlMode = SqlModes.Text;
                     db.BeginTransaction();
 
-                    var order54 = db.Query<Order>().Where(o => o.ID == 54).Single();
+                    Order newOrder = new Order();
+                    newOrder.OrderName = "new order";
+                    db.Insert<Order>(newOrder);
 
-                    Assert.IsNotNull(order54);
+                    Order lastOrder = db.Query<Order>().LastOrDefault();
 
-                    OrderItem orderItem = new OrderItem { OrderID = 54, ItemDescription = "Test item", Price = 5.5m };
+                    //var order54 = db.Query<Order>().Where(o => o.ID == 54).FirstOrDefault();
+
+                    //Assert.IsNotNull(order54);
+
+                    OrderItem orderItem = new OrderItem { OrderID = lastOrder.ID, ItemDescription = "Test item", Price = 5.5m };
                     db.Insert<OrderItem>(orderItem);
 
                     var orderWithItem = db.Query<Order>()
-                        .Join<Order, OrderItem>(JoinType.Left, (o, oi) => o.ID == oi.OrderID)
-                        .Where(o => o.ID == 54)
+                        .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
+                        .Where(o => o.ID == lastOrder.ID)
                         .FirstOrDefault();
 
-                    //var results = db.Query<Order>()
-                    //    .Join<Order, OrderItem>(JoinType.Left, (o, oi) => o.ID == oi.OrderID)
-                    //    .Join<OrderItem, Receipt>(JoinType.Left, (oi, r) => oi.ID == r.OrderItemID)
-                    //    .Where(o => o.OrderName == "Test1").ToList();
+                    var results = db.Query<Order>()
+                        .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
+                        .Join<OrderItem, Receipt>(JoinType.Left, oi => oi.ItemReceipt, (oi, r) => oi.ID == r.OrderItemID)
+                        .Where(o => o.OrderName == "Test1").ToList();
 
                     var notFree = db.Query<Order>()
-                        .Join<Order, OrderItem>(JoinType.Left, (o, oi) => o.ID == oi.OrderID)
+                        .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
                         .Where<OrderItem>(oi => oi.Price > 0).ToList();
 
                     Assert.IsTrue(notFree.Count > 0);
@@ -100,13 +106,14 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
                     int orderItemID = orderWithItem.OrderItems[0].ID;
                     db.Delete<OrderItem>(oi => oi.ID == orderItemID);
 
-                    //Assert.IsTrue(results.Count > 0);
+                    Assert.IsTrue(results.Count > 0);
 
                     db.Commit();
                 }
                 catch
                 {
                     db.RollBack();
+                    throw;
                 }                
             }
 
