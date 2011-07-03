@@ -9,7 +9,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe.Entities
     [Table("Order")]
     public class Order
     {
-        [Column(IsPrimaryKey = true, IsAutoIncrement=true)]
+        [Column(IsPrimaryKey = true, IsAutoIncrement=true, ReturnValue=true)]
         public int ID { get; set; }
 
         [Column]
@@ -22,7 +22,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe.Entities
     [Table("OrderItem")]
     public class OrderItem
     {
-        [Column("ID", AltName = "OrderItemID", IsPrimaryKey = true, IsAutoIncrement=true)]
+        [Column("ID", AltName = "OrderItemID", IsPrimaryKey = true, IsAutoIncrement=true, ReturnValue=true)]
         public int ID { get; set; }
 
         [Column]

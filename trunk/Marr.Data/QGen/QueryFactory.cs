@@ -12,10 +12,11 @@ namespace Marr.Data.QGen
     /// </summary>
     internal class QueryFactory
     {
-        private const string DB_SqlClient = "System.Data.SqlClient";
+        private const string DB_SqlClient = "System.Data.SqlClientFactory";
+        private const string DB_OleDb = "System.Data.OleDb.OleDbFactory";
         private const string DB_SqlCe = "System.Data.SqlServerCe.SqlCeProviderFactory";
-        private const string DB_SystemDataOracleClient = "System.Data.OracleClient";
-        private const string DB_OracleDataAccessClient = "Oracle.DataAccess.Client";
+        private const string DB_SystemDataOracleClient = "System.Data.OracleClientFactory";
+        private const string DB_OracleDataAccessClient = "Oracle.DataAccess.Client.OracleClientFactory";
 
         private static Dialect _dialect;
 
@@ -63,7 +64,7 @@ namespace Marr.Data.QGen
                         break;
 
                     case DB_SqlCe:
-                        _dialect = new SqlServerDialect();
+                        _dialect = new SqlServerCeDialect();
                         break;
 
                     default:

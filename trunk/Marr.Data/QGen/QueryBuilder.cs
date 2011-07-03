@@ -16,7 +16,7 @@ namespace Marr.Data.QGen
     /// It uses chaining methods to provide a fluent interface for creating select queries.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class QueryBuilder<T> : ExpressionVisitor, IEnumerable<T>
+    public class QueryBuilder<T> : ExpressionVisitor, IEnumerable<T>, IQueryBuilder
     {
         #region - Private Members -
 
@@ -243,13 +243,14 @@ namespace Marr.Data.QGen
 
         }
 
-        internal void BuildQuery()
+        public string BuildQuery()
         {
             // Generate a query
             string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
             string sort = SortBuilder.ToString();
             IQuery query = QueryFactory.CreateSelectQuery(_tables, _db, where, sort, _useAltName);
             _queryText = query.Generate();
+            return _queryText;
         }
 
         #endregion

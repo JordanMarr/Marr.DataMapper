@@ -32,9 +32,10 @@ namespace Marr.Data
         int Update<T>(T entity, Expression<Func<T, bool>> filter);
         int Update<T>(string tableName, T entity, Expression<Func<T, bool>> filter);
         int Update<T>(T entity, string sql);
-        int Insert<T>(T entity);
-        int Insert<T>(string tableName, T entity);
-        int Insert<T>(T entity, string sql);
+        InsertQueryBuilder<T> Insert<T>();
+        object Insert<T>(T entity);
+        object Insert<T>(string tableName, T entity);
+        object Insert<T>(T entity, string sql);
         int Delete<T>(Expression<Func<T, bool>> filter);
         int Delete<T>(string tableName, Expression<Func<T, bool>> filter);
         void BeginTransaction();

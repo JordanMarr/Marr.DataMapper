@@ -105,10 +105,13 @@
     <Compile Include="QGen\DeleteQuery.cs" />
     <Compile Include="QGen\Dialects\Dialect.cs" />
     <Compile Include="QGen\Dialects\OracleDialect.cs" />
+    <Compile Include="QGen\Dialects\SqlServerCeDialect.cs" />
     <Compile Include="QGen\Dialects\SqlServerDialect.cs" />
     <Compile Include="QGen\ExpressionVisitor.cs" />
     <Compile Include="QGen\InsertQuery.cs" />
+    <Compile Include="QGen\InsertQueryBuilder.cs" />
     <Compile Include="QGen\IQuery.cs" />
+    <Compile Include="QGen\IQueryBuilder.cs" />
     <Compile Include="QGen\JoinBuilder.cs" />
     <Compile Include="QGen\QueryBuilder.cs" />
     <Compile Include="QGen\QueryFactory.cs" />

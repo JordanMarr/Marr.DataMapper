@@ -71,42 +71,57 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
                     db.SqlMode = SqlModes.Text;
                     db.BeginTransaction();
 
+                    // Insert a new order
                     Order newOrder = new Order();
                     newOrder.OrderName = "new order";
-                    db.Insert<Order>(newOrder);
+                    int orderID = Convert.ToInt32(db.Insert<Order>().Entity(newOrder).GetIdentity().Execute());
+                    Assert.IsTrue(orderID > 0);
 
-                    Order lastOrder = db.Query<Order>().LastOrDefault();
+                    // Update order name to use the generated ID autoincremented value
+                    newOrder.OrderName = string.Concat(newOrder.OrderName, " ", newOrder.ID);
+                    db.Update<Order>(newOrder, o => o.ID == newOrder.ID);
 
-                    //var order54 = db.Query<Order>().Where(o => o.ID == 54).FirstOrDefault();
+                    // Add an order item associated to the newly added order
+                    OrderItem orderItem = new OrderItem { OrderID = newOrder.ID, ItemDescription = "Test item", Price = 5.5m };
+                    int orderItemID = Convert.ToInt32(db.Insert<OrderItem>().Entity(orderItem).GetIdentity().Execute());
+                    Assert.IsTrue(orderItemID > 0);
 
-                    //Assert.IsNotNull(order54);
+                    // Add a receipt associated to the new ordeer / order item
+                    Receipt receipt = new Receipt { OrderItemID = orderItem.ID, AmountPaid = 5.5m };
+                    db.Insert<Receipt>(receipt);
 
-                    OrderItem orderItem = new OrderItem { OrderID = lastOrder.ID, ItemDescription = "Test item", Price = 5.5m };
-                    db.Insert<OrderItem>(orderItem);
-
+                    // Query the newly added order with its order item (do not query receipt)
                     var orderWithItem = db.Query<Order>()
                         .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
-                        .Where(o => o.ID == lastOrder.ID)
+                        .Where(o => o.ID == newOrder.ID)
                         .FirstOrDefault();
 
-                    var results = db.Query<Order>()
+                    // Query the newly added order with associated order item and receipt
+                    var orderWithItemAndReceipt = db.Query<Order>()
                         .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
                         .Join<OrderItem, Receipt>(JoinType.Left, oi => oi.ItemReceipt, (oi, r) => oi.ID == r.OrderItemID)
-                        .Where(o => o.OrderName == "Test1").ToList();
-
-                    var notFree = db.Query<Order>()
-                        .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
-                        .Where<OrderItem>(oi => oi.Price > 0).ToList();
-
-                    Assert.IsTrue(notFree.Count > 0);
+                        .Where(o => o.ID == newOrder.ID).FirstOrDefault();
 
                     Assert.IsNotNull(orderWithItem);
                     Assert.IsTrue(orderWithItem.OrderItems.Count == 1);
+                    Assert.IsNull(orderWithItem.OrderItems[0].ItemReceipt);
 
-                    int orderItemID = orderWithItem.OrderItems[0].ID;
+                    Assert.IsNotNull(orderWithItemAndReceipt.OrderItems[0].ItemReceipt);
+
+                    // Delete all added items
+                    db.Delete<Order>(o => o.ID == orderID);
                     db.Delete<OrderItem>(oi => oi.ID == orderItemID);
+                    db.Delete<Receipt>(r => r.OrderItemID == orderItemID);
 
-                    Assert.IsTrue(results.Count > 0);
+                    // Verify items are deleted
+                    var receipts = db.Query<Receipt>().Where(r => r.OrderItemID == orderItemID).ToList();
+                    Assert.IsTrue(receipts.Count == 0);
+
+                    var orderItems = db.Query<OrderItem>().Where(oi => oi.ID == orderItemID).ToList();
+                    Assert.IsTrue(orderItems.Count == 0);
+
+                    var orders = db.Query<Order>().Where(o => o.ID == orderID).ToList();
+                    Assert.IsTrue(orders.Count == 0);
 
                     db.Commit();
                 }
@@ -116,7 +131,34 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
                     throw;
                 }                
             }
+        }
 
+        [TestMethod]
+        public void TestQueryBuilders()
+        {
+            using (var db = CreateSqlServerCeDB())
+            {
+                db.SqlMode = SqlModes.Text;
+                db.BeginTransaction();
+
+                string query = db.Query<Order>()
+                        .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
+                        .Join<OrderItem, Receipt>(JoinType.Left, oi => oi.ItemReceipt, (oi, r) => oi.ID == r.OrderItemID)
+                        .Where(o => o.OrderName == "Test1").BuildQuery();
+
+                db.Parameters.Clear();
+
+                string insertQuery = db.Insert<Order>()
+                    .Entity(new Order())
+                    .TableName("ORDERS_TABLE")
+                    .GetIdentity()
+                    .BuildQuery();
+
+
+                Assert.IsNotNull(query);
+                Assert.IsNotNull(insertQuery);
+                db.RollBack();
+            }
         }
     }
 }

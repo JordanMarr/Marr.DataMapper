@@ -14,7 +14,7 @@ namespace Marr.Data.QGen
     /// It also has some methods that coincide with Linq methods, to provide Linq compatibility.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class SortBuilder<T> : IEnumerable<T>
+    public class SortBuilder<T> : IEnumerable<T>, IQueryBuilder
     {
         private QueryBuilder<T> _baseBuilder;
         private Dialect _dialect;
@@ -70,6 +70,11 @@ namespace Marr.Data.QGen
         public List<T> ToList()
         {
             return _baseBuilder.ToList();
+        }
+
+        public string BuildQuery()
+        {
+            return _baseBuilder.BuildQuery();
         }
 
         public override string ToString()

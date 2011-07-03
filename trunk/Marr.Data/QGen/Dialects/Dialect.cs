@@ -39,5 +39,13 @@ namespace Marr.Data.QGen.Dialects
                 return null;
             }
         }
+
+        public virtual bool SupportsBatchQueries
+        {
+            get
+            {
+                return true;
+            }
+        }
     }
 }

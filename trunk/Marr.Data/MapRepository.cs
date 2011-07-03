@@ -133,7 +133,7 @@ namespace Marr.Data
 
         #region - Columns repository -
 
-        internal ColumnMapCollection GetColumns(Type entityType)
+        public ColumnMapCollection GetColumns(Type entityType)
         {
             if (Columns.ContainsKey(entityType))
             {

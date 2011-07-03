@@ -20,7 +20,6 @@ namespace Marr.Data.QGen
 
         public InsertQuery(Dialect dialect, ColumnMapCollection columns, DbCommand command, string target)
         {
-
             if (string.IsNullOrEmpty(target))
             {
                 throw new DataMappingException("A target table must be passed in or set in a TableAttribute.");
@@ -64,12 +63,6 @@ namespace Marr.Data.QGen
             values.Append(")");
 
             sql.Append(values);
-
-            // If identity query exists and there is a return value column
-            if (!string.IsNullOrEmpty(Dialect.IdentityQuery) && Columns.ReturnValues.Count() > 0)
-            {
-                sql.Append(Dialect.IdentityQuery);
-            }
 
             return sql.ToString();
         }

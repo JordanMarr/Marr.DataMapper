@@ -699,79 +699,32 @@ namespace Marr.Data
 
         #region - Insert -
 
-        public int Insert<T>(T entity)
+        public InsertQueryBuilder<T> Insert<T>()
         {
-            return Insert<T>(null, entity);
+            return new InsertQueryBuilder<T>(this);
         }
 
-        public int Insert<T>(string tableName, T entity)
+        public object Insert<T>(T entity)
         {
-            if (entity == null)
-                throw new ArgumentNullException("entity");
-            
-            // Remember sql mode
-            var previousSqlMode = this.SqlMode;
-            SqlMode = SqlModes.Text;
-
-            var mappingHelper = new MappingHelper(Command);
-            if (tableName == null)
-            {
-                tableName = MapRepository.Instance.GetTableName(typeof(T));
-            }
-            ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
-            mappingHelper.CreateParameters<T>(entity, mappings, true);
-            IQuery query = QueryFactory.CreateInsertQuery(mappings, this, tableName);
-            Command.CommandText = query.Generate();
-
-            int rowsAffected = 0;
-
-            try
-            {
-                OpenConnection();
-                object returnValue = Command.ExecuteScalar();
-                mappingHelper.SetOutputValues<T>(entity, mappings.OutputFields);
-                mappingHelper.SetOutputValues<T>(entity, mappings.ReturnValues, returnValue);
-            }
-            finally
-            {
-                CloseConnection();
-            }
-
-            // Return to previous sql mode
-            SqlMode = previousSqlMode;
-
-            return rowsAffected;
+            return new InsertQueryBuilder<T>(this)
+                .Entity(entity)
+                .Execute();
         }
 
-        public int Insert<T>(T entity, string sql)
+        public object Insert<T>(string tableName, T entity)
         {
-            if (entity == null)
-                throw new ArgumentNullException("The entity cannot be null.");
+            return new InsertQueryBuilder<T>(this)
+                .Entity(entity)
+                .TableName(tableName)
+                .Execute();
+        }
 
-            if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("A stored procedure name has not been specified for 'Insert'.");
-
-            var mappingHelper = new MappingHelper(Command);
-            Command.CommandText = sql;
-            Type entityType = typeof(T);
-            ColumnMapCollection mappings = MapRepository.Instance.GetColumns(entityType);
-            mappingHelper.CreateParameters<T>(entity, mappings.NonReturnValues, false);
-
-            int rowsAffected = 0;
-
-            try
-            {
-                OpenConnection();
-                object returnValue = Command.ExecuteScalar();
-                mappingHelper.SetOutputValues<T>(entity, mappings.OutputFields);
-                mappingHelper.SetOutputValues<T>(entity, mappings.ReturnValues, returnValue);
-            }
-            finally
-            {
-                CloseConnection();
-            }
-
-            return rowsAffected;
+        public object Insert<T>(T entity, string sql)
+        {
+            return new InsertQueryBuilder<T>(this)
+                .Entity(entity)
+                .QueryText(sql)
+                .Execute();
         }
 
         #endregion
