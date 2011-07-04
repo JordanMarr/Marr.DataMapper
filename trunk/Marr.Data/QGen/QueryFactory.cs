@@ -12,7 +12,7 @@ namespace Marr.Data.QGen
     /// </summary>
     internal class QueryFactory
     {
-        private const string DB_SqlClient = "System.Data.SqlClientFactory";
+        private const string DB_SqlClient = "System.Data.SqlClient.SqlClientFactory";
         private const string DB_OleDb = "System.Data.OleDb.OleDbFactory";
         private const string DB_SqlCe = "System.Data.SqlServerCe.SqlCeProviderFactory";
         private const string DB_SystemDataOracleClient = "System.Data.OracleClientFactory";
