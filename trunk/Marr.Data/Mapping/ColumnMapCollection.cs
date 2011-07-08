@@ -138,5 +138,39 @@ namespace Marr.Data.Mapping
 
 
         #endregion
+
+        #region - Actions -
+
+        /// <summary>
+        /// Set's each column's altname as the given prefix + the column name.
+        /// Ex: 
+        /// Original column name: "ID"
+        /// Passed in prefix: "PRODUCT_"
+        /// Generated AltName: "PRODUCT_ID"
+        /// </summary>
+        /// <param name="prefix">The given prefix.</param>
+        /// <returns></returns>
+        public ColumnMapCollection PrefixAltNames(string prefix)
+        {
+            this.ForEach(c => c.ColumnInfo.AltName = c.ColumnInfo.Name.Insert(0, prefix));
+            return this;
+        }
+
+        /// <summary>
+        /// Set's each column's altname as the column name + the given prefix.
+        /// Ex: 
+        /// Original column name: "ID"
+        /// Passed in suffix: "_PRODUCT"
+        /// Generated AltName: "ID_PRODUCT"
+        /// </summary>
+        /// <param name="suffix"></param>
+        /// <returns></returns>
+        public ColumnMapCollection SuffixAltNames(string suffix)
+        {
+            this.ForEach(c => c.ColumnInfo.AltName = c.ColumnInfo.Name + suffix);
+            return this;
+        }
+
+        #endregion
     }
 }

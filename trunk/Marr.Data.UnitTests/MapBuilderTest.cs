@@ -105,6 +105,28 @@ namespace Marr.Data.UnitTests
             Assert.IsTrue(maps.Columns[0].FieldType == typeof(DateTime));
         }
 
+        [TestMethod]
+        public void MapBuilder_ShouldPrefixAltNames_But_ShouldNotPrefixNames()
+        {
+            var mapBuilder = new MapBuilder();
+            var columns = mapBuilder.BuildColumns<Person>()
+                .Columns.PrefixAltNames("p_");
+
+            Assert.IsTrue(columns.All(c => c.ColumnInfo.AltName.StartsWith("p_")));
+            Assert.IsFalse(columns.All(c => c.ColumnInfo.Name.StartsWith("p_")));
+        }
+
+        [TestMethod]
+        public void MapBuilder_ShouldSuffixAltNames_But_ShouldNotSuffixNames()
+        {
+            var mapBuilder = new MapBuilder();
+            var columns = mapBuilder.BuildColumns<Person>()
+                .Columns.SuffixAltNames("_p");
+
+            Assert.IsTrue(columns.All(c => c.ColumnInfo.AltName.EndsWith("_p")));
+            Assert.IsFalse(columns.All(c => c.ColumnInfo.Name.EndsWith("_p")));
+        }
+
         #endregion
 
         #region - Relationships -
