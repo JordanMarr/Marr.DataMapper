@@ -59,6 +59,8 @@
     <Compile Include="DB_Access\Entities\OptionType.cs" />
     <Compile Include="DB_SqlServerCe\Entities\Order.cs" />
     <Compile Include="DB_Access\Entities\Product.cs" />
+    <Compile Include="Misc\InsertQueryTests.cs" />
+    <Compile Include="Misc\UpdateQueryTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DB_SqlServerCe\SqlServerCeTests.cs" />
     <Compile Include="TestBase.cs" />

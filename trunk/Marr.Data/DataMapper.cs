@@ -618,81 +618,34 @@ namespace Marr.Data
 
         #region - Update -
 
+        public UpdateQueryBuilder<T> Update<T>()
+        {
+            return new UpdateQueryBuilder<T>(this);            
+        }
+
         public int Update<T>(T entity, Expression<Func<T, bool>> filter)
         {
-            return Update<T>(null, entity, filter);
+            return Update<T>()
+                .Entity(entity)
+                .Where(filter)
+                .Execute();
         }
 
         public int Update<T>(string tableName, T entity, Expression<Func<T, bool>> filter)
         {
-            if (entity == null)
-                throw new ArgumentNullException("entity");
-
-            // Remember sql mode
-            var previousSqlMode = this.SqlMode;
-            SqlMode = SqlModes.Text;
-
-            var mappingHelper = new MappingHelper(Command);
-            if (tableName == null)
-            {
-                tableName = MapRepository.Instance.GetTableName(typeof(T));
-            }
-            ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
-            // Add update parameters
-            mappingHelper.CreateParameters<T>(entity, mappings, true);
-            // Create where clause and add where parameters
-            var dialect = QGen.QueryFactory.CreateDialect(this);
-            TableCollection tables = new TableCollection();
-            tables.Add(new Table(typeof(T)));
-            var where = new WhereBuilder<T>(Command, dialect, filter, tables, false, false);
-            IQuery query = QueryFactory.CreateUpdateQuery(mappings, this, tableName, where.ToString());
-            Command.CommandText = query.Generate();
-
-            int rowsAffected = 0;
-
-            try
-            {
-                OpenConnection();
-                rowsAffected = Command.ExecuteNonQuery();
-                mappingHelper.SetOutputValues<T>(entity, mappings.OutputFields);
-            }
-            finally
-            {
-                CloseConnection();
-            }
-
-            // Return to previous sql mode
-            SqlMode = previousSqlMode;
-
-            return rowsAffected;
+            return Update<T>()
+                .TableName(tableName)
+                .Entity(entity)
+                .Where(filter)
+                .Execute();
         }
 
         public int Update<T>(T entity, string sql)
         {
-            if (entity == null)
-                throw new ArgumentNullException("The entity cannot be null.");
-
-            if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("A stored procedure name has not been specified for 'Update'.");
-
-            var mappingHelper = new MappingHelper(Command);
-            Command.CommandText = sql;
-            ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(T));
-            mappingHelper.CreateParameters<T>(entity, mappings, false);
-            int rowsAffected = 0;
-
-            try
-            {
-                OpenConnection();
-                rowsAffected = Command.ExecuteNonQuery();
-                mappingHelper.SetOutputValues<T>(entity, mappings.OutputFields);
-            }
-            finally
-            {
-                CloseConnection();
-            }
-
-            return rowsAffected;
+            return Update<T>()
+                .Entity(entity)
+                .QueryText(sql)
+                .Execute();
         }
 
         #endregion
@@ -706,14 +659,14 @@ namespace Marr.Data
 
         public object Insert<T>(T entity)
         {
-            return new InsertQueryBuilder<T>(this)
+            return Insert<T>()
                 .Entity(entity)
                 .Execute();
         }
 
         public object Insert<T>(string tableName, T entity)
         {
-            return new InsertQueryBuilder<T>(this)
+            return Insert<T>()
                 .Entity(entity)
                 .TableName(tableName)
                 .Execute();
@@ -721,7 +674,7 @@ namespace Marr.Data
 
         public object Insert<T>(T entity, string sql)
         {
-            return new InsertQueryBuilder<T>(this)
+            return Insert<T>()
                 .Entity(entity)
                 .QueryText(sql)
                 .Execute();

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Marr.Data.Mapping;
+using System.Linq.Expressions;
 
 namespace Marr.Data.QGen
 {
@@ -17,6 +18,7 @@ namespace Marr.Data.QGen
         private bool _generateQuery = true;
         private bool _getIdentityValue;
         private Dialects.Dialect _dialect;
+        private ColumnMapCollection _columnsToInsert;
 
         public InsertQueryBuilder(DataMapper db)
         {
@@ -64,16 +66,68 @@ namespace Marr.Data.QGen
             return this;
         }
 
+        public InsertQueryBuilder<T> ColumnsIncluding(params Expression<Func<T, object>>[] properties)
+        {
+            List<string> columnList = new List<string>();
+
+            foreach (var column in properties)
+            {
+                columnList.Add(column.GetMemberName());
+            }
+
+            return ColumnsIncluding(columnList.ToArray());
+        }
+
+        public InsertQueryBuilder<T> ColumnsIncluding(params string[] properties)
+        {
+            _columnsToInsert = new ColumnMapCollection();
+
+            foreach (string propertyName in properties)
+            {
+                _columnsToInsert.Add(_mappings.GetByFieldName(propertyName));
+            }
+
+            return this;
+        }
+
+        public InsertQueryBuilder<T> ColumnsExcluding(params Expression<Func<T, object>>[] properties)
+        {
+            List<string> columnList = new List<string>();
+
+            foreach (var column in properties)
+            {
+                columnList.Add(column.GetMemberName());
+            }
+
+            return ColumnsExcluding(columnList.ToArray());
+        }
+
+        public InsertQueryBuilder<T> ColumnsExcluding(params string[] properties)
+        {
+            _columnsToInsert = new ColumnMapCollection();
+
+            _columnsToInsert.AddRange(_mappings);
+
+            foreach (string propertyName in properties)
+            {
+                _columnsToInsert.RemoveAll(c => c.FieldName == propertyName);
+            }
+
+            return this;
+        }
+
         public string BuildQuery()
         {
             if (_entity == null)
-                throw new ArgumentNullException("Entity");
+                throw new ArgumentNullException("You must specify an entity to insert.");
 
             // Override SqlMode since we know this will be a text query
             _db.SqlMode = SqlModes.Text;
 
-            _mappingHelper.CreateParameters<T>(_entity, _mappings, true);
-            IQuery query = QueryFactory.CreateInsertQuery(_mappings, _db, _tableName);
+            var columns = _columnsToInsert ?? _mappings;
+
+            _mappingHelper.CreateParameters<T>(_entity, columns, _generateQuery);
+            IQuery query = QueryFactory.CreateInsertQuery(columns, _db, _tableName);
 
             _db.Command.CommandText = query.Generate();
 
@@ -98,7 +152,7 @@ namespace Marr.Data.QGen
             }
             else
             {
-                _mappingHelper.CreateParameters<T>(_entity, _mappings.NonReturnValues, false);
+                _mappingHelper.CreateParameters<T>(_entity, _mappings.NonReturnValues, _generateQuery);
             }
 
             object scalar = null;

@@ -123,6 +123,7 @@
     <Compile Include="QGen\Table.cs" />
     <Compile Include="QGen\TableCollection.cs" />
     <Compile Include="QGen\UpdateQuery.cs" />
+    <Compile Include="QGen\UpdateQueryBuilder.cs" />
     <Compile Include="QGen\View.cs" />
     <Compile Include="QGen\WhereBuilder.cs" />
     <Compile Include="Reflection\IReflectionStrategy.cs" />

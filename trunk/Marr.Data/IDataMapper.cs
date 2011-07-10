@@ -29,6 +29,7 @@ namespace Marr.Data
         string ProviderString { get; }
         ParameterChainMethods AddParameter(string name, object value);
         IDbDataParameter AddParameter(IDbDataParameter parameter);
+        UpdateQueryBuilder<T> Update<T>();
         int Update<T>(T entity, Expression<Func<T, bool>> filter);
         int Update<T>(string tableName, T entity, Expression<Func<T, bool>> filter);
         int Update<T>(T entity, string sql);
