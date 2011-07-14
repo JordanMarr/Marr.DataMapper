@@ -181,6 +181,81 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
         }
 
         [TestMethod]
+        public void Test_Simple_Paging_WithNoJoins_WithWhereClause()
+        {
+            using (var db = CreateSqlServerDB())
+            {
+                try
+                {
+                    db.BeginTransaction();
+
+                    // Insert 10 orders
+                    for (int i = 1; i < 11; i++)
+                    {
+                        Order order = new Order { OrderName = "Order" + (i.ToString().PadLeft(2, '0')) };
+                        db.Insert<Order>(order);
+                    }
+
+                    // Get page 1 with up to 2 records
+                    var page1 = db.Query<Order>()
+                        .Where(o => o.OrderName == "Order09")
+                        .OrderBy(o => o.OrderName)
+                        .Page(1, 2)
+                        .ToList();
+
+                    Assert.AreEqual(1, page1.Count, "Page should only have one record.");
+                    Assert.AreEqual("Order09", page1[0].OrderName);
+                }
+                catch
+                {
+                    throw;
+                }
+                finally
+                {
+                    db.RollBack();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void Test_Simple_Paging_WithNoJoins_WithMultipleOrderByClauses()
+        {
+            using (var db = CreateSqlServerDB())
+            {
+                try
+                {
+                    db.BeginTransaction();
+
+                    // Insert 10 orders
+                    for (int i = 1; i < 11; i++)
+                    {
+                        Order order = new Order { OrderName = "Order" + (i.ToString().PadLeft(2, '0')) };
+                        db.Insert<Order>(order);
+                    }
+
+                    // Get page 1 with up to 2 records
+                    var page1 = db.Query<Order>()
+                        .Where(o => o.OrderName == "Order09")
+                        .OrderBy(o => o.OrderName)
+                        .ThenByDescending(o => o.ID)
+                        .Page(1, 2)
+                        .ToList();
+
+                    Assert.AreEqual(1, page1.Count, "Page should only have one record.");
+                    Assert.AreEqual("Order09", page1[0].OrderName);
+                }
+                catch
+                {
+                    throw;
+                }
+                finally
+                {
+                    db.RollBack();
+                }
+            }
+        }
+
+        [TestMethod]
         public void Test_Complex_Paging_WithJoins()
         {
             using (var db = CreateSqlServerDB())
@@ -235,6 +310,101 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
                     Assert.AreEqual("Order03", page2[0].OrderName);
                     Assert.AreEqual("Order04", page2[1].OrderName);
                     Assert.AreEqual(2, page2[0].OrderItems.Count);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+                finally
+                {
+                    db.RollBack();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void Test_Complex_Paging_WithJoins_WithWhereClause()
+        {
+            using (var db = CreateSqlServerDB())
+            {
+                try
+                {
+                    db.BeginTransaction();
+
+                    // Insert 10 orders
+                    for (int i = 1; i < 11; i++)
+                    {
+                        Order order = new Order { OrderName = "Order" + (i.ToString().PadLeft(2, '0')) };
+                        db.Insert<Order>()
+                            .Entity(order)
+                            .GetIdentity()
+                            .Execute();
+
+                        OrderItem orderItem1 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc1", Price = 5.5m };
+                        OrderItem orderItem2 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc2", Price = 6.6m };
+                        db.Insert(orderItem1);
+                        db.Insert(orderItem2);
+                    }
+                    
+                    // Get page 1 with 2 records
+                    var page1 = db.Query<Order>()
+                        .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
+                        .Where(o => o.OrderName == "Order09")
+                        .OrderBy(o => o.OrderName)
+                        .Page(1, 2)
+                        .ToList();
+
+                    Assert.AreEqual(1, page1.Count, "Page size should be 1.");
+                    Assert.AreEqual("Order09", page1[0].OrderName);
+                    Assert.AreEqual(2, page1[0].OrderItems.Count);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+                finally
+                {
+                    db.RollBack();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void Test_Complex_Paging_WithJoins_WithWhereClause_WithMultipleOrderClauses()
+        {
+            using (var db = CreateSqlServerDB())
+            {
+                try
+                {
+                    db.BeginTransaction();
+
+                    // Insert 10 orders
+                    for (int i = 1; i < 11; i++)
+                    {
+                        Order order = new Order { OrderName = "Order" + (i.ToString().PadLeft(2, '0')) };
+                        db.Insert<Order>()
+                            .Entity(order)
+                            .GetIdentity()
+                            .Execute();
+
+                        OrderItem orderItem1 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc1", Price = 5.5m };
+                        OrderItem orderItem2 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc2", Price = 6.6m };
+                        db.Insert(orderItem1);
+                        db.Insert(orderItem2);
+                    }
+
+                    // Get page 1 with 2 records
+                    var page1 = db.Query<Order>()
+                        .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
+                        .Where(o => o.OrderName == "Order09")
+                        .OrderBy(o => o.OrderName)
+                        .ThenByDescending(o => o.ID)
+                        .Page(1, 2)
+                        .ToList();
+
+                    Assert.AreEqual(1, page1.Count, "Page size should be 1.");
+                    Assert.AreEqual("Order09", page1[0].OrderName);
+                    Assert.AreEqual(2, page1[0].OrderItems.Count);
                 }
                 catch (Exception ex)
                 {
