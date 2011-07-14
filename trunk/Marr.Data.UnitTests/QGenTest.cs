@@ -27,25 +27,6 @@ namespace Marr.Data.UnitTests
             InitMappings();
         }
 
-        public void InitMappings()
-        {
-            MapBuilder builder = new MapBuilder();
-
-            builder.BuildTable<Person>("PersonTable");
-
-            builder.BuildColumns<Person>()
-                .SetReturnValue("ID")
-                .SetPrimaryKey("ID")
-                .SetAutoIncrement("ID");
-
-            builder.BuildRelationships<Person>();
-
-            builder.BuildColumns<Pet>()
-                .SetPrimaryKey("ID")
-                .SetAltName("ID", "Pet_ID")
-                .SetAltName("Name", "Pet_Name");
-        }
-
         [TestMethod]
         public void SqlServerUpdateQuery_ShouldGenQuery()
         {

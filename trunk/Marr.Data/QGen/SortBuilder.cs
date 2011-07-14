@@ -16,6 +16,7 @@ namespace Marr.Data.QGen
     /// <typeparam name="T"></typeparam>
     public class SortBuilder<T> : IEnumerable<T>, IQueryBuilder
     {
+        private string _constantOrderByClause;
         private QueryBuilder<T> _baseBuilder;
         private Dialect _dialect;
         private List<SortColumn<T>> _sortExpressions;
@@ -40,6 +41,20 @@ namespace Marr.Data.QGen
         internal SortBuilder<T> OrderByDescending(MemberInfo member)
         {
             _sortExpressions.Add(new SortColumn<T>(member, SortDirection.Desc));
+            return this;
+        }
+
+        public SortBuilder<T> OrderBy(string orderByClause)
+        {
+            if (string.IsNullOrEmpty(orderByClause))
+                throw new ArgumentNullException("orderByClause");
+
+            if (!orderByClause.ToUpper().Contains("ORDER BY "))
+            {
+                orderByClause = orderByClause.Insert(0, " ORDER BY ");
+            }
+
+            _constantOrderByClause = orderByClause;
             return this;
         }
 
@@ -97,6 +112,11 @@ namespace Marr.Data.QGen
 
         public override string ToString()
         {
+            if (!string.IsNullOrEmpty(_constantOrderByClause))
+            {
+                return _constantOrderByClause;
+            }
+
             StringBuilder sb = new StringBuilder();
 
             foreach (var sort in _sortExpressions)

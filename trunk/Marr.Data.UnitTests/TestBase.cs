@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Data.Common;
 using Rhino.Mocks;
+using Marr.Data.Mapping;
+using Marr.Data.UnitTests.Entities;
 
 namespace Marr.Data.UnitTests
 {
@@ -96,6 +98,25 @@ namespace Marr.Data.UnitTests
             dbFactory.Expect(f => f.CreateConnection()).Return(_connection);
 
             return new DataMapper(dbFactory, "connString...");
+        }
+
+        protected void InitMappings()
+        {
+            MapBuilder builder = new MapBuilder();
+
+            builder.BuildTable<Person>("PersonTable");
+
+            builder.BuildColumns<Person>()
+                .SetReturnValue("ID")
+                .SetPrimaryKey("ID")
+                .SetAutoIncrement("ID");
+
+            builder.BuildRelationships<Person>();
+
+            builder.BuildColumns<Pet>()
+                .SetPrimaryKey("ID")
+                .SetAltName("ID", "Pet_ID")
+                .SetAltName("Name", "Pet_Name");
         }
 
     }

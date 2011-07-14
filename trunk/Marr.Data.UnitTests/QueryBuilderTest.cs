@@ -12,22 +12,26 @@ using Marr.Data.QGen.Dialects;
 namespace Marr.Data.UnitTests
 {
     [TestClass]
-    public class AutoAutoQueryBuilderTest : TestBase
+    public class QueryBuilderTest : TestBase
     {
+        [TestInitialize]
+        public void Init()
+        {
+            InitMappings();
+        }
+
         [TestMethod]
         public void Complex_Where_Query_No_Sort()
         {
             // Arrange
             var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
             QueryBuilder<Person> builder = new QueryBuilder<Person>(db, new SqlServerDialect());
+            builder.Where(p => p.Age > 16 && p.Name.StartsWith("J"));
 
             // Act
-            builder.Where(p => p.Age > 16 && p.Name.StartsWith("J"));
-            
-            // Assert
-            builder.BuildQuery();
-            string generatedSql = builder._queryText;
+            string generatedSql = builder.BuildQuery();
 
+            // Assert
             Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[Name],[t0].[Age],[t0].[BirthDate],[t0].[IsHappy] "));
             Assert.IsTrue(generatedSql.Contains("FROM [PersonTable] [t0]"));
             Assert.IsTrue(generatedSql.Contains("((([t0].[Age] > @P0) AND [t0].[Name] LIKE @P1 + '%'))"));
@@ -40,14 +44,12 @@ namespace Marr.Data.UnitTests
             // Arrange
             var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
             QueryBuilder<Person> builder = new QueryBuilder<Person>(db, new SqlServerDialect());
-
-            // Act
             builder.OrderBy(p => p.ID).OrderBy(p => p.Name);
 
-            // Assert
-            builder.BuildQuery();
-            string generatedSql = builder._queryText;
+            // Act
+            string generatedSql = builder.BuildQuery();
 
+            // Assert
             Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[Name],[t0].[Age],[t0].[BirthDate],[t0].[IsHappy] "));
             Assert.IsTrue(generatedSql.Contains("FROM [PersonTable]"));
             Assert.IsFalse(generatedSql.Contains("WHERE"));
@@ -60,17 +62,15 @@ namespace Marr.Data.UnitTests
             // Arrange
             var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
             QueryBuilder<Person> builder = new QueryBuilder<Person>(db, new SqlServerDialect());
-
-            // Act
             builder
                 .Where(p => p.Age > 16 && p.Name.StartsWith("J"))
                 .OrderBy(p => p.Name)
                 .OrderByDescending(p => p.ID);
 
-            // Assert
-            builder.BuildQuery();
-            string generatedSql = builder._queryText;
+            // Act
+            string generatedSql = builder.BuildQuery();
 
+            // Assert
             Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[Name],[t0].[Age],[t0].[BirthDate],[t0].[IsHappy] "));
             Assert.IsTrue(generatedSql.Contains("FROM [PersonTable] [t0]"));
             Assert.IsTrue(generatedSql.Contains("((([t0].[Age] > @P0) AND [t0].[Name] LIKE @P1 + '%'))"));
@@ -84,22 +84,74 @@ namespace Marr.Data.UnitTests
             // Arrange
             var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
             QueryBuilder<Order> builder = new QueryBuilder<Order>(db, new SqlServerDialect());
-            
-            // Act
             builder
                 .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
                 .Where<OrderItem>(oi => oi.OrderID > 0)
                 .OrderBy(o => o.OrderItems[0].ID);
 
-            // Assert
-            builder.BuildQuery();
-            string generatedSql = builder._queryText;
+            // Act
+            string generatedSql = builder.BuildQuery();
 
+            // Assert
             Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[OrderName],[t1].[ID] AS OrderItemID,[t1].[OrderID],[t1].[ItemDescription],[t1].[Price] "));
             Assert.IsTrue(generatedSql.Contains("FROM [Order] [t0] LEFT JOIN [OrderItem] [t1]"));
             Assert.IsTrue(generatedSql.Contains("([t1].[OrderID] > @P0)"));
             Assert.IsTrue(generatedSql.Contains("ORDER BY [t1].[OrderItemID]"));
         }
 
+        [TestMethod]
+        public void ManualOrderByClause()
+        {
+            // Arrange
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
+            QueryBuilder<Person> builder = new QueryBuilder<Person>(db, new SqlServerDialect());
+            builder
+                .OrderBy("RAND()");
+
+            // Act
+            string generatedSql = builder.BuildQuery();
+
+            // Assert
+            Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[Name],[t0].[Age],[t0].[BirthDate],[t0].[IsHappy] "));
+            Assert.IsTrue(generatedSql.Contains("FROM [PersonTable] [t0]"));
+            Assert.IsTrue(generatedSql.Contains("ORDER BY RAND()"));
+        }
+
+        [TestMethod]
+        public void ManualWhereClause()
+        {
+            // Arrange
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
+            QueryBuilder<Person> builder = new QueryBuilder<Person>(db, new SqlServerDialect());
+            builder
+                .Where("[t0].[ID] = 1");
+
+            // Act
+            string generatedSql = builder.BuildQuery();
+
+            // Assert
+            Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[Name],[t0].[Age],[t0].[BirthDate],[t0].[IsHappy] "));
+            Assert.IsTrue(generatedSql.Contains("FROM [PersonTable] [t0]"));
+            Assert.IsTrue(generatedSql.Contains("WHERE [t0].[ID] = 1"));
+        }
+
+        [TestMethod]
+        public void WhenQueryingAView_WhereClauseShouldUseAltNameForColumns()
+        {
+            // Arrange
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
+            QueryBuilder<Person> builder = new QueryBuilder<Person>(db, new SqlServerDialect());
+            builder
+                .Graph()
+                .Where<Pet>(p => p.Name == "Spot"); // Pet Name has an alt name of 'Pet_Name' specified
+
+            // Act
+            string generatedSql = builder.BuildQuery();
+
+            // Assert
+            Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[Name],[t0].[Age],[t0].[BirthDate],[t0].[IsHappy],[t0].[Pet_ID],[t0].[Pet_Name] "));
+            Assert.IsTrue(generatedSql.Contains("FROM [PersonTable] [t0]"));
+            Assert.IsTrue(generatedSql.Contains("[t0].[Pet_Name] = @P0"));
+        }
     }
 }

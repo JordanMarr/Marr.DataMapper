@@ -106,5 +106,17 @@ namespace Marr.Data.Mapping
             get { return _paramDirection; }
             set { _paramDirection = value; }
         }
+
+        public string TryGetAltName()
+        {
+            if (!string.IsNullOrEmpty(AltName) && AltName != Name)
+            {
+                return AltName;
+            }
+            else
+            {
+                return Name;
+            }
+        }
     }
 }

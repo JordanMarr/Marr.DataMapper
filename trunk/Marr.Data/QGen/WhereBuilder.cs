@@ -20,6 +20,7 @@ namespace Marr.Data.QGen
     /// <typeparam name="T"></typeparam>
     public class WhereBuilder<T> : ExpressionVisitor
     {
+        private string _constantWhereClause;
         private MapRepository _repos;
         private DbCommand _command;
         private string _paramPrefix;
@@ -29,6 +30,12 @@ namespace Marr.Data.QGen
         protected StringBuilder _sb;
         protected TableCollection _tables;
         protected bool _tablePrefix;
+
+        public WhereBuilder(string whereClause, bool useAltName)
+        {
+            _constantWhereClause = whereClause;
+            _useAltName = useAltName;
+        }
 
         public WhereBuilder(DbCommand command, Dialect dialect, Expression filter, TableCollection tables, bool useAltName, bool tablePrefix)
         {
@@ -240,7 +247,14 @@ namespace Marr.Data.QGen
 
         public override string ToString()
         {
-            return _sb.ToString();
+            if (string.IsNullOrEmpty(_constantWhereClause))
+            {
+                return _sb.ToString();
+            }
+            else
+            {
+                return _constantWhereClause;
+            }
         }
     } 
 }

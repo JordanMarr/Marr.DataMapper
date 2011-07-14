@@ -31,6 +31,7 @@ namespace Marr.Data.Mapping
         bool IsAutoIncrement { get; set; }
         bool ReturnValue { get; set; }
         ParameterDirection ParamDirection { get; set; }
+        string TryGetAltName();
     }
    
 }

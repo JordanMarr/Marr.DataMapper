@@ -44,49 +44,16 @@ namespace Marr.Data
             string commandType = command.GetType().Name.ToLower();
             return commandType.Contains("oracle") ? ":" : "@";
         }
-
+        
         /// <summary>
-        /// Returns the ColumnAttribute column name (if attribute exists), or the member name.
-        /// </summary>
-        /// <param name="member"></param>
-        /// <returns></returns>
-        public static string GetColumnName(this MemberInfo member, bool useAltName)
-        {
-            // Initialize column name as member name
-            string columnName = member.Name;
-
-            // If column name is overridden at ColumnAttribute level, use that name instead
-            object[] attributes = member.GetCustomAttributes(typeof(ColumnAttribute), false);
-            if (attributes.Length > 0)
-            {
-                IColumnInfo column = (attributes[0] as ColumnAttribute);
-                if (useAltName && !string.IsNullOrEmpty(column.AltName))
-                    columnName = column.AltName;
-                else if (!string.IsNullOrEmpty(column.Name))
-                    columnName = column.Name;
-            }
-
-            return columnName;
-        }
-
-        /// <summary>
-        /// Returns the TableAttribute name (if attribute exists), or the member name.
+        /// Returns the mapped name, or the member name.
         /// </summary>
         /// <param name="member"></param>
         /// <returns></returns>
         public static string GetTableName(this MemberInfo member)
         {
-            string tableName = member.DeclaringType.Name;
-
-            // If table name is overridden at TableAttribute level, use that name instead
-            object[] attributes = member.DeclaringType.GetCustomAttributes(typeof(TableAttribute), false);
-            if (attributes.Length > 0)
-            {
-                TableAttribute table = (attributes[0] as TableAttribute);
-                tableName = table.Name;
-            }
-
-            return tableName;
+            string tableName = MapRepository.Instance.GetTableName(member.DeclaringType);
+            return tableName ?? member.DeclaringType.Name;
         }
 
         public static string GetTableName(this Type memberType)
@@ -96,10 +63,38 @@ namespace Marr.Data
 
         public static string GetColumName(this IColumnInfo col, bool useAltName)
         {
-            if (useAltName && !string.IsNullOrEmpty(col.AltName))
-                return col.AltName;
+            if (useAltName)
+            {
+                return col.TryGetAltName();
+            }
             else
+            {
                 return col.Name;
+            }
+        }
+
+
+        /// <summary>
+        /// Returns the mapped column name, or the member name.
+        /// </summary>
+        /// <param name="member"></param>
+        /// <returns></returns>
+        public static string GetColumnName(this MemberInfo member, bool useAltName)
+        {
+            // Initialize column name as member name
+            string columnName = member.Name;
+
+            var columnMap = MapRepository.Instance.GetColumns(member.DeclaringType).GetByFieldName(member.Name);
+            if (useAltName)
+            {
+                columnName = columnMap.ColumnInfo.TryGetAltName();
+            }
+            else
+            {
+                columnName = columnMap.ColumnInfo.Name;
+            }
+
+            return columnName;
         }
 
         /// <summary>

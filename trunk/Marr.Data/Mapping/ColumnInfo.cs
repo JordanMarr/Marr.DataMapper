@@ -22,5 +22,17 @@ namespace Marr.Data.Mapping
         public bool IsAutoIncrement { get; set; }
         public bool ReturnValue { get; set; }
         public System.Data.ParameterDirection ParamDirection { get; set; }
+
+        public string TryGetAltName()
+        {
+            if (!string.IsNullOrEmpty(AltName) && AltName != Name)
+            {
+                return AltName;
+            }
+            else
+            {
+                return Name;
+            }
+        }
     }
 }

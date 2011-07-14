@@ -26,7 +26,7 @@ namespace Marr.Data.QGen
         private WhereBuilder<T> _whereBuilder;
         private SortBuilder<T> _sortBuilder;
         private bool _useAltName = false;
-        internal string _queryText;
+        private string _queryText;
         private List<string> _childrenToLoad;
         private bool _enablePaging = false;
         private int _skip;
@@ -325,6 +325,20 @@ namespace Marr.Data.QGen
             return SortBuilder;
         }
 
+        public SortBuilder<T> Where(string whereClause)
+        {
+            if (string.IsNullOrEmpty(whereClause))
+                throw new ArgumentNullException("whereClause");
+
+            if (!whereClause.ToUpper().Contains("WHERE "))
+            {
+                whereClause = whereClause.Insert(0, " WHERE ");
+            }
+
+            _whereBuilder = new WhereBuilder<T>(whereClause, _useAltName);
+            return SortBuilder;
+        }
+
         public SortBuilder<T> OrderBy(Expression<Func<T, object>> sortExpression)
         {
             SortBuilder.OrderBy(sortExpression);
@@ -349,6 +363,19 @@ namespace Marr.Data.QGen
             return SortBuilder;
         }
 
+        public SortBuilder<T> OrderBy(string orderByClause)
+        {
+            if (string.IsNullOrEmpty(orderByClause))
+                throw new ArgumentNullException("orderByClause");
+
+            if (!orderByClause.ToUpper().Contains("ORDER BY "))
+            {
+                orderByClause = orderByClause.Insert(0, " ORDER BY ");
+            }
+
+            SortBuilder.OrderBy(orderByClause);
+            return SortBuilder;
+        }
 
         public QueryBuilder<T> Take(int count)
         {
