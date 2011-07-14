@@ -77,7 +77,7 @@ namespace Marr.Data.QGen
             StringBuilder sql = new StringBuilder();
 
             sql.AppendLine("WITH GroupCTE AS (");
-            _innerQuery.BuildSelectClause(sql);
+            BuildSelectClause(sql);
             BuildGroupColumn(sql);
             _innerQuery.BuildFromClause(sql);
             _innerQuery.BuildJoinClauses(sql);
@@ -100,10 +100,10 @@ namespace Marr.Data.QGen
 
         private void BuildJoinBackToCTE(StringBuilder sql)
         {
-            Table baseTable = _innerQuery.Tables[0];
+            Table baseTable = GetBaseTable();
             sql.AppendLine("INNER JOIN RowNumCTE cte");
             int pksAdded = 0;
-            foreach (var pk in _innerQuery.Tables[0].Columns.PrimaryKeys)
+            foreach (var pk in baseTable.Columns.PrimaryKeys)
             {
                 if (pksAdded > 0)
                     sql.Append(" AND ");
@@ -147,7 +147,8 @@ namespace Marr.Data.QGen
 
         private string BuildBaseTablePKColumns()
         {
-            Table baseTable = _innerQuery.Tables[0];
+            Table baseTable = GetBaseTable();
+
             StringBuilder sb = new StringBuilder();
             foreach (var col in baseTable.Columns.PrimaryKeys)
             {
@@ -171,5 +172,65 @@ namespace Marr.Data.QGen
             
             sql.AppendFormat(", ROW_NUMBER() OVER ({0}) As RowNumber ", orderBy);
         }
+
+        private Table GetBaseTable()
+        {
+            Table baseTable = null;
+            if (_innerQuery.Tables[0] is View)
+            {
+                baseTable = (_innerQuery.Tables[0] as View).Tables[0];
+            }
+            else
+            {
+                baseTable = _innerQuery.Tables[0];
+            }
+            return baseTable;
+        }
+
+        public void BuildSelectClause(StringBuilder sql)
+        {
+            List<string> appended = new List<string>();
+
+            sql.Append("SELECT ");
+
+            int startIndex = sql.Length;
+
+            // COLUMNS
+            foreach (Table join in _innerQuery.Tables)
+            {
+                for (int i = 0; i < join.Columns.Count; i++)
+                {
+                    var c = join.Columns[i];
+
+                    if (sql.Length > startIndex && sql[sql.Length - 1] != ',')
+                        sql.Append(",");
+
+                    if (join is View)
+                    {
+                        string token = _innerQuery.Dialect.CreateToken(string.Concat(join.Alias, ".", _innerQuery.NameOrAltName(c.ColumnInfo)));
+                        if (appended.Contains(token))
+                            continue;
+
+                        sql.Append(token);
+                        appended.Add(token);
+                    }
+                    else
+                    {
+                        string token = string.Concat(join.Alias, ".", c.ColumnInfo.Name);
+                        if (appended.Contains(token))
+                            continue;
+
+                        sql.Append(_innerQuery.Dialect.CreateToken(token));
+
+                        if (_innerQuery.UseAltName && c.ColumnInfo.AltName != null && c.ColumnInfo.AltName != c.ColumnInfo.Name)
+                        {
+                            string altName = c.ColumnInfo.AltName;
+                            sql.AppendFormat(" AS {0}", altName);
+                        }
+                    }
+                }
+            }
+        }
+
     }
 }

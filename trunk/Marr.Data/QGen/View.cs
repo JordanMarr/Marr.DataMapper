@@ -20,10 +20,13 @@ namespace Marr.Data.QGen
         {
             _viewName = viewName;
             _tables = tables;
-
-            
         }
 
+        public Table[] Tables
+        {
+            get { return _tables; }
+        }
+        
         public override string Name
         {
             get

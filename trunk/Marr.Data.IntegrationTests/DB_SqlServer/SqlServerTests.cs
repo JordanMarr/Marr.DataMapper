@@ -418,6 +418,57 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
         }
 
         [TestMethod]
+        public void Test_Paging_With_View()
+        {
+            using (var db = CreateSqlServerDB())
+            {
+                try
+                {
+                    db.BeginTransaction();
+
+                    // Insert 10 orders
+                    for (int i = 1; i < 11; i++)
+                    {
+                        Order order = new Order { OrderName = "Order" + (i.ToString().PadLeft(2, '0')) };
+                        db.Insert<Order>()
+                            .Entity(order)
+                            .GetIdentity()
+                            .Execute();
+
+                        Assert.IsTrue(order.ID > 0, "Identity value should have been returned.");
+
+                        OrderItem orderItem1 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc1", Price = 5.5m };
+                        OrderItem orderItem2 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc2", Price = 6.6m };
+                        db.Insert(orderItem1);
+                        db.Insert(orderItem2);
+                    }
+
+                    db.SqlMode = SqlModes.Text;
+
+                    // Get page 1 with up to 2 records
+                    var page1 = db.Query<Order>()
+                        .Table("V_Orders")
+                        .Graph(o => o.OrderItems)
+                        .OrderBy(o => o.OrderName)
+                        .Page(1, 2)
+                        .ToList();
+
+                    Assert.AreEqual(2, page1.Count, "Page should have two records.");
+                    Assert.AreEqual(2, page1[0].OrderItems.Count);
+                    Assert.AreEqual(2, page1[1].OrderItems.Count);
+                }
+                catch
+                {
+                    throw;
+                }
+                finally
+                {
+                    db.RollBack();
+                }
+            }
+        }
+
+        [TestMethod]
         public void TestQueryBuilders()
         {
             using (var db = CreateSqlServerDB())
