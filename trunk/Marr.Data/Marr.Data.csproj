@@ -114,6 +114,7 @@
     <Compile Include="QGen\IQuery.cs" />
     <Compile Include="QGen\IQueryBuilder.cs" />
     <Compile Include="QGen\JoinBuilder.cs" />
+    <Compile Include="QGen\PagingQueryDecorator.cs" />
     <Compile Include="QGen\QueryBuilder.cs" />
     <Compile Include="QGen\QueryFactory.cs" />
     <Compile Include="QGen\QueryQueueItem.cs" />

@@ -17,9 +17,7 @@ namespace Marr.Data.QGen
         private const string DB_SqlCe = "System.Data.SqlServerCe.SqlCeProviderFactory";
         private const string DB_SystemDataOracleClient = "System.Data.OracleClientFactory";
         private const string DB_OracleDataAccessClient = "Oracle.DataAccess.Client.OracleClientFactory";
-
-        private static Dialect _dialect;
-
+        
         public static IQuery CreateUpdateQuery(Mapping.ColumnMapCollection columns, IDataMapper dataMapper, string target, string whereClause)
         {
             Dialect dialect = CreateDialect(dataMapper);
@@ -43,37 +41,45 @@ namespace Marr.Data.QGen
             return new SelectQuery(dialect, tables, where, orderBy, useAltName);
         }
 
+        public static IQuery CreatePagingSelectQuery(TableCollection tables, IDataMapper dataMapper, string where, string orderBy, bool useAltName, int skip, int take)
+        {
+            SelectQuery innerQuery = (SelectQuery)CreateSelectQuery(tables, dataMapper, where, orderBy, useAltName);
+
+            string providerString = dataMapper.ProviderString;
+            switch (providerString)
+            {
+                case DB_SqlClient:
+                    return new PagingQueryDecorator(innerQuery, skip, take);
+
+                case DB_SqlCe:
+                    return new PagingQueryDecorator(innerQuery, skip, take);
+
+                default:
+                    throw new NotImplementedException("Paging has not yet been implemented for this provider.");
+            }
+        }
+
         public static Dialects.Dialect CreateDialect(IDataMapper dataMapper)
         {
-            if (_dialect == null)
+            string providerString = dataMapper.ProviderString;
+
+            switch (providerString)
             {
-                string providerString = dataMapper.ProviderString;
+                case DB_SqlClient:
+                    return new SqlServerDialect();
 
-                switch (providerString)
-                {
-                    case DB_SqlClient:
-                        _dialect = new SqlServerDialect();
-                        break;
+                case DB_OracleDataAccessClient:
+                    return new OracleDialect();
 
-                    case DB_OracleDataAccessClient:
-                        _dialect = new OracleDialect();
-                        break;
+                case DB_SystemDataOracleClient:
+                    return new OracleDialect();
 
-                    case DB_SystemDataOracleClient:
-                        _dialect = new OracleDialect();
-                        break;
+                case DB_SqlCe:
+                    return new SqlServerCeDialect();
 
-                    case DB_SqlCe:
-                        _dialect = new SqlServerCeDialect();
-                        break;
-
-                    default:
-                        _dialect = new Dialect();
-                        break;
-                }
+                default:
+                    return new Dialect();
             }
-
-            return _dialect;
         }
     }
 }

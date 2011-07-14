@@ -14,11 +14,11 @@ namespace Marr.Data.QGen
     /// </summary>
     public class SelectQuery : IQuery
     {
-        protected Dialect Dialect { get; set; }
-        protected string WhereClause { get; set; }
-        protected string OrderBy { get; set; }
-        protected TableCollection Tables { get; set; }
-        protected bool UseAltName;
+        public Dialect Dialect { get; set; }
+        public string WhereClause { get; set; }
+        public string OrderBy { get; set; }
+        public TableCollection Tables { get; set; }
+        public bool UseAltName;
 
         public SelectQuery(Dialect dialect, TableCollection tables, string whereClause, string orderBy, bool useAltName)
         {
@@ -29,9 +29,22 @@ namespace Marr.Data.QGen
             UseAltName = useAltName;
         }
 
-        public string Generate()
+        public virtual string Generate()
         {
-            StringBuilder sql = new StringBuilder("SELECT ");
+            StringBuilder sql = new StringBuilder();
+
+            BuildSelectClause(sql);
+            BuildFromClause(sql);
+            BuildJoinClauses(sql);
+            BuildWhereClause(sql);
+            BuildOrderClause(sql);
+
+            return sql.ToString();
+        }
+
+        public void BuildSelectClause(StringBuilder sql)
+        {
+            sql.Append("SELECT ");
 
             int startIndex = sql.Length;
 
@@ -47,15 +60,7 @@ namespace Marr.Data.QGen
 
                     if (join is View)
                     {
-                        string token = string.Empty;
-                        if (UseAltName && c.ColumnInfo.AltName != null && c.ColumnInfo.AltName != c.ColumnInfo.Name)
-                        {
-                            token = string.Concat(join.Alias, ".", c.ColumnInfo.AltName);
-                        }
-                        else
-                        {
-                            token = string.Concat(join.Alias, ".", c.ColumnInfo.Name);
-                        }
+                        string token = string.Concat(join.Alias, ".", NameOrAltName(c.ColumnInfo));
                         sql.Append(Dialect.CreateToken(token));
                     }
                     else
@@ -68,14 +73,32 @@ namespace Marr.Data.QGen
                             string altName = c.ColumnInfo.AltName;
                             sql.AppendFormat(" AS {0}", altName);
                         }
-                    }                    
+                    }
                 }
             }
+        }
 
+        public string NameOrAltName(IColumnInfo columnInfo)
+        {
+            if (UseAltName && columnInfo.AltName != null && columnInfo.AltName != columnInfo.Name)
+            {
+                return columnInfo.AltName;
+            }
+            else
+            {
+                return columnInfo.Name;
+            }
+        }
+
+        public void BuildFromClause(StringBuilder sql)
+        {
             // BASE TABLE
             Table baseTable = Tables[0];
             sql.AppendFormat(" FROM {0} {1} ", Dialect.CreateToken(baseTable.Name), Dialect.CreateToken(baseTable.Alias));
+        }
 
+        public void BuildJoinClauses(StringBuilder sql)
+        {
             // JOINS
             for (int i = 1; i < Tables.Count; i++)
             {
@@ -88,13 +111,17 @@ namespace Marr.Data.QGen
                         Tables[i].JoinClause);
                 }
             }
-
-            sql.Append(WhereClause);
-
-            sql.Append(OrderBy);
-
-            return sql.ToString();
         }
+
+        public void BuildWhereClause(StringBuilder sql)
+        {
+            sql.Append(WhereClause);
+        }
+
+        public void BuildOrderClause(StringBuilder sql)
+        {
+            sql.Append(OrderBy);
+        }       
 
         private string TranslateJoin(JoinType join)
         {

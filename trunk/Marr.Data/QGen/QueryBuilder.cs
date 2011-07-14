@@ -28,6 +28,9 @@ namespace Marr.Data.QGen
         private bool _useAltName = false;
         internal string _queryText;
         private List<string> _childrenToLoad;
+        private bool _enablePaging = false;
+        private int _skip;
+        private int _take;
         private SortBuilder<T> SortBuilder
         {
             get
@@ -149,6 +152,14 @@ namespace Marr.Data.QGen
             return this;
         }
 
+        public QueryBuilder<T> Page(int pageNumber, int pageSize)
+        {
+            _enablePaging = true;
+            _skip = (pageNumber - 1) * pageSize;
+            _take = pageSize;
+            return this;
+        }
+        
         private string[] ParseChildrenToLoad(Expression<Func<T, object>>[] childrenToLoad)
         {
             List<string> entitiesToLoad = new List<string>();
@@ -248,8 +259,17 @@ namespace Marr.Data.QGen
             // Generate a query
             string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
             string sort = SortBuilder.ToString();
-            IQuery query = QueryFactory.CreateSelectQuery(_tables, _db, where, sort, _useAltName);
-            _queryText = query.Generate();
+            
+            if (_enablePaging)
+            {
+                IQuery pagingQuery = QueryFactory.CreatePagingSelectQuery(_tables, _db, where, sort, _useAltName, _skip, _take);
+                _queryText = pagingQuery.Generate();
+            }
+            else
+            {
+                IQuery query = QueryFactory.CreateSelectQuery(_tables, _db, where, sort, _useAltName);
+                _queryText = query.Generate();
+            }
             return _queryText;
         }
 
@@ -327,6 +347,21 @@ namespace Marr.Data.QGen
         {
             SortBuilder.OrderByDescending(sortExpression);
             return SortBuilder;
+        }
+
+
+        public QueryBuilder<T> Take(int count)
+        {
+            _enablePaging = true;
+            _take = count;
+            return this;
+        }
+
+        public QueryBuilder<T> Skip(int count)
+        {
+            _enablePaging = true;
+            _skip = count;
+            return this;
         }
 
         /// <summary>

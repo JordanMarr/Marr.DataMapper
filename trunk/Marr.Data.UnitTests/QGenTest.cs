@@ -458,5 +458,86 @@ namespace Marr.Data.UnitTests
             Assert.IsTrue(queryText.Contains("[BirthDate]"), "Query should contain property name");
             Assert.IsTrue(queryText.Contains("[IsHappy]"), "Query should contain property name");
         }
+
+        [TestMethod]
+        public void WhenPageIsCalledBeforeOrderBy_ShouldTranslateToQuery()
+        {
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, @"Data Source=jordan-pc\sqlexpress;Initial Catalog=MyBigFishBowl;Persist Security Info=True;User ID=jmarr;Password=password");
+            string sqlPage1 = db.Query<Person>()
+                .Page(1, 20)
+                .OrderBy(p => p.Name)
+                .BuildQuery();
+
+            Assert.IsTrue(sqlPage1.Contains("WHERE RowNumber BETWEEN 1 AND 20"));
+
+            string sqlPage2 = db.Query<Person>()
+                .Page(2, 20)
+                .OrderBy(p => p.Name)
+                .BuildQuery();
+
+            Assert.IsTrue(sqlPage2.Contains("WHERE RowNumber BETWEEN 21 AND 40"));
+        }
+
+        [TestMethod]
+        public void WhenPageIsCalledAfterOrderBy_ShouldTranslateToQuery()
+        {
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, @"Data Source=jordan-pc\sqlexpress;Initial Catalog=MyBigFishBowl;Persist Security Info=True;User ID=jmarr;Password=password");
+            string sqlPage1 = db.Query<Person>()
+                .OrderBy(p => p.Name)
+                .Page(1, 20)
+                .BuildQuery();
+
+            Assert.IsTrue(sqlPage1.Contains("WHERE RowNumber BETWEEN 1 AND 20"));
+
+            string sqlPage2 = db.Query<Person>()
+                .OrderBy(p => p.Name)
+                .Page(2, 20)
+                .BuildQuery();
+
+            Assert.IsTrue(sqlPage2.Contains("WHERE RowNumber BETWEEN 21 AND 40"));
+        }
+
+
+        [TestMethod]
+        public void WhenSkipTakeIsCalledBeforeOrderBy_ShouldTranslateToQuery()
+        {
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, @"Data Source=jordan-pc\sqlexpress;Initial Catalog=MyBigFishBowl;Persist Security Info=True;User ID=jmarr;Password=password");
+            string sqlPage1 = db.Query<Person>()
+                .Skip(0)
+                .Take(20)
+                .OrderBy(p => p.Name)
+                .BuildQuery();
+
+            Assert.IsTrue(sqlPage1.Contains("WHERE RowNumber BETWEEN 1 AND 20"));
+
+            string sqlPage2 = db.Query<Person>()
+                .Skip(20)
+                .Take(20)
+                .OrderBy(p => p.Name)
+                .BuildQuery();
+
+            Assert.IsTrue(sqlPage2.Contains("WHERE RowNumber BETWEEN 21 AND 40"));
+        }
+
+        [TestMethod]
+        public void WhenSkipTakeIsCalledAfterOrderBy_ShouldTranslateToQuery()
+        {
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, @"Data Source=jordan-pc\sqlexpress;Initial Catalog=MyBigFishBowl;Persist Security Info=True;User ID=jmarr;Password=password");
+            string sqlPage1 = db.Query<Person>()
+                .OrderBy(p => p.Name)
+                .Skip(0)
+                .Take(20).BuildQuery();
+
+            Assert.IsTrue(sqlPage1.Contains("WHERE RowNumber BETWEEN 1 AND 20"));
+
+            string sqlPage2 = db.Query<Person>()
+                .OrderBy(p => p.Name)
+                .Skip(20)
+                .Take(20)
+                .BuildQuery();
+
+            Assert.IsTrue(sqlPage2.Contains("WHERE RowNumber BETWEEN 21 AND 40"));
+        }
+
     }
 }

@@ -14,6 +14,12 @@ namespace Marr.Data.IntegrationTests
             return db;
         }
 
+        protected IDataMapper CreateSqlServerDB()
+        {
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, ConfigurationManager.ConnectionStrings["DB_SqlServer"].ConnectionString);
+            return db;
+        }
+
         protected IDataMapper CreateAccessDB()
         {
             var db = new DataMapper(System.Data.OleDb.OleDbFactory.Instance, ConfigurationManager.ConnectionStrings["DB_Access"].ConnectionString);

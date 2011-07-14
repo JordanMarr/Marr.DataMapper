@@ -168,7 +168,10 @@ namespace Marr.Data.QGen
                     scalar = _db.Command.ExecuteScalar();
                 }
                 _mappingHelper.SetOutputValues<T>(_entity, _mappings.OutputFields);
-                _mappingHelper.SetOutputValues<T>(_entity, _mappings.ReturnValues, scalar);
+                if (scalar != null)
+                {
+                    _mappingHelper.SetOutputValues<T>(_entity, _mappings.ReturnValues, scalar);
+                }
             }
             finally
             {

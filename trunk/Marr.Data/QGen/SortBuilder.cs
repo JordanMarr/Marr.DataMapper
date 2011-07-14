@@ -67,6 +67,24 @@ namespace Marr.Data.QGen
             return this;
         }
 
+        public SortBuilder<T> Take(int count)
+        {
+            _baseBuilder.Take(count);
+            return this;
+        }
+
+        public SortBuilder<T> Skip(int count)
+        {
+            _baseBuilder.Skip(count);
+            return this;
+        }
+
+        public SortBuilder<T> Page(int pageNumber, int pageSize)
+        {
+            _baseBuilder.Page(pageNumber, pageSize);
+            return this;
+        }
+
         public List<T> ToList()
         {
             return _baseBuilder.ToList();

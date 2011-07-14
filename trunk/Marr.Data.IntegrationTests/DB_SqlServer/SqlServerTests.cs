@@ -1,19 +1,18 @@
 ﻿using System;
-using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Configuration;
-using Marr.Data.IntegrationTests.DB_SqlServerCe.Entities;
+using Marr.Data.IntegrationTests.DB_SqlServer.Entities;
 using Marr.Data.QGen;
 
-namespace Marr.Data.IntegrationTests.DB_SqlServerCe
+namespace Marr.Data.IntegrationTests.DB_SqlServer
 {
     /// <summary>
     /// Contains integration tests for the data mapper.
     /// </summary>
     [TestClass]
-    public class SqlServerCeTests : TestBase
+    public class SqlServerTests : TestBase
     {
         [TestInitialize]
         public void Setup()
@@ -22,9 +21,9 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
         }
 
         [TestMethod]
-        public void TestSqlCe_Insert_Query()
+        public void TestSql_Insert_Query()
         {
-            using (var db = CreateSqlServerCeDB())
+            using (var db = CreateSqlServerDB())
             {
                 try
                 {
@@ -59,13 +58,13 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
                     throw;
                 }
             }
-            
+
         }
 
         [TestMethod]
         public void TestJoin()
         {
-            using (var db = CreateSqlServerCeDB())
+            using (var db = CreateSqlServerDB())
             {
                 try
                 {
@@ -130,14 +129,128 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
                 {
                     db.RollBack();
                     throw;
-                }                
+                }
+            }
+        }
+
+        [TestMethod]
+        public void Test_Simple_Paging_WithNoJoins()
+        {
+            using (var db = CreateSqlServerDB())
+            {
+                try
+                {
+                    db.BeginTransaction();
+
+                    // Insert 10 orders
+                    for (int i = 1; i < 11; i++)
+                    {
+                        Order order = new Order { OrderName = "Order" + (i.ToString().PadLeft(2, '0')) };
+                        db.Insert<Order>(order);
+                    }
+
+                    // Get page 1 with 2 records
+                    var page1 = db.Query<Order>()
+                        .OrderBy(o => o.OrderName)
+                        .Page(1, 2)
+                        .ToList();
+
+                    Assert.AreEqual(2, page1.Count, "Page size should be 2.");
+                    Assert.AreEqual("Order01", page1[0].OrderName);
+                    Assert.AreEqual("Order02", page1[1].OrderName);
+
+                    // Get page 1 with 2 records
+                    var page2 = db.Query<Order>()
+                        .OrderBy(o => o.OrderName)
+                        .Page(2, 2)
+                        .ToList();
+
+                    Assert.AreEqual(2, page2.Count, "Page size should be 2.");
+                    Assert.AreEqual("Order03", page2[0].OrderName);
+                    Assert.AreEqual("Order04", page2[1].OrderName);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+                finally
+                {
+                    db.RollBack();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void Test_Complex_Paging_WithJoins()
+        {
+            using (var db = CreateSqlServerDB())
+            {
+                try
+                {
+                    db.BeginTransaction();
+
+                    // Insert 10 orders
+                    for (int i = 1; i < 11; i++)
+                    {
+                        Order order = new Order { OrderName = "Order" + (i.ToString().PadLeft(2, '0')) };
+                        db.Insert<Order>()
+                            .Entity(order)
+                            .GetIdentity()
+                            .Execute();
+
+                        OrderItem orderItem1 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc1", Price = 5.5m };
+                        OrderItem orderItem2 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc2", Price = 6.6m };
+                        db.Insert(orderItem1);
+                        db.Insert(orderItem2);
+                    }
+
+                    string query1 = db.Query<Order>()
+                        .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
+                        .OrderBy(o => o.OrderName)
+                        .Page(1, 2)
+                        .BuildQuery();
+
+                    Assert.IsNotNull(query1);
+
+                    // Get page 1 with 2 records
+                    var page1 = db.Query<Order>()
+                        .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o,oi) => o.ID == oi.OrderID)
+                        .OrderBy(o => o.OrderName)
+                        .Page(1, 2)
+                        .ToList();
+
+                    Assert.AreEqual(2, page1.Count, "Page size should be 2.");
+                    Assert.AreEqual("Order01", page1[0].OrderName);
+                    Assert.AreEqual("Order02", page1[1].OrderName);
+                    Assert.AreEqual(2, page1[0].OrderItems.Count);
+
+                    // Get page 1 with 2 records
+                    var page2 = db.Query<Order>()
+                        .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
+                        .OrderBy(o => o.OrderName)
+                        .Page(2, 2)
+                        .ToList();
+
+                    Assert.AreEqual(2, page2.Count, "Page size should be 2.");
+                    Assert.AreEqual("Order03", page2[0].OrderName);
+                    Assert.AreEqual("Order04", page2[1].OrderName);
+                    Assert.AreEqual(2, page2[0].OrderItems.Count);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+                finally
+                {
+                    db.RollBack();
+                }
             }
         }
 
         [TestMethod]
         public void TestQueryBuilders()
         {
-            using (var db = CreateSqlServerCeDB())
+            using (var db = CreateSqlServerDB())
             {
                 db.SqlMode = SqlModes.Text;
                 db.BeginTransaction();
@@ -161,5 +274,6 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
                 db.RollBack();
             }
         }
+
     }
 }
