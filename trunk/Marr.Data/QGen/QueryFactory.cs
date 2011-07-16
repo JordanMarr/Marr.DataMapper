@@ -44,7 +44,19 @@ namespace Marr.Data.QGen
         public static IQuery CreateRowCountSelectQuery(TableCollection tables, IDataMapper dataMapper, string where, string orderBy, bool useAltName)
         {
             SelectQuery innerQuery = (SelectQuery)CreateSelectQuery(tables, dataMapper, where, orderBy, useAltName);
-            return new RowCountQueryDecorator(innerQuery);
+
+            string providerString = dataMapper.ProviderString;
+            switch (providerString)
+            {
+                case DB_SqlClient:
+                    return new RowCountQueryDecorator(innerQuery);
+
+                case DB_SqlCe:
+                    return new RowCountQueryDecorator(innerQuery);
+
+                default:
+                    throw new NotImplementedException("Row count has not yet been implemented for this provider.");
+            }
         }
 
         public static IQuery CreatePagingSelectQuery(TableCollection tables, IDataMapper dataMapper, string where, string orderBy, bool useAltName, int skip, int take)

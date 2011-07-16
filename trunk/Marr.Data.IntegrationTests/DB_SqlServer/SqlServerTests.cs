@@ -49,13 +49,14 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 
                     Assert.IsTrue(results.Count == 1);
                     Assert.AreEqual(results[0].OrderName, "Test1");
-
-                    db.Commit();
                 }
                 catch
                 {
-                    db.RollBack();
                     throw;
+                }
+                finally
+                {
+                    db.RollBack();
                 }
             }
 
@@ -122,13 +123,14 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 
                     var orders = db.Query<Order>().Where(o => o.ID == orderID).ToList();
                     Assert.IsTrue(orders.Count == 0);
-
-                    db.Commit();
                 }
                 catch
                 {
-                    db.RollBack();
                     throw;
+                }
+                finally
+                {
+                    db.RollBack();
                 }
             }
         }
@@ -151,7 +153,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 
                     // Row count without a where statement
                     var orders = db.Query<Order>().ToList();
-                    Assert.IsTrue(orders.Count >= 10);
+                    Assert.IsTrue(orders.Count == 10);
                     int count = db.Query<Order>().GetRowCount();
                     Assert.AreEqual(orders.Count, count);
 
@@ -168,6 +170,74 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
                     Assert.AreEqual(2, pagedOrders.Count);
                     int totalCount = db.Query<Order>().GetRowCount();
                     Assert.IsTrue(totalCount > pagedOrders.Count);
+                }
+                catch
+                {
+                    throw;
+                }
+                finally
+                {
+                    db.RollBack();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void Test_GetRowCount_WithTableJoins()
+        {
+            using (var db = CreateSqlServerDB())
+            {
+                try
+                {
+                    db.BeginTransaction();
+
+                    // Insert 10 orders
+                    for (int i = 1; i < 11; i++)
+                    {
+                        Order order = new Order { OrderName = "Order" + (i.ToString().PadLeft(2, '0')) };
+                        db.Insert<Order>()
+                            .Entity(order)
+                            .GetIdentity()
+                            .Execute();
+
+                        Assert.IsTrue(order.ID > 0, "Identity value should have been returned.");
+
+                        OrderItem orderItem1 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc1", Price = 5.5m };
+                        OrderItem orderItem2 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc2", Price = 6.6m };
+                        db.Insert(orderItem1);
+                        db.Insert(orderItem2);
+                    }
+
+                    // First verify that there are 20 order item records
+                    var orderItems = db.Query<OrderItem>()
+                        .Table("V_Orders")
+                        .ToList();
+
+                    Assert.AreEqual(20, orderItems.Count);
+
+                    // Row count with a join
+                    var orders = db.Query<Order>()
+                        .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
+                        .ToList();
+                    Assert.IsTrue(orders.Count == 10);
+
+                    int count = db.Query<Order>()
+                        .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
+                        .GetRowCount();
+                    Assert.AreEqual(orders.Count, count);
+
+                    // Rowcount from a view
+                    var orders2 = db.Query<Order>()
+                        .Table("V_Orders")
+                        .Graph(o => o.OrderItems)
+                        .ToList();
+                    Assert.IsTrue(orders2.Count == 10);
+
+                    int count2 = db.Query<Order>()
+                        .Table("V_Orders")
+                        .Graph(o => o.OrderItems)
+                        .GetRowCount();
+                    Assert.AreEqual(orders2.Count, count2);
                 }
                 catch
                 {
@@ -405,7 +475,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
                     Assert.AreEqual("Order09", page1[0].OrderName);
                     Assert.AreEqual(2, page1[0].OrderItems.Count);
                 }
-                catch (Exception ex)
+                catch
                 {
                     throw;
                 }
@@ -453,7 +523,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
                     Assert.AreEqual("Order09", page1[0].OrderName);
                     Assert.AreEqual(2, page1[0].OrderItems.Count);
                 }
-                catch (Exception ex)
+                catch
                 {
                     throw;
                 }
@@ -520,26 +590,36 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
         {
             using (var db = CreateSqlServerDB())
             {
-                db.SqlMode = SqlModes.Text;
-                db.BeginTransaction();
+                try
+                {
+                    db.SqlMode = SqlModes.Text;
+                    db.BeginTransaction();
 
-                string query = db.Query<Order>()
-                        .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
-                        .Join<OrderItem, Receipt>(JoinType.Left, oi => oi.ItemReceipt, (oi, r) => oi.ID == r.OrderItemID)
-                        .Where(o => o.OrderName == "Test1").BuildQuery();
+                    string query = db.Query<Order>()
+                            .Join<Order, OrderItem>(JoinType.Left, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
+                            .Join<OrderItem, Receipt>(JoinType.Left, oi => oi.ItemReceipt, (oi, r) => oi.ID == r.OrderItemID)
+                            .Where(o => o.OrderName == "Test1").BuildQuery();
 
-                db.Parameters.Clear();
+                    db.Parameters.Clear();
 
-                string insertQuery = db.Insert<Order>()
-                    .Entity(new Order())
-                    .TableName("ORDERS_TABLE")
-                    .GetIdentity()
-                    .BuildQuery();
+                    string insertQuery = db.Insert<Order>()
+                        .Entity(new Order())
+                        .TableName("ORDERS_TABLE")
+                        .GetIdentity()
+                        .BuildQuery();
 
 
-                Assert.IsNotNull(query);
-                Assert.IsNotNull(insertQuery);
-                db.RollBack();
+                    Assert.IsNotNull(query);
+                    Assert.IsNotNull(insertQuery);
+                }
+                catch
+                {
+                    throw;
+                }
+                finally
+                {
+                    db.RollBack();
+                }
             }
         }
 
