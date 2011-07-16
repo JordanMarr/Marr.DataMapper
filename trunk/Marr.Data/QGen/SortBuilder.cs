@@ -100,6 +100,11 @@ namespace Marr.Data.QGen
             return this;
         }
 
+        public int GetRowCount()
+        {
+            return _baseBuilder.GetRowCount();
+        }
+
         public List<T> ToList()
         {
             return _baseBuilder.ToList();

@@ -134,6 +134,53 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
         }
 
         [TestMethod]
+        public void Test_GetRowCount()
+        {
+            using (var db = CreateSqlServerDB())
+            {
+                try
+                {
+                    db.BeginTransaction();
+
+                    // Insert 10 orders
+                    for (int i = 1; i < 11; i++)
+                    {
+                        Order order = new Order { OrderName = "Order" + (i.ToString().PadLeft(2, '0')) };
+                        db.Insert<Order>(order);
+                    }
+
+                    // Row count without a where statement
+                    var orders = db.Query<Order>().ToList();
+                    Assert.IsTrue(orders.Count >= 10);
+                    int count = db.Query<Order>().GetRowCount();
+                    Assert.AreEqual(orders.Count, count);
+
+                    // Row count with a where statement
+                    var filteredOrders = db.Query<Order>().Where(o => o.OrderName == "Order03").ToList();
+                    int filteredCount = db.Query<Order>().Where(o => o.OrderName == "Order03").GetRowCount();
+                    Assert.AreEqual(filteredOrders.Count, filteredCount);
+
+                    // Row count with paged results
+                    var pagedOrders = db.Query<Order>()
+                        .Page(1, 2)
+                        .OrderBy(o => o.OrderName)
+                        .ToList();
+                    Assert.AreEqual(2, pagedOrders.Count);
+                    int totalCount = db.Query<Order>().GetRowCount();
+                    Assert.IsTrue(totalCount > pagedOrders.Count);
+                }
+                catch
+                {
+                    throw;
+                }
+                finally
+                {
+                    db.RollBack();
+                }
+            }
+        }
+
+        [TestMethod]
         public void Test_Simple_Paging_WithNoJoins()
         {
             using (var db = CreateSqlServerDB())

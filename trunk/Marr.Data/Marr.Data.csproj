@@ -118,6 +118,7 @@
     <Compile Include="QGen\QueryBuilder.cs" />
     <Compile Include="QGen\QueryFactory.cs" />
     <Compile Include="QGen\QueryQueueItem.cs" />
+    <Compile Include="QGen\RowCountQueryDecorator.cs" />
     <Compile Include="QGen\SelectQuery.cs" />
     <Compile Include="QGen\SortBuilder.cs" />
     <Compile Include="QGen\SortColumn.cs" />

@@ -201,14 +201,31 @@ namespace Marr.Data.QGen
             }
         }
 
+        public int GetRowCount()
+        {
+            SqlModes previousSqlMode = _db.SqlMode;
+
+            // Generate a row count query
+            string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
+            string sort = SortBuilder.ToString();
+
+            IQuery query = QueryFactory.CreateRowCountSelectQuery(_tables, _db, where, sort, _useAltName);
+            string queryText = query.Generate();
+
+            _db.SqlMode = SqlModes.Text;
+            int count = (int)_db.ExecuteScalar(queryText);
+
+            _db.SqlMode = previousSqlMode;
+            return count;
+        }
+
         /// <summary>
         /// Executes the query and returns a list of results.
         /// </summary>
         /// <returns>A list of query results of type T.</returns>
         public List<T> ToList()
         {
-            // Remember sql mode
-            var previousSqlMode = _db.SqlMode;
+            SqlModes previousSqlMode = _db.SqlMode;
 
             BuildQueryOrAppendClauses();
 
@@ -219,7 +236,6 @@ namespace Marr.Data.QGen
             else
             {
                 _results = (List<T>)_db.Query<T>(_queryText, _results);
-
             }
 
             // Return to previous sql mode
@@ -251,7 +267,6 @@ namespace Marr.Data.QGen
                     _queryText = string.Concat(_queryText, " ", _sortBuilder.ToString());
                 }
             }
-
         }
 
         public string BuildQuery()
@@ -259,17 +274,19 @@ namespace Marr.Data.QGen
             // Generate a query
             string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
             string sort = SortBuilder.ToString();
-            
+
+            IQuery query = null;
             if (_enablePaging)
             {
-                IQuery pagingQuery = QueryFactory.CreatePagingSelectQuery(_tables, _db, where, sort, _useAltName, _skip, _take);
-                _queryText = pagingQuery.Generate();
+                query = QueryFactory.CreatePagingSelectQuery(_tables, _db, where, sort, _useAltName, _skip, _take);
             }
             else
             {
-                IQuery query = QueryFactory.CreateSelectQuery(_tables, _db, where, sort, _useAltName);
-                _queryText = query.Generate();
+                query = QueryFactory.CreateSelectQuery(_tables, _db, where, sort, _useAltName);
             }
+
+            _queryText = query.Generate();
+
             return _queryText;
         }
 

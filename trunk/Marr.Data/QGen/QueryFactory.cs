@@ -41,6 +41,12 @@ namespace Marr.Data.QGen
             return new SelectQuery(dialect, tables, where, orderBy, useAltName);
         }
 
+        public static IQuery CreateRowCountSelectQuery(TableCollection tables, IDataMapper dataMapper, string where, string orderBy, bool useAltName)
+        {
+            SelectQuery innerQuery = (SelectQuery)CreateSelectQuery(tables, dataMapper, where, orderBy, useAltName);
+            return new RowCountQueryDecorator(innerQuery);
+        }
+
         public static IQuery CreatePagingSelectQuery(TableCollection tables, IDataMapper dataMapper, string where, string orderBy, bool useAltName, int skip, int take)
         {
             SelectQuery innerQuery = (SelectQuery)CreateSelectQuery(tables, dataMapper, where, orderBy, useAltName);
