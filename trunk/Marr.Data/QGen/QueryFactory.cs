@@ -14,9 +14,10 @@ namespace Marr.Data.QGen
     {
         private const string DB_SqlClient = "System.Data.SqlClient.SqlClientFactory";
         private const string DB_OleDb = "System.Data.OleDb.OleDbFactory";
-        private const string DB_SqlCe = "System.Data.SqlServerCe.SqlCeProviderFactory";
+        private const string DB_SqlCeClient = "System.Data.SqlServerCe.SqlCeProviderFactory";
         private const string DB_SystemDataOracleClient = "System.Data.OracleClientFactory";
         private const string DB_OracleDataAccessClient = "Oracle.DataAccess.Client.OracleClientFactory";
+        private const string DB_FireBirdClient = "FirebirdSql.Data.FirebirdClient.FirebirdClientFactory";
         
         public static IQuery CreateUpdateQuery(Mapping.ColumnMapCollection columns, IDataMapper dataMapper, string target, string whereClause)
         {
@@ -51,7 +52,7 @@ namespace Marr.Data.QGen
                 case DB_SqlClient:
                     return new RowCountQueryDecorator(innerQuery);
 
-                case DB_SqlCe:
+                case DB_SqlCeClient:
                     return new RowCountQueryDecorator(innerQuery);
 
                 default:
@@ -69,7 +70,7 @@ namespace Marr.Data.QGen
                 case DB_SqlClient:
                     return new PagingQueryDecorator(innerQuery, skip, take);
 
-                case DB_SqlCe:
+                case DB_SqlCeClient:
                     return new PagingQueryDecorator(innerQuery, skip, take);
 
                 default:
@@ -80,7 +81,6 @@ namespace Marr.Data.QGen
         public static Dialects.Dialect CreateDialect(IDataMapper dataMapper)
         {
             string providerString = dataMapper.ProviderString;
-
             switch (providerString)
             {
                 case DB_SqlClient:
@@ -92,8 +92,11 @@ namespace Marr.Data.QGen
                 case DB_SystemDataOracleClient:
                     return new OracleDialect();
 
-                case DB_SqlCe:
+                case DB_SqlCeClient:
                     return new SqlServerCeDialect();
+
+                case DB_FireBirdClient:
+                    return new FirebirdDialect();
 
                 default:
                     return new Dialect();
