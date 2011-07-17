@@ -126,5 +126,20 @@ namespace Marr.Data
             return memberExpression.Member.Name;
         }
 
+        public static bool ContainsMember(this List<MemberInfo> list, MemberInfo member)
+        {
+            foreach (var m in list)
+            {
+                if (m.EqualsMember(member))
+                    return true;
+            }
+
+            return false;
+        }
+
+        public static bool EqualsMember(this MemberInfo member, MemberInfo otherMember)
+        {
+            return member.Name == otherMember.Name && member.DeclaringType == otherMember.DeclaringType;
+        }
     }
 }

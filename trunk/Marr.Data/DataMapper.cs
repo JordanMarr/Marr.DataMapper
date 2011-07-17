@@ -557,7 +557,7 @@ namespace Marr.Data
         public ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList)
         {
             EntityGraph graph = new EntityGraph(typeof(T), (IList)entityList);
-            return QueryToGraph<T>(sql, graph, new List<string>());
+            return QueryToGraph<T>(sql, graph, new List<MemberInfo>());
         }
 
         /// <summary>
@@ -568,7 +568,7 @@ namespace Marr.Data
         /// <param name="entityList"></param>
         /// <param name="entityGraph">Coordinates loading all objects in the graph..</param>
         /// <returns></returns>
-        internal ICollection<T> QueryToGraph<T>(string sql, EntityGraph graph, List<string> childrenToLoad)
+        internal ICollection<T> QueryToGraph<T>(string sql, EntityGraph graph, List<MemberInfo> childrenToLoad)
         {
             if (string.IsNullOrEmpty(sql))
                 throw new ArgumentNullException("sql");
@@ -590,7 +590,7 @@ namespace Marr.Data
                         {
                             // If is child relationship entity, and childrenToLoad are specified, and entity is not listed,
                             // then skip this entity.
-                            if (childrenToLoad.Count > 0 && !lvl.IsRoot && !childrenToLoad.Contains(lvl.Member.Name)) // lvl.Member.Name
+                            if (childrenToLoad.Count > 0 && !lvl.IsRoot && !childrenToLoad.ContainsMember(lvl.Member)) // lvl.Member.Name
                             {
                                 continue;
                             }

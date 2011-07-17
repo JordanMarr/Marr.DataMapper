@@ -27,7 +27,7 @@ namespace Marr.Data.QGen
         private SortBuilder<T> _sortBuilder;
         private bool _useAltName = false;
         private string _queryText;
-        private List<string> _childrenToLoad;
+        private List<MemberInfo> _childrenToLoad;
         private bool _enablePaging = false;
         private int _skip;
         private int _take;
@@ -67,7 +67,7 @@ namespace Marr.Data.QGen
             _dialect = dialect;
             _tables = new TableCollection();
             _tables.Add(new Table(typeof(T)));
-            _childrenToLoad = new List<string>();
+            _childrenToLoad = new List<MemberInfo>();
         }
 
         #endregion
@@ -103,33 +103,23 @@ namespace Marr.Data.QGen
         /// <param name="childrenToLoad">A list of related child entites to load (passed in as properties / lambda expressions).</param>
         public QueryBuilder<T> Graph(params Expression<Func<T, object>>[] childrenToLoad)
         {
-            return Graph(ParseChildrenToLoad(childrenToLoad));
-        }
-
-        /// <summary>
-        /// If no parameters are passed in, this method instructs the DataMapper to load all related entities in the graph.
-        /// If specific entities are passed in, only these relationships will be loaded.
-        /// </summary>
-        /// <param name="childrenToLoad">A list of related child entites to load (passed in as property names).</param>
-        public QueryBuilder<T> Graph(params string[] childrenToLoad)
-        {
             TableCollection tablesInView = new TableCollection();
-
             if (childrenToLoad.Length > 0)
             {
                 // Add base table
                 tablesInView.Add(_tables[0]);
 
-                // Add user specified child tables
-                foreach (string child in childrenToLoad)
+                foreach (var exp in childrenToLoad)
                 {
-                    var node = EntGraph.Where(g => g.Member != null && g.Member.Name == child).FirstOrDefault();
+                    MemberInfo child = (exp.Body as MemberExpression).Member;
+
+                    var node = EntGraph.Where(g => g.Member != null && g.Member.EqualsMember(child)).FirstOrDefault();
                     if (node != null)
                     {
                         tablesInView.Add(new Table(node.EntityType, JoinType.None));
                     }
 
-                    if (!_childrenToLoad.Contains(child))
+                    if (!_childrenToLoad.ContainsMember(child))
                     {
                         _childrenToLoad.Add(child);
                     }
@@ -151,7 +141,7 @@ namespace Marr.Data.QGen
             _useAltName = true;
             return this;
         }
-
+        
         public QueryBuilder<T> Page(int pageNumber, int pageSize)
         {
             _enablePaging = true;
@@ -452,27 +442,22 @@ namespace Marr.Data.QGen
 
         public QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, Expression<Func<TLeft, IEnumerable<TRight>>> rightEntity, Expression<Func<TLeft, TRight, bool>> filterExpression)
         {
-            string rightMemberName = rightEntity.GetMemberName();
-
-            return this.Join(joinType, rightMemberName, filterExpression);
+            MemberInfo rightMember = (rightEntity.Body as MemberExpression).Member;
+            return this.Join(joinType, rightMember, filterExpression);
         }
 
         public QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, Expression<Func<TLeft, TRight>> rightEntity, Expression<Func<TLeft, TRight, bool>> filterExpression)
         {
-            string rightMemberName = rightEntity.GetMemberName();
-
-            if (!_childrenToLoad.Contains(rightMemberName))
-                _childrenToLoad.Add(rightMemberName);
-
-            return this.Join(joinType, rightMemberName, filterExpression);
+            MemberInfo rightMember = (rightEntity.Body as MemberExpression).Member;
+            return this.Join(joinType, rightMember, filterExpression);
         }
 
-        public QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, string rightMemberName, Expression<Func<TLeft, TRight, bool>> filterExpression)
+        public QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, MemberInfo rightMember, Expression<Func<TLeft, TRight, bool>> filterExpression)
         {
             _useAltName = true;
 
-            if (!_childrenToLoad.Contains(rightMemberName))
-                _childrenToLoad.Add(rightMemberName);
+            if (!_childrenToLoad.ContainsMember(rightMember))
+                _childrenToLoad.Add(rightMember);
 
             Table table = new Table(typeof(TRight), joinType);
             _tables.Add(table);

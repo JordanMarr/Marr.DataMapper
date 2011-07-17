@@ -623,5 +623,57 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
             }
         }
 
+        [TestMethod]
+        public void Test_Filtering_ChildrenToload_With_Graph()
+        {
+            using (var db = CreateSqlServerDB())
+            {
+                try
+                {
+                    db.SqlMode = SqlModes.Text;
+                    db.BeginTransaction();
+
+                    // Insert 10 orders
+                    for (int i = 1; i < 11; i++)
+                    {
+                        Order order = new Order { OrderName = "Order" + (i.ToString().PadLeft(2, '0')) };
+                        db.Insert<Order>()
+                            .Entity(order)
+                            .GetIdentity()
+                            .Execute();
+
+                        OrderItem orderItem1 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc1", Price = 5.5m };
+                        OrderItem orderItem2 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc2", Price = 6.6m };
+                        db.Insert<OrderItem>().Entity(orderItem1).GetIdentity().Execute();
+                        db.Insert<OrderItem>().Entity(orderItem2).GetIdentity().Execute();
+
+                        Receipt receipt1 = new Receipt { OrderItemID = orderItem1.ID, AmountPaid = orderItem1.Price };
+                        Receipt receipt2 = new Receipt { OrderItemID = orderItem2.ID, AmountPaid = orderItem2.Price };
+                        db.Insert<Receipt>(receipt1);
+                        db.Insert<Receipt>(receipt2);
+                    }
+                    
+                    // Try to get entire graph, including orderitems and receipts
+                    var orders = db.Query<Order>().Table("V_OrdersReceipts").Graph(o => o.OrderItems, o => o.OrderItems[0].ItemReceipt).ToList();
+                    Assert.IsTrue(orders.Count > 0);
+                    Assert.IsNotNull(orders[0].OrderItems);
+                    Assert.IsNotNull(orders[0].OrderItems[0].ItemReceipt);
+
+                    // Try to get filtered graph without receipt
+                    var orders2 = db.Query<Order>().Table("V_OrdersReceipts").Graph(o => o.OrderItems).ToList();
+                    Assert.IsTrue(orders2.Count > 0);
+                    Assert.IsNotNull(orders2[0].OrderItems);
+                    Assert.IsNull(orders2[0].OrderItems[0].ItemReceipt);
+                }
+                catch
+                {
+                    throw;
+                }
+                finally
+                {
+                    db.RollBack();
+                }
+            }
+        }
     }
 }
