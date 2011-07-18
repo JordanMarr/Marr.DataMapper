@@ -36,7 +36,7 @@ namespace Marr.Data.QGen.Dialects
         {
             get
             {
-                return null;
+                throw new NotImplementedException("IdentityQuery has not been implemented for this provider.");
             }
         }
 

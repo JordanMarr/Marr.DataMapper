@@ -160,8 +160,10 @@ namespace Marr.Data.QGen
             try
             {
                 _db.OpenConnection();
+
                 scalar = _db.Command.ExecuteScalar();
-                if (_generateQuery && !_dialect.SupportsBatchQueries)
+
+                if (_getIdentityValue && _generateQuery && !_dialect.SupportsBatchQueries)
                 {
                     // Run identity query as a separate query
                     _db.Command.CommandText = _dialect.IdentityQuery;
@@ -187,6 +189,5 @@ namespace Marr.Data.QGen
 
             return scalar;
         }
-
     }
 }
