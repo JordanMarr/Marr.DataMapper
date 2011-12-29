@@ -29,7 +29,7 @@ namespace Marr.Data.IntegrationTests.DB_Access
                     db.BeginTransaction();
 
                     // Query for an entity that does not exist
-                    Product p1 = db.Query<Product>().Table("V_Product").Graph()
+                    Product p1 = db.Query<Product>().From("V_Product").Graph()
                         .Where(p => p.Name == "P1").FirstOrDefault();
                     Assert.IsNull(p1, "P1 should not exist yet");
 
@@ -38,7 +38,7 @@ namespace Marr.Data.IntegrationTests.DB_Access
                     db.Insert<Product>(newProduct);
 
                     // Query newly inserted entity
-                    p1 = db.Query<Product>().Table("V_Product").Graph()
+                    p1 = db.Query<Product>().From("V_Product").Graph()
                         .Where(p => p.Name == "P1").FirstOrDefault();
                     Assert.IsNotNull(p1, "P1 should have been added to the database.");
 
@@ -50,14 +50,14 @@ namespace Marr.Data.IntegrationTests.DB_Access
                     p1.Price = 444.44M;
                     db.Update<Product>(p1, p => p.Name == "P1");
 
-                    var updatedP1 = db.Query<Product>().Table("V_Product").Graph()
+                    var updatedP1 = db.Query<Product>().From("V_Product").Graph()
                         .Where(p => p.Name == "P1").FirstOrDefault();
                     Assert.AreEqual(444.44M, updatedP1.Price);
 
                     // Delete entity
                     db.Delete<Product>(p => p.Name == "P1");
 
-                    var deletedP1 = db.Query<Product>().Table("V_Product").Graph()
+                    var deletedP1 = db.Query<Product>().From("V_Product").Graph()
                         .Where(p => p.Name == "P1").FirstOrDefault();
                     Assert.IsNull(deletedP1, "P1 should have been deleted.");
 
@@ -90,7 +90,7 @@ namespace Marr.Data.IntegrationTests.DB_Access
                 {
                     profiler.Restart();
 
-                    var products = db.Query<Product>().Table("V_Product").Graph().ToList();
+                    var products = db.Query<Product>().From("V_Product").Graph().ToList();
 
                     profiler.Stop();
 

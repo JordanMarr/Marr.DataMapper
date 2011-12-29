@@ -210,7 +210,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 
                     // First verify that there are 20 order item records
                     var orderItems = db.Query<OrderItem>()
-                        .Table("V_Orders")
+                        .From("V_Orders")
                         .ToList();
 
                     Assert.AreEqual(20, orderItems.Count);
@@ -228,13 +228,13 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 
                     // Rowcount from a view
                     var orders2 = db.Query<Order>()
-                        .Table("V_Orders")
+                        .From("V_Orders")
                         .Graph(o => o.OrderItems)
                         .ToList();
                     Assert.IsTrue(orders2.Count == 10);
 
                     int count2 = db.Query<Order>()
-                        .Table("V_Orders")
+                        .From("V_Orders")
                         .Graph(o => o.OrderItems)
                         .GetRowCount();
                     Assert.AreEqual(orders2.Count, count2);
@@ -564,7 +564,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 
                     // Get page 1 with up to 2 records
                     var page1 = db.Query<Order>()
-                        .Table("V_Orders")
+                        .From("V_Orders")
                         .Graph(o => o.OrderItems)
                         .OrderBy(o => o.OrderName)
                         .Page(1, 2)
@@ -654,13 +654,13 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
                     }
                     
                     // Try to get entire graph, including orderitems and receipts
-                    var orders = db.Query<Order>().Table("V_OrdersReceipts").Graph(o => o.OrderItems, o => o.OrderItems[0].ItemReceipt).ToList();
+                    var orders = db.Query<Order>().From("V_OrdersReceipts").Graph(o => o.OrderItems, o => o.OrderItems[0].ItemReceipt).ToList();
                     Assert.IsTrue(orders.Count > 0);
                     Assert.IsNotNull(orders[0].OrderItems);
                     Assert.IsNotNull(orders[0].OrderItems[0].ItemReceipt);
 
                     // Try to get filtered graph without receipt
-                    var orders2 = db.Query<Order>().Table("V_OrdersReceipts").Graph(o => o.OrderItems).ToList();
+                    var orders2 = db.Query<Order>().From("V_OrdersReceipts").Graph(o => o.OrderItems).ToList();
                     Assert.IsTrue(orders2.Count > 0);
                     Assert.IsNotNull(orders2[0].OrderItems);
                     Assert.IsNull(orders2[0].OrderItems[0].ItemReceipt);

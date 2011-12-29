@@ -75,15 +75,24 @@ namespace Marr.Data.QGen
         #region - Fluent Methods -
 
         /// <summary>
-        /// Overrides the table name that will be used in the query.
+        /// Overrides the base table name that will be used in the query.
         /// </summary>
+        [Obsolete("This property is obsolete.  Use the 'From' method instead.")]
         public QueryBuilder<T> Table(string tableName)
         {
-            if (string.IsNullOrEmpty(tableName))
-                throw new DataMappingException("A target table must be passed in or set in a TableAttribute.");
+            return From(tableName);
+        }
+
+        /// <summary>
+        /// Overrides the base table or view name that will be used in the query.
+        /// </summary>
+        public QueryBuilder<T> From(string tableOrView)
+        {
+            if (string.IsNullOrEmpty(tableOrView))
+                throw new ArgumentNullException("tableOrView");
 
             // Override the base table name
-            _tables[0].Name = tableName;
+            _tables[0].Name = tableOrView;
             return this;
         }
 

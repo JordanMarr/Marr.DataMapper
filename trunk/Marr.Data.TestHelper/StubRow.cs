@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Marr.Data.UnitTests
+namespace Marr.Data.TestHelper
 {
     public class StubRow
     {

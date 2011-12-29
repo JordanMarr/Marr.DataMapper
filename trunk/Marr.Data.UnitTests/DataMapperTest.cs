@@ -7,6 +7,7 @@ using System.Data.Common;
 using Rhino.Mocks;
 using Marr.Data.UnitTests.Entities;
 using Marr.Data.Mapping;
+using Marr.Data.TestHelper;
 
 namespace Marr.Data.UnitTests
 {
