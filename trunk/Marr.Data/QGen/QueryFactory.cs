@@ -18,6 +18,7 @@ namespace Marr.Data.QGen
         private const string DB_SystemDataOracleClient = "System.Data.OracleClientFactory";
         private const string DB_OracleDataAccessClient = "Oracle.DataAccess.Client.OracleClientFactory";
         private const string DB_FireBirdClient = "FirebirdSql.Data.FirebirdClient.FirebirdClientFactory";
+        private const string DB_SQLiteClient = "System.Data.SQLite.SQLiteFactory";
         
         public static IQuery CreateUpdateQuery(Mapping.ColumnMapCollection columns, IDataMapper dataMapper, string target, string whereClause)
         {
@@ -97,6 +98,9 @@ namespace Marr.Data.QGen
 
                 case DB_FireBirdClient:
                     return new FirebirdDialect();
+
+                case DB_SQLiteClient:
+                    return new SqliteDialect();
 
                 default:
                     return new Dialect();

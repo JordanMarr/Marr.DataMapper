@@ -106,6 +106,7 @@
     <Compile Include="QGen\Dialects\Dialect.cs" />
     <Compile Include="QGen\Dialects\FirebirdDialect.cs" />
     <Compile Include="QGen\Dialects\OracleDialect.cs" />
+    <Compile Include="QGen\Dialects\SqliteDialect.cs" />
     <Compile Include="QGen\Dialects\SqlServerCeDialect.cs" />
     <Compile Include="QGen\Dialects\SqlServerDialect.cs" />
     <Compile Include="QGen\ExpressionVisitor.cs" />
