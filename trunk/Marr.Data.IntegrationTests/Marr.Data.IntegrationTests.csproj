@@ -83,6 +83,7 @@
     <Content Include="App_Data\DB_SqlServerCe.sdf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="DB_SqlServer\DB Scripts.sql" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Entities\" />
