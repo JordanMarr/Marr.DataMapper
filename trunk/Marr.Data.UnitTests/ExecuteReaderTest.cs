@@ -56,11 +56,28 @@ namespace Marr.Data.Tests
             var db = CreateDB_ForQuery(rs);
 
             List<Person> people = db.ExecuteReader("SELECT PersonName FROM tbl WHERE ID=2", LoadPerson).ToList();
-
+            
             Assert.AreEqual(3, people.Count);
             Assert.AreEqual(1, people[0].ID);
             Assert.AreEqual(2, people[1].ID);
             Assert.AreEqual(3, people[2].ID);
+        }
+
+        [TestMethod]
+        public void ShouldLoadEntityDictionaryWithDelegateSyntax()
+        {
+            StubResultSet rs = new StubResultSet("ID", "Name", "Age");
+            rs.AddRow(1, "Person1", 31);
+            rs.AddRow(2, "Person2", 32);
+            rs.AddRow(3, "Person3", 33);
+            var db = CreateDB_ForQuery(rs);
+
+            Dictionary<int, Person> people = db.ExecuteReader("SELECT PersonName FROM tbl WHERE ID=2", LoadPerson).ToDictionary(p => p.ID);
+            
+            Assert.AreEqual(3, people.Count);
+            Assert.AreEqual(1, people[1].ID);
+            Assert.AreEqual(2, people[2].ID);
+            Assert.AreEqual(3, people[3].ID);
         }
 
         private Person LoadPerson(DbDataReader reader)
