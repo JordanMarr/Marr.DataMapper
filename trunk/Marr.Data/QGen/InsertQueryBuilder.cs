@@ -56,7 +56,7 @@ namespace Marr.Data.QGen
         /// <returns></returns>
         public InsertQueryBuilder<T> GetIdentity()
         {
-            if (string.IsNullOrEmpty(_dialect.IdentityQuery))
+            if (!_dialect.HasIdentityQuery)
             {
                 string err = string.Format("The current dialect '{0}' does not have an identity query implemented.", _dialect.ToString());
                 throw new DataMappingException(err);

@@ -500,6 +500,11 @@ namespace Marr.Data
 
         #region - Query -
 
+        /// <summary>
+        /// Creates a QueryBuilder that allows you to build a query.
+        /// </summary>
+        /// <typeparam name="T">The type of object that will be queried.</typeparam>
+        /// <returns>Returns a QueryBuilder of T.</returns>
         public QueryBuilder<T> Query<T>()
         {
             var dialect = QGen.QueryFactory.CreateDialect(this);
@@ -672,26 +677,61 @@ namespace Marr.Data
 
         #region - Insert -
 
+        /// <summary>
+        /// Creates an InsertQueryBuilder that allows you to build an insert statement.
+        /// This method gives you the flexibility to manually configure all options of your insert statement.
+        /// Note: You must manually call the Execute() chaining method to run the query.
+        /// </summary>
         public InsertQueryBuilder<T> Insert<T>()
         {
             return new InsertQueryBuilder<T>(this);
         }
 
+        /// <summary>
+        /// Generates and executes an insert query for the given entity.
+        /// This overload will automatically run an identity query if you have mapped an auto-incrementing column,
+        /// and if an identity query has been implemented for your current database dialect.
+        /// </summary>
         public object Insert<T>(T entity)
         {
-            return Insert<T>()
-                .Entity(entity)
-                .Execute();
+            var columns = MapRepository.Instance.GetColumns(typeof(T));
+
+            var dialect = QueryFactory.CreateDialect(this);
+            var builder = Insert<T>().Entity(entity);
+
+            // If an auto-increment column exists and this dialect has an identity query...
+            if (columns.Exists(c => c.ColumnInfo.IsAutoIncrement) && dialect.HasIdentityQuery)
+            {
+                builder.GetIdentity();
+            }
+
+            return builder.Execute();
         }
 
+        /// <summary>
+        /// Generates and executes an insert query for the given entity.
+        /// This overload will automatically run an identity query if you have mapped an auto-incrementing column,
+        /// and if an identity query has been implemented for your current database dialect.
+        /// </summary>
         public object Insert<T>(string tableName, T entity)
         {
-            return Insert<T>()
-                .Entity(entity)
-                .TableName(tableName)
-                .Execute();
+            var columns = MapRepository.Instance.GetColumns(typeof(T));
+
+            var dialect = QueryFactory.CreateDialect(this);
+            var builder = Insert<T>().Entity(entity).TableName(tableName);
+
+            // If an auto-increment column exists and this dialect has an identity query...
+            if (columns.Exists(c => c.ColumnInfo.IsAutoIncrement) && dialect.HasIdentityQuery)
+            {
+                builder.GetIdentity();
+            }
+
+            return builder.Execute();
         }
 
+        /// <summary>
+        /// Executes an insert query for the given entity using the given sql insert statement.
+        /// </summary>
         public object Insert<T>(T entity, string sql)
         {
             return Insert<T>()

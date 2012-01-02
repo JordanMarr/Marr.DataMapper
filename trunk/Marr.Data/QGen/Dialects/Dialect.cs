@@ -36,7 +36,15 @@ namespace Marr.Data.QGen.Dialects
         {
             get
             {
-                throw new NotImplementedException("IdentityQuery has not been implemented for this provider.");
+                return null;
+            }
+        }
+
+        public bool HasIdentityQuery
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(IdentityQuery);
             }
         }
 

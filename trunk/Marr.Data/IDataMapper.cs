@@ -26,43 +26,185 @@ namespace Marr.Data
 {
     public interface IDataMapper : IDisposable
     {
+        #region - Contructor, Members -
+
         string ProviderString { get; }
-        ParameterChainMethods AddParameter(string name, object value);
-        IDbDataParameter AddParameter(IDbDataParameter parameter);
+        DbCommand Command { get; }
+
+        /// <summary>
+        /// Gets or sets a value that determines whether the DataMapper will 
+        /// use a stored procedure or a sql text command to access 
+        /// the database.  The default is stored procedure.
+        /// </summary>
+        SqlModes SqlMode { get; set; }        
+
+        #endregion
+
+        #region - Update -
+
         UpdateQueryBuilder<T> Update<T>();
         int Update<T>(T entity, Expression<Func<T, bool>> filter);
         int Update<T>(string tableName, T entity, Expression<Func<T, bool>> filter);
         int Update<T>(T entity, string sql);
+
+        #endregion
+
+        #region - Insert -
+
+        /// <summary>
+        /// Creates an InsertQueryBuilder that allows you to build an insert statement.
+        /// This method gives you the flexibility to manually configure all options of your insert statement.
+        /// Note: You must manually call the Execute() chaining method to run the query.
+        /// </summary>
         InsertQueryBuilder<T> Insert<T>();
+
+        /// <summary>
+        /// Generates and executes an insert query for the given entity.
+        /// This overload will automatically run an identity query if you have mapped an auto-incrementing column,
+        /// and if an identity query has been implemented for your current database dialect.
+        /// </summary>
         object Insert<T>(T entity);
+
+        /// <summary>
+        /// Generates and executes an insert query for the given entity.
+        /// This overload will automatically run an identity query if you have mapped an auto-incrementing column,
+        /// and if an identity query has been implemented for your current database dialect.
+        /// </summary>
         object Insert<T>(string tableName, T entity);
+
+        /// <summary>
+        /// Executes an insert query for the given entity using the given sql insert statement.
+        /// </summary>
         object Insert<T>(T entity, string sql);
+
+        #endregion
+
+        #region - Delete -
+
         int Delete<T>(Expression<Func<T, bool>> filter);
         int Delete<T>(string tableName, Expression<Func<T, bool>> filter);
+
+        #endregion
+
+        #region - Connections / Transactions -
+
         void BeginTransaction();
-        DbCommand Command { get; }
+        void RollBack();
         void Commit();
-        int DeleteDataTable(DataTable dt, string deleteSP);
+        event EventHandler OpeningConnection;
+
+        #endregion
+
+        #region - ExecuteScalar, ExecuteNonQuery, ExecuteReader -
+
+        /// <summary>
+        /// Executes a non query that returns an integer.
+        /// </summary>
+        /// <param name="sql">The SQL command to execute.</param>
+        /// <returns>An integer value</returns>
         int ExecuteNonQuery(string sql);
+
+        /// <summary>
+        /// Executes a stored procedure that returns a scalar value.
+        /// </summary>
+        /// <param name="sql">The SQL command to execute.</param>
+        /// <returns>A scalar value</returns>
         object ExecuteScalar(string sql);
+
+        /// <summary>
+        /// Executes a DataReader that can be controlled using a Func expression.
+        /// (Note that reader.Read() will be called automatically).
+        /// </summary>
+        /// <typeparam name="TResult"></typeparam>
+        /// <param name="sql"></param>
+        /// <param name="func"></param>
+        /// <returns></returns>
         IEnumerable<TResult> ExecuteReader<TResult>(string sql, Func<DbDataReader, TResult> func);
+
+        #endregion
+
+        #region - DataSets -
+
         DataSet GetDataSet(string sql);
         DataSet GetDataSet(string sql, DataSet ds, string tableName);
         DataTable GetDataTable(string sql, DataTable dt, string tableName);
         DataTable GetDataTable(string sql);
         int InsertDataTable(DataTable table, string insertSP);
         int InsertDataTable(DataTable table, string insertSP, UpdateRowSource updateRowSource);
-        DbParameterCollection Parameters { get; }
-        T Find<T>(string sql);
-        T Find<T>(string sql, T ent);
-        QueryBuilder<T> Query<T>();
-        List<T> Query<T>(string sql);
-        List<T> QueryToGraph<T>(string sql);
-        ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList);
-        ICollection<T> Query<T>(string sql, ICollection<T> entityList);
-        void RollBack();
-        SqlModes SqlMode { get; set; }        
         int UpdateDataSet(DataSet ds, string updateSP);
-        event EventHandler OpeningConnection;
+        int DeleteDataTable(DataTable dt, string deleteSP);
+
+        #endregion
+
+        #region - Parameters -
+
+        DbParameterCollection Parameters { get; }
+        ParameterChainMethods AddParameter(string name, object value);
+        IDbDataParameter AddParameter(IDbDataParameter parameter);
+
+        #endregion
+
+        #region - Find -
+
+        /// <summary>
+        /// Returns an entity of type T.
+        /// </summary>
+        /// <typeparam name="T">The type of entity that is to be instantiated and loaded with values.</typeparam>
+        /// <param name="sql">The SQL command to execute.</param>
+        /// <returns>An instantiated and loaded entity of type T.</returns>
+        T Find<T>(string sql);
+
+        /// <summary>
+        /// Returns an entity of type T.
+        /// </summary>
+        /// <typeparam name="T">The type of entity that is to be instantiated and loaded with values.</typeparam>
+        /// <param name="sql">The SQL command to execute.</param>
+        /// <param name="ent">A previously instantiated entity that will be loaded with values.</param>
+        /// <returns>An instantiated and loaded entity of type T.</returns>
+        T Find<T>(string sql, T ent);
+
+        #endregion
+
+        #region - Query -
+
+        /// <summary>
+        /// Creates a QueryBuilder that allows you to build a query.
+        /// </summary>
+        /// <typeparam name="T">The type of object that will be queried.</typeparam>
+        /// <returns>Returns a QueryBuilder of T.</returns>
+        QueryBuilder<T> Query<T>();
+
+        /// <summary>
+        /// Returns the results of a query.
+        /// Uses a List of type T to return the data.
+        /// </summary>
+        /// <typeparam name="T">The type of object that will be queried.</typeparam>
+        /// <returns>Returns a list of the specified type.</returns>
+        List<T> Query<T>(string sql);
+
+        /// <summary>
+        /// Returns the results of a query or a stored procedure.
+        /// </summary>
+        /// <typeparam name="T">The type of object that will be queried.</typeparam>
+        /// <param name="sql">The sql query or stored procedure name to run.</param>
+        /// <param name="entityList">A previously instantiated list to populate.</param>
+        /// <returns>Returns a list of the specified type.</returns>
+        ICollection<T> Query<T>(string sql, ICollection<T> entityList);
+
+        #endregion
+
+        #region - Query to Graph -
+
+        /// <summary>
+        /// Runs a query and then tries to instantiate the entire object graph with entites.
+        /// </summary>
+        List<T> QueryToGraph<T>(string sql);
+
+        /// <summary>
+        /// Runs a query and then tries to instantiate the entire object graph with entites.
+        /// </summary>
+        ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList);
+
+        #endregion
     }
 }
