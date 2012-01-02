@@ -21,6 +21,7 @@ using System.Data;
 using System.Reflection;
 using Marr.Data.Mapping;
 using System.Linq.Expressions;
+using System.Data.Common;
 
 namespace Marr.Data
 {
@@ -140,6 +141,15 @@ namespace Marr.Data
         public static bool EqualsMember(this MemberInfo member, MemberInfo otherMember)
         {
             return member.Name == otherMember.Name && member.DeclaringType == otherMember.DeclaringType;
+        }
+
+        /// <summary>
+        /// Gets a value from a DbDataReader by using the column name;
+        /// </summary>
+        public static T GetValue<T>(this DbDataReader reader, string columnName)
+        {
+            int ordinal = reader.GetOrdinal(columnName);
+            return (T)reader.GetValue(ordinal);
         }
     }
 }

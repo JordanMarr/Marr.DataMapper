@@ -45,6 +45,7 @@ namespace Marr.Data
         int DeleteDataTable(DataTable dt, string deleteSP);
         int ExecuteNonQuery(string sql);
         object ExecuteScalar(string sql);
+        IEnumerable<TResult> ExecuteReader<TResult>(string sql, Func<DbDataReader, TResult> func);
         DataSet GetDataSet(string sql);
         DataSet GetDataSet(string sql, DataSet ds, string tableName);
         DataTable GetDataTable(string sql, DataTable dt, string tableName);
@@ -52,19 +53,16 @@ namespace Marr.Data
         int InsertDataTable(DataTable table, string insertSP);
         int InsertDataTable(DataTable table, string insertSP, UpdateRowSource updateRowSource);
         DbParameterCollection Parameters { get; }
-        void Find(string sql);
         T Find<T>(string sql);
         T Find<T>(string sql, T ent);
         QueryBuilder<T> Query<T>();
         List<T> Query<T>(string sql);
         List<T> QueryToGraph<T>(string sql);
         ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList);
-        void Query(string sql);
         ICollection<T> Query<T>(string sql, ICollection<T> entityList);
         void RollBack();
         SqlModes SqlMode { get; set; }        
         int UpdateDataSet(DataSet ds, string updateSP);
-        event EventHandler<LoadEntityEventArgs> LoadEntity;
         event EventHandler OpeningConnection;
     }
 }

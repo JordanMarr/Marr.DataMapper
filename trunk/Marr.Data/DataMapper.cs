@@ -181,7 +181,7 @@ namespace Marr.Data
 
         #endregion
 
-        #region - Execute Command / Get a Scalar Value -
+        #region - ExecuteScalar, ExecuteNonQuery, ExecuteReader -
 
         /// <summary>
         /// Executes a stored procedure that returns a scalar value.
@@ -191,7 +191,7 @@ namespace Marr.Data
         public object ExecuteScalar(string sql)
         {
             if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("A stored procedure name is required.");
+                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
             else
                 Command.CommandText = sql;
 
@@ -214,7 +214,7 @@ namespace Marr.Data
         public int ExecuteNonQuery(string sql)
         {
             if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("A stored procedure name is required.");
+                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
             else
                 Command.CommandText = sql;
 
@@ -222,6 +222,49 @@ namespace Marr.Data
             {
                 OpenConnection();
                 return Command.ExecuteNonQuery();
+            }
+            finally
+            {
+                CloseConnection();
+            }
+        }
+        
+        /// <summary>
+        /// Executes a DataReader that can be controlled using a Func expression.
+        /// (Note that reader.Read() will be called automatically).
+        /// </summary>
+        /// <typeparam name="TResult"></typeparam>
+        /// <param name="sql"></param>
+        /// <param name="func"></param>
+        /// <returns></returns>
+        public IEnumerable<TResult> ExecuteReader<TResult>(string sql, Func<DbDataReader, TResult> func)
+        {
+            if (string.IsNullOrEmpty(sql))
+                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
+            else
+                Command.CommandText = sql;
+
+            try
+            {
+                OpenConnection();
+
+                List<TResult> list = new List<TResult>();
+                DbDataReader reader = null;
+                try
+                {
+                    reader = Command.ExecuteReader();
+
+                    while (reader.Read())
+                    {
+                        list.Add(func(reader));
+                    }
+
+                    return list;
+                }
+                finally
+                {
+                    if (reader != null) reader.Close();
+                }
             }
             finally
             {
@@ -241,7 +284,7 @@ namespace Marr.Data
         public DataSet GetDataSet(string sql, DataSet ds, string tableName)
         {
             if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("A stored procedure name is required.");
+                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
 
             try
             {
@@ -277,7 +320,7 @@ namespace Marr.Data
         public DataTable GetDataTable(string sql, DataTable dt, string tableName)
         {
             if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("A stored procedure name is required.");
+                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
 
             try
             {
@@ -303,13 +346,13 @@ namespace Marr.Data
             }
         }
 
-        public int UpdateDataSet(DataSet ds, string updateSP)
+        public int UpdateDataSet(DataSet ds, string sql)
         {
-            if (string.IsNullOrEmpty(updateSP))
-                throw new ArgumentNullException("A stored procedure name is required.");
+            if (string.IsNullOrEmpty(sql))
+                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
 
             if (ds == null)
-                throw new ArgumentNullException("DataSet cannot be null.");
+                throw new ArgumentNullException("ds", "DataSet cannot be null.");
 
             DbDataAdapter adapter = null;
 
@@ -318,7 +361,7 @@ namespace Marr.Data
                 adapter = _dbProviderFactory.CreateDataAdapter();
 
                 adapter.UpdateCommand = Command;
-                adapter.UpdateCommand.CommandText = updateSP;
+                adapter.UpdateCommand.CommandText = sql;
 
                 return adapter.Update(ds);
             }
@@ -336,13 +379,13 @@ namespace Marr.Data
             return this.InsertDataTable(table, insertSP, UpdateRowSource.None);
         }
 
-        public int InsertDataTable(DataTable table, string insertSP, UpdateRowSource updateRowSource)
+        public int InsertDataTable(DataTable dt, string sql, UpdateRowSource updateRowSource)
         {
-            if (string.IsNullOrEmpty(insertSP))
-                throw new ArgumentNullException("A stored procedure name is required.");
+            if (string.IsNullOrEmpty(sql))
+                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
 
-            if (table == null)
-                throw new ArgumentNullException("DataTable cannot be null.");
+            if (dt == null)
+                throw new ArgumentNullException("dt", "DataTable cannot be null.");
 
             DbDataAdapter adapter = null;
 
@@ -351,11 +394,11 @@ namespace Marr.Data
                 adapter = _dbProviderFactory.CreateDataAdapter();
 
                 adapter.InsertCommand = Command;
-                adapter.InsertCommand.CommandText = insertSP;
+                adapter.InsertCommand.CommandText = sql;
 
                 adapter.InsertCommand.UpdatedRowSource = updateRowSource;
 
-                return adapter.Update(table);
+                return adapter.Update(dt);
             }
             finally
             {
@@ -366,13 +409,13 @@ namespace Marr.Data
             }
         }
 
-        public int DeleteDataTable(DataTable dt, string deleteSP)
+        public int DeleteDataTable(DataTable dt, string sql)
         {
-            if (string.IsNullOrEmpty(deleteSP))
-                throw new ArgumentNullException("A stored procedure name is required.");
+            if (string.IsNullOrEmpty(sql))
+                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
 
             if (dt == null)
-                throw new ArgumentNullException("DataSet cannot be null.");
+                throw new ArgumentNullException("dt", "DataSet cannot be null.");
 
             DbDataAdapter adapter = null;
 
@@ -381,7 +424,7 @@ namespace Marr.Data
                 adapter = _dbProviderFactory.CreateDataAdapter();
 
                 adapter.DeleteCommand = Command;
-                adapter.DeleteCommand.CommandText = deleteSP;
+                adapter.DeleteCommand.CommandText = sql;
 
                 return adapter.Update(dt);
             }
@@ -398,18 +441,6 @@ namespace Marr.Data
 
         #region - Find -
 
-        /// <summary>
-        /// Runs a query.  Use this overload when you want to manage instantiating and loading an entity.
-        /// </summary>
-        public void Find(string sql)
-        {
-            if (LoadEntity == null)
-                throw new NullReferenceException("This overload of Find requires a subscriber to the LoadEntity event.");
-
-            // Note: It doesn't matter which generic parameter is passed here.
-            Find<string>(sql);
-        }
-
         public T Find<T>(string sql)
         {
             return this.Find<T>(sql, default(T));
@@ -424,7 +455,7 @@ namespace Marr.Data
         public T Find<T>(string sql, T ent)
         {
             if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("A stored procedure name has not been specified for 'Find'.");
+                throw new ArgumentNullException("sql", "A stored procedure name has not been specified for 'Find'.");
 
             Type entityType = typeof(T);
             Command.CommandText = sql;
@@ -441,18 +472,10 @@ namespace Marr.Data
                 {
                     if (reader.Read())
                     {
-                        if (LoadEntity != null)
-                        {
-                            // Delegates the loading task to the caller
-                            LoadEntity(this, new LoadEntityEventArgs(reader));
-                        }
+                        if (ent == null)
+                            ent = (T)mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false);
                         else
-                        {
-                            if (ent == null)
-                                ent = (T)mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false);
-                            else
-                                mappingHelper.LoadExistingEntity(mappings, reader, ent, false);
-                        }
+                            mappingHelper.LoadExistingEntity(mappings, reader, ent, false);
                     }
                 }
             }
@@ -475,19 +498,6 @@ namespace Marr.Data
         }
 
         /// <summary>
-        /// Runs a query.  Use this overload when you want to manage instantiating and adding 
-        /// each entity instance to a collection using the LoadEntity event.
-        /// </summary>
-        public void Query(string sql)
-        {
-            if (LoadEntity == null)
-                throw new NullReferenceException("This overload of Query requires a subscriber to the LoadEntity event.");
-
-            // Note: It doesn't matter which generic parameter is passed here.
-            Query<object>(sql);
-        }
-
-        /// <summary>
         /// Returns the results of a query.
         /// Uses a List of type T to return the data.
         /// </summary>
@@ -504,10 +514,10 @@ namespace Marr.Data
         public ICollection<T> Query<T>(string sql, ICollection<T> entityList)
         {
             if (entityList == null)
-                throw new ArgumentNullException("ICollection instance cannot be null.");
+                throw new ArgumentNullException("entityList", "ICollection instance cannot be null.");
 
             if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("A stored procedure name has not been specified for 'Query'.");
+                throw new ArgumentNullException("sql", "A stored procedure name has not been specified for 'Query'.");
 
             var mappingHelper = new MappingHelper(Command);
             Type entityType = typeof(T);
@@ -521,19 +531,11 @@ namespace Marr.Data
                 {
                     while (reader.Read())
                     {
-                        if (LoadEntity != null)
-                        {
-                            // Delegates the loading task to the caller
-                            LoadEntity(this, new LoadEntityEventArgs(reader));
-                        }
-                        else
-                        {
-                            // Create new entity
-                            object ent = mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false);
+                        // Create new entity
+                        object ent = mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false);
 
-                            // Add entity to return list
-                            entityList.Add((T)ent);
-                        }
+                        // Add entity to return list
+                        entityList.Add((T)ent);
                     }
                 }
             }
@@ -571,7 +573,7 @@ namespace Marr.Data
         internal ICollection<T> QueryToGraph<T>(string sql, EntityGraph graph, List<MemberInfo> childrenToLoad)
         {
             if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("sql");
+                throw new ArgumentNullException("sql", "sql");
 
             var mappingHelper = new MappingHelper(Command);
             Type parentType = typeof(T);
@@ -729,8 +731,6 @@ namespace Marr.Data
         
         #region - Events -
 
-        public event EventHandler<LoadEntityEventArgs> LoadEntity;
-
         public event EventHandler OpeningConnection;
 
         public event EventHandler ClosingConnection;
@@ -804,9 +804,6 @@ namespace Marr.Data
 
         private void UnbindEvents()
         {
-            if (LoadEntity != null)
-                LoadEntity = null;
-
             if (OpeningConnection != null)
                 OpeningConnection = null;
 

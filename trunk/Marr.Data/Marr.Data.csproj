@@ -73,7 +73,6 @@
     <Compile Include="EntityReference.cs" />
     <Compile Include="GroupingKeyCollection.cs" />
     <Compile Include="IDataMapper.cs" />
-    <Compile Include="LoadEntityEventArgs.cs" />
     <Compile Include="Mapping\ColumnMapBuilder.cs" />
     <Compile Include="Mapping\MapBuilder.cs" />
     <Compile Include="Mapping\RelationshipBuilder.cs" />
