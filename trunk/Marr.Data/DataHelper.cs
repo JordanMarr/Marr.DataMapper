@@ -151,5 +151,13 @@ namespace Marr.Data
             int ordinal = reader.GetOrdinal(columnName);
             return (T)reader.GetValue(ordinal);
         }
+
+        /// <summary>
+        /// Determines if an entity is a primitive value or a string.
+        /// </summary>
+        public static bool IsSimpleType(Type type)
+        {
+            return type.IsPrimitive || type.Equals(typeof(string));
+        }
     }
 }

@@ -68,6 +68,7 @@
     <Compile Include="DataMapperTest.cs" />
     <Compile Include="QGenTest.cs" />
     <Compile Include="QueryBuilderTest.cs" />
+    <Compile Include="SimpleTypeQueryTest.cs" />
     <Compile Include="TestBase.cs" />
   </ItemGroup>
   <ItemGroup>

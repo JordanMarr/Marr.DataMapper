@@ -463,6 +463,8 @@ namespace Marr.Data
             MapRepository repository = MapRepository.Instance;
             ColumnMapCollection mappings = repository.GetColumns(entityType);
 
+            bool isSimpleType = DataHelper.IsSimpleType(typeof(T));
+
             try
             {
                 OpenConnection();
@@ -472,10 +474,17 @@ namespace Marr.Data
                 {
                     if (reader.Read())
                     {
-                        if (ent == null)
-                            ent = (T)mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false);
+                        if (isSimpleType)
+                        {
+                            return (T)reader.GetValue(0);
+                        }
                         else
-                            mappingHelper.LoadExistingEntity(mappings, reader, ent, false);
+                        {
+                            if (ent == null)
+                                ent = (T)mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false);
+                            else
+                                mappingHelper.LoadExistingEntity(mappings, reader, ent, false);
+                        }
                     }
                 }
             }
@@ -524,6 +533,8 @@ namespace Marr.Data
             Command.CommandText = sql;
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(entityType);
 
+            bool isSimpleType = DataHelper.IsSimpleType(typeof(T));
+
             try
             {
                 OpenConnection();
@@ -531,11 +542,18 @@ namespace Marr.Data
                 {
                     while (reader.Read())
                     {
-                        // Create new entity
-                        object ent = mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false);
+                        if (isSimpleType)
+                        {
+                            entityList.Add((T)reader.GetValue(0));
+                        }
+                        else
+                        {
+                            // Create new entity
+                            object ent = mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false);
 
-                        // Add entity to return list
-                        entityList.Add((T)ent);
+                            // Add entity to return list
+                            entityList.Add((T)ent);
+                        }
                     }
                 }
             }
