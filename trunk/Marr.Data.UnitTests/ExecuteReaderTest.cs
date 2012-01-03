@@ -41,7 +41,7 @@ namespace Marr.Data.Tests
             rs.AddRow(2, "Person2", 35);
             var db = CreateDB_ForQuery(rs);
 
-            Person p = db.ExecuteReader("SELECT PersonName FROM tbl WHERE ID=2", LoadPerson).FirstOrDefault();
+            Person p = db.ExecuteReader<Person>("SELECT PersonName FROM tbl WHERE ID=2", LoadPerson).FirstOrDefault();
 
             Assert.AreEqual("Person2", p.Name);
         }
@@ -55,7 +55,9 @@ namespace Marr.Data.Tests
             rs.AddRow(3, "Person3", 33);
             var db = CreateDB_ForQuery(rs);
 
-            List<Person> people = db.ExecuteReader("SELECT PersonName FROM tbl WHERE ID=2", LoadPerson).ToList();
+            List<Person> people = db.ExecuteReader("SELECT PersonName FROM tbl WHERE ID=2",
+                r => new Person { ID = r.GetInt32(0), Name = r.GetString(1), Age = r.GetInt32(2) }
+                ).ToList();
             
             Assert.AreEqual(3, people.Count);
             Assert.AreEqual(1, people[0].ID);
@@ -74,7 +76,7 @@ namespace Marr.Data.Tests
 
             Dictionary<string, int> people = new Dictionary<string, int>();
 
-            db.ExecuteReaderAction("SELECT PersonName FROM tbl", r => { people.Add(r.GetString(1), r.GetInt32(0)); });
+            db.ExecuteReader("SELECT PersonName FROM tbl", r => { people.Add(r.GetString(1), r.GetInt32(0)); });
 
             Assert.AreEqual(3, people.Count);
             Assert.AreEqual(1, people["Hash1"]);

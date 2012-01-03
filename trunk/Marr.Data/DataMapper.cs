@@ -228,14 +228,14 @@ namespace Marr.Data
                 CloseConnection();
             }
         }
-        
+
         /// <summary>
         /// Executes a DataReader that can be controlled using a Func delegate.
         /// (Note that reader.Read() will be called automatically).
         /// </summary>
         /// <typeparam name="TResult">The type that will be return in the result set.</typeparam>
         /// <param name="sql">The sql statement that will be executed.</param>
-        /// <param name="func">The function that will return the TResult.</param>
+        /// <param name="func">The function that will build the the TResult set.</param>
         /// <returns>An IEnumerable of TResult.</returns>
         public IEnumerable<TResult> ExecuteReader<TResult>(string sql, Func<DbDataReader, TResult> func)
         {
@@ -277,7 +277,7 @@ namespace Marr.Data
         /// </summary>
         /// <param name="sql">The sql statement that will be executed.</param>
         /// <param name="action">The delegate that will work with the result set.</param>
-        public void ExecuteReaderAction(string sql, Action<DbDataReader> action)
+        public void ExecuteReader(string sql, Action<DbDataReader> action)
         {
             if (string.IsNullOrEmpty(sql))
                 throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");

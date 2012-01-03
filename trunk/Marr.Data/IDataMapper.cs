@@ -119,7 +119,7 @@ namespace Marr.Data
         /// </summary>
         /// <typeparam name="TResult">The type that will be return in the result set.</typeparam>
         /// <param name="sql">The sql statement that will be executed.</param>
-        /// <param name="func">The function that will return the TResult.</param>
+        /// <param name="func">The function that will build the the TResult set.</param>
         /// <returns>An IEnumerable of TResult.</returns>
         IEnumerable<TResult> ExecuteReader<TResult>(string sql, Func<DbDataReader, TResult> func);
 
@@ -128,7 +128,7 @@ namespace Marr.Data
         /// </summary>
         /// <param name="sql">The sql statement that will be executed.</param>
         /// <param name="action">The delegate that will work with the result set.</param>
-        void ExecuteReaderAction(string sql, Action<DbDataReader> action);
+        void ExecuteReader(string sql, Action<DbDataReader> action);
 
         #endregion
 
