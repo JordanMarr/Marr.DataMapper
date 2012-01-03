@@ -71,6 +71,7 @@
     <Compile Include="EntityGraph.cs" />
     <Compile Include="EntityMerger.cs" />
     <Compile Include="EntityReference.cs" />
+    <Compile Include="ExtensionMethods.cs" />
     <Compile Include="GroupingKeyCollection.cs" />
     <Compile Include="IDataMapper.cs" />
     <Compile Include="Mapping\ColumnMapBuilder.cs" />
