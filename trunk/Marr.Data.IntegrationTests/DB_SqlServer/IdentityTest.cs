@@ -38,7 +38,6 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
             }
         }
 
-
         [TestMethod]
         public void GeneratedQueryShouldBeAbleToGetIdentity()
         {
@@ -62,7 +61,31 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
         }
 
         [TestMethod]
-        public void ManualQueryShouldBeAbleToGetIdentity()
+        public void ManualQueryShouldAutomaticallyGetIdentity()
+        {
+            using (var db = CreateSqlServerDB())
+            {
+                try
+                {
+                    db.SqlMode = SqlModes.Text;
+
+                    db.BeginTransaction();
+
+                    Order order = new Order { OrderName = "Order1" };
+
+                    var identity = db.Insert(order, "INSERT INTO [Order] (OrderName) VALUES (@OrderName);");
+
+                    Assert.IsTrue(int.Parse(identity.ToString()) > 0);
+                }
+                finally
+                {
+                    db.RollBack();
+                }
+            }
+        }
+
+        [TestMethod]
+        public void ManualQueryWithManualIdentityStatementShouldBeAbleToGetIdentity()
         {
             using (var db = CreateSqlServerDB())
             {

@@ -74,6 +74,8 @@ namespace Marr.Data
 
         /// <summary>
         /// Executes an insert query for the given entity using the given sql insert statement.
+        /// This overload will automatically run an identity query if you have mapped an auto-incrementing column,
+        /// and if an identity query has been implemented for your current database dialect.
         /// </summary>
         object Insert<T>(T entity, string sql);
 

@@ -695,7 +695,6 @@ namespace Marr.Data
         public object Insert<T>(T entity)
         {
             var columns = MapRepository.Instance.GetColumns(typeof(T));
-
             var dialect = QueryFactory.CreateDialect(this);
             var builder = Insert<T>().Entity(entity);
 
@@ -716,7 +715,6 @@ namespace Marr.Data
         public object Insert<T>(string tableName, T entity)
         {
             var columns = MapRepository.Instance.GetColumns(typeof(T));
-
             var dialect = QueryFactory.CreateDialect(this);
             var builder = Insert<T>().Entity(entity).TableName(tableName);
 
@@ -731,13 +729,22 @@ namespace Marr.Data
 
         /// <summary>
         /// Executes an insert query for the given entity using the given sql insert statement.
+        /// This overload will automatically run an identity query if you have mapped an auto-incrementing column,
+        /// and if an identity query has been implemented for your current database dialect.
         /// </summary>
         public object Insert<T>(T entity, string sql)
         {
-            return Insert<T>()
-                .Entity(entity)
-                .QueryText(sql)
-                .Execute();
+            var columns = MapRepository.Instance.GetColumns(typeof(T));
+            var dialect = QueryFactory.CreateDialect(this);
+            var builder = Insert<T>().Entity(entity).QueryText(sql);
+
+            // If an auto-increment column exists and this dialect has an identity query...
+            if (columns.Exists(c => c.ColumnInfo.IsAutoIncrement) && dialect.HasIdentityQuery)
+            {
+                builder.GetIdentity();
+            }
+
+            return builder.Execute();
         }
 
         #endregion

@@ -116,34 +116,6 @@ namespace Marr.Data.QGen
             return this;
         }
 
-        public string BuildQuery()
-        {
-            if (_entity == null)
-                throw new ArgumentNullException("You must specify an entity to insert.");
-
-            // Override SqlMode since we know this will be a text query
-            _db.SqlMode = SqlModes.Text;
-
-            var columns = _columnsToInsert ?? _mappings;
-
-            _mappingHelper.CreateParameters<T>(_entity, columns, _generateQuery);
-            IQuery query = QueryFactory.CreateInsertQuery(columns, _db, _tableName);
-
-            _db.Command.CommandText = query.Generate();
-
-            if (_getIdentityValue && _dialect.SupportsBatchQueries)
-            {
-                // Append a batched identity query
-                if (!_db.Command.CommandText.EndsWith(";"))
-                {
-                    _db.Command.CommandText += ";";
-                }
-                _db.Command.CommandText += _dialect.IdentityQuery;
-            }
-
-            return _db.Command.CommandText;
-        }
-
         public object Execute()
         {
             if (_generateQuery)
@@ -152,6 +124,7 @@ namespace Marr.Data.QGen
             }
             else
             {
+                TryAppendIdentityQuery();
                 _mappingHelper.CreateParameters<T>(_entity, _mappings.NonReturnValues, _generateQuery);
             }
 
@@ -163,12 +136,13 @@ namespace Marr.Data.QGen
 
                 scalar = _db.Command.ExecuteScalar();
 
-                if (_getIdentityValue && _generateQuery && !_dialect.SupportsBatchQueries)
+                if (_getIdentityValue && !_dialect.SupportsBatchQueries)
                 {
                     // Run identity query as a separate query
                     _db.Command.CommandText = _dialect.IdentityQuery;
                     scalar = _db.Command.ExecuteScalar();
                 }
+
                 _mappingHelper.SetOutputValues<T>(_entity, _mappings.OutputFields);
                 if (scalar != null)
                 {
@@ -188,6 +162,39 @@ namespace Marr.Data.QGen
             }
 
             return scalar;
+        }
+
+        public string BuildQuery()
+        {
+            if (_entity == null)
+                throw new ArgumentNullException("You must specify an entity to insert.");
+
+            // Override SqlMode since we know this will be a text query
+            _db.SqlMode = SqlModes.Text;
+
+            var columns = _columnsToInsert ?? _mappings;
+
+            _mappingHelper.CreateParameters<T>(_entity, columns, _generateQuery);
+            IQuery query = QueryFactory.CreateInsertQuery(columns, _db, _tableName);
+
+            _db.Command.CommandText = query.Generate();
+
+            TryAppendIdentityQuery();
+
+            return _db.Command.CommandText;
+        }
+
+        private void TryAppendIdentityQuery()
+        {
+            if (_getIdentityValue && _dialect.SupportsBatchQueries)
+            {
+                // Append a batched identity query
+                if (!_db.Command.CommandText.EndsWith(";"))
+                {
+                    _db.Command.CommandText += ";";
+                }
+                _db.Command.CommandText += _dialect.IdentityQuery;
+            }
         }
     }
 }
