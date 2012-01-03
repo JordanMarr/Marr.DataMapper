@@ -7,12 +7,11 @@
     </version>
     <authors>Jordan Marr</authors>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
-    <description>Marr DataMapper is a Linq enabled ORM that allows you to project views into complex object graphs. Contributors: Rick Schott (NuGet support), "vitidev" (various contributions via CodePlex).
-    </description>
+    <description>Marr DataMapper is a Linq enabled ORM that allows you to project views into complex object graphs. Contributors: Rick Schott, vitidev.</description>
      <language>en-US</language>
     <projectUrl>http://marrdatamapper.codeplex.com/</projectUrl>
     <licenseUrl>http://marrdatamapper.codeplex.com/license</licenseUrl>
-    <tags>ORM Object Relational Mapper ADO Data Access</tags>
+    <tags>ORM</tags>
   </metadata>
   <files>
      <file src="bin\Release\*.dll" target="lib" />    
