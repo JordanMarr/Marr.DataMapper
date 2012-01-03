@@ -80,6 +80,25 @@ namespace Marr.Data.Tests
             Assert.AreEqual(3, people[3].ID);
         }
 
+        [TestMethod]
+        public void ShouldLoadEntityDictionaryUsingAnonymousObject()
+        {
+            StubResultSet rs = new StubResultSet("ID", "Hash");
+            rs.AddRow(1, "Hash1");
+            rs.AddRow(2, "Hash2");
+            rs.AddRow(3, "Hash3");
+            var db = CreateDB_ForQuery(rs);
+
+            var people = db.ExecuteReader("SELECT PersonName FROM tbl WHERE ID=2",
+                r => new { ID = r.GetValue<int>("ID"), Hash = r.GetValue<string>("Hash") })
+                .ToDictionary(obj => obj.Hash);
+
+            Assert.AreEqual(3, people.Count);
+            Assert.AreEqual(1, people["Hash1"].ID);
+            Assert.AreEqual(2, people["Hash2"].ID);
+            Assert.AreEqual(3, people["Hash3"].ID);
+        }
+
         private Person LoadPerson(DbDataReader reader)
         {
             Person p = new Person();
