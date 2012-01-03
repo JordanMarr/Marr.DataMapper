@@ -1,4 +1,9 @@
-﻿using System;
+﻿/* Copyright (C) 2006 Phil Haack
+ * This class was written by Phil Haack and graciously offered to the public via his blog:
+ * http://haacked.com/archive/2006/05/31/UnitTestingDataAccessCodeWithTheStubDataReader.aspx
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
