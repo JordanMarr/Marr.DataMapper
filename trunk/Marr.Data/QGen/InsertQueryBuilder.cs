@@ -51,7 +51,6 @@ namespace Marr.Data.QGen
 
         /// <summary>
         /// Runs an identity query to get the value of an autoincrement field.
-        /// Note: this does not run when a query has been manually passed in.
         /// </summary>
         /// <returns></returns>
         public InsertQueryBuilder<T> GetIdentity()
