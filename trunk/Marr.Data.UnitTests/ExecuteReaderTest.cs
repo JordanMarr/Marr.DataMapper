@@ -89,7 +89,7 @@ namespace Marr.Data.Tests
             rs.AddRow(3, "Hash3");
             var db = CreateDB_ForQuery(rs);
 
-            var people = db.ExecuteReader("SELECT PersonName FROM tbl WHERE ID=2",
+            var people = db.ExecuteReader("SELECT PersonName FROM tbl",
                 r => new { ID = r.GetValue<int>("ID"), Hash = r.GetValue<string>("Hash") })
                 .ToDictionary(obj => obj.Hash);
 
