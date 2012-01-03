@@ -64,24 +64,7 @@ namespace Marr.Data.Tests
         }
 
         [TestMethod]
-        public void ShouldLoadEntityDictionaryWithDelegateSyntax()
-        {
-            StubResultSet rs = new StubResultSet("ID", "Name", "Age");
-            rs.AddRow(1, "Person1", 31);
-            rs.AddRow(2, "Person2", 32);
-            rs.AddRow(3, "Person3", 33);
-            var db = CreateDB_ForQuery(rs);
-
-            Dictionary<int, Person> people = db.ExecuteReader("SELECT PersonName FROM tbl WHERE ID=2", LoadPerson).ToDictionary(p => p.ID);
-            
-            Assert.AreEqual(3, people.Count);
-            Assert.AreEqual(1, people[1].ID);
-            Assert.AreEqual(2, people[2].ID);
-            Assert.AreEqual(3, people[3].ID);
-        }
-
-        [TestMethod]
-        public void ShouldLoadEntityDictionaryUsingAnonymousObject()
+        public void ExecuteReaderAction_ShouldLoadEntityDictionary()
         {
             StubResultSet rs = new StubResultSet("ID", "Hash");
             rs.AddRow(1, "Hash1");
@@ -89,14 +72,14 @@ namespace Marr.Data.Tests
             rs.AddRow(3, "Hash3");
             var db = CreateDB_ForQuery(rs);
 
-            var people = db.ExecuteReader("SELECT PersonName FROM tbl",
-                r => new { ID = r.GetValue<int>("ID"), Hash = r.GetValue<string>("Hash") })
-                .ToDictionary(obj => obj.Hash);
+            Dictionary<string, int> people = new Dictionary<string, int>();
+
+            db.ExecuteReaderAction("SELECT PersonName FROM tbl", r => { people.Add(r.GetString(1), r.GetInt32(0)); });
 
             Assert.AreEqual(3, people.Count);
-            Assert.AreEqual(1, people["Hash1"].ID);
-            Assert.AreEqual(2, people["Hash2"].ID);
-            Assert.AreEqual(3, people["Hash3"].ID);
+            Assert.AreEqual(1, people["Hash1"]);
+            Assert.AreEqual(2, people["Hash2"]);
+            Assert.AreEqual(3, people["Hash3"]);
         }
 
         private Person LoadPerson(DbDataReader reader)

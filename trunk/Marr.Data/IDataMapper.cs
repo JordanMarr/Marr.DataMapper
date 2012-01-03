@@ -114,14 +114,21 @@ namespace Marr.Data
         object ExecuteScalar(string sql);
 
         /// <summary>
-        /// Executes a DataReader that can be controlled using a Func expression.
+        /// Executes a DataReader that can be controlled using a Func delegate.
         /// (Note that reader.Read() will be called automatically).
         /// </summary>
-        /// <typeparam name="TResult"></typeparam>
-        /// <param name="sql"></param>
-        /// <param name="func"></param>
-        /// <returns></returns>
+        /// <typeparam name="TResult">The type that will be return in the result set.</typeparam>
+        /// <param name="sql">The sql statement that will be executed.</param>
+        /// <param name="func">The function that will return the TResult.</param>
+        /// <returns>An IEnumerable of TResult.</returns>
         IEnumerable<TResult> ExecuteReader<TResult>(string sql, Func<DbDataReader, TResult> func);
+
+        /// <summary>
+        /// Executes a DataReader that can be controlled using an Action delegate.
+        /// </summary>
+        /// <param name="sql">The sql statement that will be executed.</param>
+        /// <param name="action">The delegate that will work with the result set.</param>
+        void ExecuteReaderAction(string sql, Action<DbDataReader> action);
 
         #endregion
 
