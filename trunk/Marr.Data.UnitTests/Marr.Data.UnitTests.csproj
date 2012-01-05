@@ -70,6 +70,7 @@
     <Compile Include="QueryBuilderTest.cs" />
     <Compile Include="SimpleTypeQueryTest.cs" />
     <Compile Include="TestBase.cs" />
+    <Compile Include="UnitOfWorkTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Marr.Data.TestHelper\Marr.Data.TestHelper.csproj">
