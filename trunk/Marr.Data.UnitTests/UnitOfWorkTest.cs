@@ -93,6 +93,7 @@ namespace Marr.Data.Tests
             }
 
             factory.AssertWasCalled(f => f.Create(), o => o.Repeat.Once());
+            db.AssertWasCalled(d => d.ExecuteNonQuery(""), o => o.IgnoreArguments().Repeat.Times(4));
             db.AssertWasCalled(d => d.Dispose(), o => o.Repeat.Once());
         }
 
