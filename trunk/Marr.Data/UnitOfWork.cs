@@ -22,6 +22,7 @@ namespace Marr.Data
     {
         private Func<IDataMapper> _dbConstructor;
         private IDataMapper _lazyLoadedDB;
+        private short _transactionCount;
 
         public UnitOfWork(Func<IDataMapper> dbConstructor)
         {
@@ -55,6 +56,42 @@ namespace Marr.Data
             }
         }
 
+        public void BeginTransaction()
+        {
+            // Only allow one transaction to begin
+            if (_transactionCount < 1)
+            {
+                DB.BeginTransaction();
+            }
+
+            _transactionCount++;
+        }
+
+        public void Commit()
+        {
+            // Only allow the outermost transaction to commit (all nested transactions must succeed)
+            if (_transactionCount == 1)
+            {
+                DB.Commit();
+            }
+
+            _transactionCount--;
+        }
+
+        public void RollBack()
+        {
+            // Any level transaction should be allowed to rollback
+            DB.RollBack();
+
+            // Throw an exception if a nested ShareContext transaction rolls back
+            if (_transactionCount > 1)
+            {
+                throw new NestedSharedContextRollBackException();
+            }
+
+            _transactionCount--;
+        }
+
         public void Dispose()
         {
             if (!IsShared)
@@ -67,11 +104,25 @@ namespace Marr.Data
 
         private void ForceDispose()
         {
+            _transactionCount = 0;
+
             if (_lazyLoadedDB != null)
             {
                 _lazyLoadedDB.Dispose();
                 _lazyLoadedDB = null;
             }
         }
+    }
+
+    [Serializable]
+    public class NestedSharedContextRollBackException : Exception
+    {
+        public NestedSharedContextRollBackException() { }
+        public NestedSharedContextRollBackException(string message) : base(message) { }
+        public NestedSharedContextRollBackException(string message, Exception inner) : base(message, inner) { }
+        protected NestedSharedContextRollBackException(
+          System.Runtime.Serialization.SerializationInfo info,
+          System.Runtime.Serialization.StreamingContext context)
+            : base(info, context) { }
     }
 }
