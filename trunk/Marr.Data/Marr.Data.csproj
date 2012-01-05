@@ -74,6 +74,8 @@
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="GroupingKeyCollection.cs" />
     <Compile Include="IDataMapper.cs" />
+    <Compile Include="UnitOfWork.cs" />
+    <Compile Include="UnitOfWorkSharedContext.cs" />
     <Compile Include="Mapping\ColumnMapBuilder.cs" />
     <Compile Include="Mapping\MapBuilder.cs" />
     <Compile Include="Mapping\RelationshipBuilder.cs" />
