@@ -13,13 +13,12 @@ namespace Marr.Data.TestHelper
     {
         private List<ColumnMapInfo> _columns;
         private List<Type> _types;
+        private int _columnIndex;
 
-        public StubEntityResultSet(params Type[] entityTypes)
+        public StubEntityResultSet()
         {
             _columns = new List<ColumnMapInfo>();
             _types = new List<Type>();
-
-            AddFieldNames(entityTypes);
         }
 
         /// <summary>
@@ -45,12 +44,14 @@ namespace Marr.Data.TestHelper
             foreach (object entity in entities)
             {
                 Type entityType = entity.GetType();
-                if (!_types.Contains(entityType))
-                {
-                    throw new Exception("You tried to add an entity type that was not specified in the constructor.");
-                }
+                AddFieldNames(entityType);
 
                 var mappings = Marr.Data.MapRepository.Instance.GetColumns(entity.GetType());
+                if (mappings.Count == 0)
+                {
+                    string error = string.Format("The entity type '{0}' does not have any column mappings.", entityType.Name);
+                    throw new ArgumentException(error);
+                }
 
                 foreach (var column in _columns.Where(c => c.Type == entityType))
                 {
@@ -74,33 +75,32 @@ namespace Marr.Data.TestHelper
             }
 
             AddRow(stubbedValues.ToArray());
+            _columnIndex = 0;
         }
 
-        private void AddFieldNames(Type[] entityTypes)
+        private void AddFieldNames(Type type)
         {
-            int index = 0;
-            foreach (Type type in entityTypes)
+            if (_types.Contains(type))
             {
-                if (!_types.Contains(type))
+                return;
+            }
+
+            _types.Add(type);
+
+            ColumnMapCollection columns = Marr.Data.MapRepository.Instance.GetColumns(type);
+
+            foreach (ColumnMap column in columns)
+            {
+                if (!_columns.Exists(c => !c.IsAlt && c.Map.ColumnInfo.Name == column.ColumnInfo.Name))
                 {
-                    _types.Add(type);
+                    _fieldNames.Add(column.ColumnInfo.Name, _columnIndex++);
+                    _columns.Add(new ColumnMapInfo(column, false, type));
                 }
 
-                ColumnMapCollection columns = Marr.Data.MapRepository.Instance.GetColumns(type);
-
-                foreach (ColumnMap column in columns)
+                if (column.ColumnInfo.AltName != null && !_columns.Exists(c => c.IsAlt && c.Map.ColumnInfo.AltName == column.ColumnInfo.AltName))
                 {
-                    if (!_columns.Exists(c => !c.IsAlt && c.Map.ColumnInfo.Name == column.ColumnInfo.Name))
-                    {
-                        _fieldNames.Add(column.ColumnInfo.Name, index++);
-                        _columns.Add(new ColumnMapInfo(column, false, type));
-                    }
-
-                    if (column.ColumnInfo.AltName != null && !_columns.Exists(c => c.IsAlt && c.Map.ColumnInfo.AltName == column.ColumnInfo.AltName))
-                    {
-                        _fieldNames.Add(column.ColumnInfo.AltName, index++);
-                        _columns.Add(new ColumnMapInfo(column, true, type));
-                    }
+                    _fieldNames.Add(column.ColumnInfo.AltName, _columnIndex++);
+                    _columns.Add(new ColumnMapInfo(column, true, type));
                 }
             }
         }

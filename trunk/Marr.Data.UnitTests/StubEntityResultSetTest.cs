@@ -21,7 +21,7 @@ namespace Marr.Data.Tests
         [TestMethod]
         public void SingleEntityTest()
         {
-            StubEntityResultSet rs = new StubEntityResultSet(typeof(Order));
+            StubEntityResultSet rs = new StubEntityResultSet();
 
             rs.AddEntity(new Order { ID = 1, OrderName = "Name1" });
             rs.AddEntity(new Order { ID = 2, OrderName = "Name2" });
@@ -40,8 +40,8 @@ namespace Marr.Data.Tests
         [TestMethod]
         public void ParentChildEntityTest()
         {
-            StubEntityResultSet rs = new StubEntityResultSet(typeof(Order), typeof(OrderItem));
-
+            StubEntityResultSet rs = new StubEntityResultSet();
+            
             rs.AddEntityWithChildren(
                 new Order { ID = 1, OrderName = "Name11" },
                 new OrderItem { ID = 1001, ItemDescription = "Desc11", OrderID = 1, Price = 1.00m }
@@ -96,7 +96,7 @@ namespace Marr.Data.Tests
         [TestMethod]
         public void ParentChildChildEntityTest()
         {
-            StubEntityResultSet rs = new StubEntityResultSet(typeof(Order), typeof(OrderItem), typeof(Receipt));
+            StubEntityResultSet rs = new StubEntityResultSet();
 
             rs.AddEntityWithChildren(
                 new Order { ID = 1, OrderName = "Name11" },
