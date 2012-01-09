@@ -23,7 +23,7 @@ using System.Data.Common;
 namespace Marr.Data.TestHelper
 {
     /// <summary>
-    /// Initializes new DataMapper instances with a stubbed result set.
+    /// Initializes a new DataMapper instance with a stubbed result set and mocked internals.
     /// </summary>
     public static class StubDataMapperFactory
     {

@@ -105,17 +105,7 @@ namespace Marr.Data.TestHelper
             }
         }
     }
-
-    public class StubEntityResultSetBuilder
-    {
-        public StubEntityResultSetBuilder()
-        {
-            StubbedValues = new List<object>();
-        }
-
-        public List<object> StubbedValues { get; set; }
-    }
-
+    
     internal class ColumnMapInfo
     {
         public ColumnMapInfo(ColumnMap column, bool isAlt, Type type)
