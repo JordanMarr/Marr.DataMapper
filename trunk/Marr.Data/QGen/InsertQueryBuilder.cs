@@ -20,6 +20,11 @@ namespace Marr.Data.QGen
         private Dialects.Dialect _dialect;
         private ColumnMapCollection _columnsToInsert;
 
+        public InsertQueryBuilder()
+        {
+            // Used only for unit testing with mock frameworks
+        }
+
         public InsertQueryBuilder(DataMapper db)
         {
             _db = db;
@@ -30,20 +35,20 @@ namespace Marr.Data.QGen
             _dialect = QueryFactory.CreateDialect(_db);
         }
 
-        public InsertQueryBuilder<T> TableName(string tableName)
+        public virtual InsertQueryBuilder<T> TableName(string tableName)
         {
             _tableName = tableName;
             return this;
         }
 
-        public InsertQueryBuilder<T> QueryText(string queryText)
+        public virtual InsertQueryBuilder<T> QueryText(string queryText)
         {
             _generateQuery = false;
             _db.Command.CommandText = queryText;
             return this;
         }
 
-        public InsertQueryBuilder<T> Entity(T entity)
+        public virtual InsertQueryBuilder<T> Entity(T entity)
         {
             _entity = entity;
             return this;
@@ -53,7 +58,7 @@ namespace Marr.Data.QGen
         /// Runs an identity query to get the value of an autoincrement field.
         /// </summary>
         /// <returns></returns>
-        public InsertQueryBuilder<T> GetIdentity()
+        public virtual InsertQueryBuilder<T> GetIdentity()
         {
             if (!_dialect.HasIdentityQuery)
             {
@@ -65,7 +70,7 @@ namespace Marr.Data.QGen
             return this;
         }
 
-        public InsertQueryBuilder<T> ColumnsIncluding(params Expression<Func<T, object>>[] properties)
+        public virtual InsertQueryBuilder<T> ColumnsIncluding(params Expression<Func<T, object>>[] properties)
         {
             List<string> columnList = new List<string>();
 
@@ -77,7 +82,7 @@ namespace Marr.Data.QGen
             return ColumnsIncluding(columnList.ToArray());
         }
 
-        public InsertQueryBuilder<T> ColumnsIncluding(params string[] properties)
+        public virtual InsertQueryBuilder<T> ColumnsIncluding(params string[] properties)
         {
             _columnsToInsert = new ColumnMapCollection();
 
@@ -89,7 +94,7 @@ namespace Marr.Data.QGen
             return this;
         }
 
-        public InsertQueryBuilder<T> ColumnsExcluding(params Expression<Func<T, object>>[] properties)
+        public virtual InsertQueryBuilder<T> ColumnsExcluding(params Expression<Func<T, object>>[] properties)
         {
             List<string> columnList = new List<string>();
 
@@ -101,7 +106,7 @@ namespace Marr.Data.QGen
             return ColumnsExcluding(columnList.ToArray());
         }
 
-        public InsertQueryBuilder<T> ColumnsExcluding(params string[] properties)
+        public virtual InsertQueryBuilder<T> ColumnsExcluding(params string[] properties)
         {
             _columnsToInsert = new ColumnMapCollection();
 
@@ -115,7 +120,7 @@ namespace Marr.Data.QGen
             return this;
         }
 
-        public object Execute()
+        public virtual object Execute()
         {
             if (_generateQuery)
             {
@@ -163,7 +168,7 @@ namespace Marr.Data.QGen
             return scalar;
         }
 
-        public string BuildQuery()
+        public virtual string BuildQuery()
         {
             if (_entity == null)
                 throw new ArgumentNullException("You must specify an entity to insert.");

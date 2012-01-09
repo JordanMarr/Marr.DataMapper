@@ -23,6 +23,11 @@ namespace Marr.Data.QGen
         private bool _useAltName;
         private TableCollection _tables;
 
+        public SortBuilder()
+        {
+            // Used only for unit testing with mock frameworks
+        }
+
         public SortBuilder(QueryBuilder<T> baseBuilder, Dialect dialect, TableCollection tables, bool useAltName)
         {
             _baseBuilder = baseBuilder;
@@ -44,7 +49,7 @@ namespace Marr.Data.QGen
             return this;
         }
 
-        public SortBuilder<T> OrderBy(string orderByClause)
+        public virtual SortBuilder<T> OrderBy(string orderByClause)
         {
             if (string.IsNullOrEmpty(orderByClause))
                 throw new ArgumentNullException("orderByClause");
@@ -58,59 +63,59 @@ namespace Marr.Data.QGen
             return this;
         }
 
-        public SortBuilder<T> OrderBy(Expression<Func<T, object>> sortExpression)
+        public virtual SortBuilder<T> OrderBy(Expression<Func<T, object>> sortExpression)
         {
             _sortExpressions.Add(new SortColumn<T>(sortExpression, SortDirection.Asc));
             return this;
         }
 
-        public SortBuilder<T> OrderByDescending(Expression<Func<T, object>> sortExpression)
+        public virtual SortBuilder<T> OrderByDescending(Expression<Func<T, object>> sortExpression)
         {
             _sortExpressions.Add(new SortColumn<T>(sortExpression, SortDirection.Desc));
             return this;
         }
 
-        public SortBuilder<T> ThenBy(Expression<Func<T, object>> sortExpression)
+        public virtual SortBuilder<T> ThenBy(Expression<Func<T, object>> sortExpression)
         {
             _sortExpressions.Add(new SortColumn<T>(sortExpression, SortDirection.Asc));
             return this;
         }
 
-        public SortBuilder<T> ThenByDescending(Expression<Func<T, object>> sortExpression)
+        public virtual SortBuilder<T> ThenByDescending(Expression<Func<T, object>> sortExpression)
         {
             _sortExpressions.Add(new SortColumn<T>(sortExpression, SortDirection.Desc));
             return this;
         }
 
-        public SortBuilder<T> Take(int count)
+        public virtual SortBuilder<T> Take(int count)
         {
             _baseBuilder.Take(count);
             return this;
         }
 
-        public SortBuilder<T> Skip(int count)
+        public virtual SortBuilder<T> Skip(int count)
         {
             _baseBuilder.Skip(count);
             return this;
         }
 
-        public SortBuilder<T> Page(int pageNumber, int pageSize)
+        public virtual SortBuilder<T> Page(int pageNumber, int pageSize)
         {
             _baseBuilder.Page(pageNumber, pageSize);
             return this;
         }
 
-        public int GetRowCount()
+        public virtual int GetRowCount()
         {
             return _baseBuilder.GetRowCount();
         }
 
-        public List<T> ToList()
+        public virtual List<T> ToList()
         {
             return _baseBuilder.ToList();
         }
 
-        public string BuildQuery()
+        public virtual string BuildQuery()
         {
             return _baseBuilder.BuildQuery();
         }
@@ -160,7 +165,7 @@ namespace Marr.Data.QGen
 
         #region IEnumerable<T> Members
 
-        public IEnumerator<T> GetEnumerator()
+        public virtual IEnumerator<T> GetEnumerator()
         {
             var list = this.ToList();
             return list.GetEnumerator();

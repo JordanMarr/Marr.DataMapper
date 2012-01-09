@@ -21,6 +21,11 @@ namespace Marr.Data.QGen
         private Dialects.Dialect _dialect;
         private ColumnMapCollection _columnsToUpdate;
 
+        public UpdateQueryBuilder()
+        {
+            // Used only for unit testing with mock frameworks
+        }
+
         public UpdateQueryBuilder(DataMapper db)
         {
             _db = db;
@@ -33,32 +38,32 @@ namespace Marr.Data.QGen
             _dialect = QueryFactory.CreateDialect(_db);
         }
 
-        public UpdateQueryBuilder<T> TableName(string tableName)
+        public virtual UpdateQueryBuilder<T> TableName(string tableName)
         {
             _tableName = tableName;
             return this;
         }
 
-        public UpdateQueryBuilder<T> QueryText(string queryText)
+        public virtual UpdateQueryBuilder<T> QueryText(string queryText)
         {
             _generateQuery = false;
             _db.Command.CommandText = queryText;
             return this;
         }
 
-        public UpdateQueryBuilder<T> Entity(T entity)
+        public virtual UpdateQueryBuilder<T> Entity(T entity)
         {
             _entity = entity;
             return this;
         }
 
-        public UpdateQueryBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
+        public virtual UpdateQueryBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
         {
             _filterExpression = filterExpression;
             return this;
         }
 
-        public UpdateQueryBuilder<T> ColumnsIncluding(params Expression<Func<T, object>>[] properties)
+        public virtual UpdateQueryBuilder<T> ColumnsIncluding(params Expression<Func<T, object>>[] properties)
         {
             List<string> columnList = new List<string>();
 
@@ -70,7 +75,7 @@ namespace Marr.Data.QGen
             return ColumnsIncluding(columnList.ToArray());
         }
 
-        public UpdateQueryBuilder<T> ColumnsIncluding(params string[] properties)
+        public virtual UpdateQueryBuilder<T> ColumnsIncluding(params string[] properties)
         {
             _columnsToUpdate = new ColumnMapCollection();
 
@@ -82,7 +87,7 @@ namespace Marr.Data.QGen
             return this;
         }
 
-        public UpdateQueryBuilder<T> ColumnsExcluding(params Expression<Func<T, object>>[] properties)
+        public virtual UpdateQueryBuilder<T> ColumnsExcluding(params Expression<Func<T, object>>[] properties)
         {
             List<string> columnList = new List<string>();
 
@@ -94,7 +99,7 @@ namespace Marr.Data.QGen
             return ColumnsExcluding(columnList.ToArray());
         }
 
-        public UpdateQueryBuilder<T> ColumnsExcluding(params string[] properties)
+        public virtual UpdateQueryBuilder<T> ColumnsExcluding(params string[] properties)
         {
             _columnsToUpdate = new ColumnMapCollection();
 
@@ -108,7 +113,7 @@ namespace Marr.Data.QGen
             return this;
         }
 
-        public string BuildQuery()
+        public virtual string BuildQuery()
         {
             if (_entity == null)
                 throw new ArgumentNullException("You must specify an entity to update.");
@@ -134,7 +139,7 @@ namespace Marr.Data.QGen
             return _db.Command.CommandText;
         }
 
-        public int Execute()
+        public virtual int Execute()
         {
             if (_generateQuery)
             {

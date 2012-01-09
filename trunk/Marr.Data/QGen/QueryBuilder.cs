@@ -61,7 +61,12 @@ namespace Marr.Data.QGen
 
         #region - Constructor -
 
-        internal QueryBuilder(DataMapper db, Dialects.Dialect dialect)
+        public QueryBuilder()
+        {
+            // Used only for unit testing with mock frameworks
+        }
+
+        public QueryBuilder(DataMapper db, Dialects.Dialect dialect)
         {
             _db = db;
             _dialect = dialect;
@@ -78,7 +83,7 @@ namespace Marr.Data.QGen
         /// Overrides the base table name that will be used in the query.
         /// </summary>
         [Obsolete("This property is obsolete.  Use the 'From' method instead.")]
-        public QueryBuilder<T> Table(string tableName)
+        public virtual QueryBuilder<T> Table(string tableName)
         {
             return From(tableName);
         }
@@ -86,7 +91,7 @@ namespace Marr.Data.QGen
         /// <summary>
         /// Overrides the base table or view name that will be used in the query.
         /// </summary>
-        public QueryBuilder<T> From(string tableOrView)
+        public virtual QueryBuilder<T> From(string tableOrView)
         {
             if (string.IsNullOrEmpty(tableOrView))
                 throw new ArgumentNullException("tableOrView");
@@ -99,7 +104,7 @@ namespace Marr.Data.QGen
         /// <summary>
         /// Allows you to manually specify the query text.
         /// </summary>
-        public QueryBuilder<T> QueryText(string queryText)
+        public virtual QueryBuilder<T> QueryText(string queryText)
         {
             _queryText = queryText;
             return this;
@@ -110,7 +115,7 @@ namespace Marr.Data.QGen
         /// If specific entities are passed in, only these relationships will be loaded.
         /// </summary>
         /// <param name="childrenToLoad">A list of related child entites to load (passed in as properties / lambda expressions).</param>
-        public QueryBuilder<T> Graph(params Expression<Func<T, object>>[] childrenToLoad)
+        public virtual QueryBuilder<T> Graph(params Expression<Func<T, object>>[] childrenToLoad)
         {
             TableCollection tablesInView = new TableCollection();
             if (childrenToLoad.Length > 0)
@@ -151,7 +156,7 @@ namespace Marr.Data.QGen
             return this;
         }
         
-        public QueryBuilder<T> Page(int pageNumber, int pageSize)
+        public virtual QueryBuilder<T> Page(int pageNumber, int pageSize)
         {
             _enablePaging = true;
             _skip = (pageNumber - 1) * pageSize;
@@ -178,7 +183,7 @@ namespace Marr.Data.QGen
         /// Allows you to interact with the DbDataReader to manually load entities.
         /// </summary>
         /// <param name="readerAction">An action that takes a DbDataReader.</param>
-        public void DataReader(Action<DbDataReader> readerAction)
+        public virtual void DataReader(Action<DbDataReader> readerAction)
         {
             if (string.IsNullOrEmpty(_queryText))
                 throw new ArgumentNullException("The query text cannot be blank.");
@@ -200,7 +205,7 @@ namespace Marr.Data.QGen
             }
         }
 
-        public int GetRowCount()
+        public virtual int GetRowCount()
         {
             SqlModes previousSqlMode = _db.SqlMode;
 
@@ -222,7 +227,7 @@ namespace Marr.Data.QGen
         /// Executes the query and returns a list of results.
         /// </summary>
         /// <returns>A list of query results of type T.</returns>
-        public List<T> ToList()
+        public virtual List<T> ToList()
         {
             SqlModes previousSqlMode = _db.SqlMode;
 
@@ -268,7 +273,7 @@ namespace Marr.Data.QGen
             }
         }
 
-        public string BuildQuery()
+        public virtual string BuildQuery()
         {
             // Generate a query
             string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
@@ -329,19 +334,19 @@ namespace Marr.Data.QGen
 
         #region - Linq Support -
 
-        public SortBuilder<T> Where<TObj>(Expression<Func<TObj, bool>> filterExpression)
+        public virtual SortBuilder<T> Where<TObj>(Expression<Func<TObj, bool>> filterExpression)
         {
             _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, _useAltName, true);
             return SortBuilder;
         }
 
-        public SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
+        public virtual SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
         {
             _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, _useAltName, true);
             return SortBuilder;
         }
 
-        public SortBuilder<T> Where(string whereClause)
+        public virtual SortBuilder<T> Where(string whereClause)
         {
             if (string.IsNullOrEmpty(whereClause))
                 throw new ArgumentNullException("whereClause");
@@ -355,31 +360,31 @@ namespace Marr.Data.QGen
             return SortBuilder;
         }
 
-        public SortBuilder<T> OrderBy(Expression<Func<T, object>> sortExpression)
+        public virtual SortBuilder<T> OrderBy(Expression<Func<T, object>> sortExpression)
         {
             SortBuilder.OrderBy(sortExpression);
             return SortBuilder;
         }
 
-        public SortBuilder<T> ThenBy(Expression<Func<T, object>> sortExpression)
+        public virtual SortBuilder<T> ThenBy(Expression<Func<T, object>> sortExpression)
         {
             SortBuilder.OrderBy(sortExpression);
             return SortBuilder;
         }
 
-        public SortBuilder<T> OrderByDescending(Expression<Func<T, object>> sortExpression)
+        public virtual SortBuilder<T> OrderByDescending(Expression<Func<T, object>> sortExpression)
         {
             SortBuilder.OrderByDescending(sortExpression);
             return SortBuilder;
         }
 
-        public SortBuilder<T> ThenByDescending(Expression<Func<T, object>> sortExpression)
+        public virtual SortBuilder<T> ThenByDescending(Expression<Func<T, object>> sortExpression)
         {
             SortBuilder.OrderByDescending(sortExpression);
             return SortBuilder;
         }
 
-        public SortBuilder<T> OrderBy(string orderByClause)
+        public virtual SortBuilder<T> OrderBy(string orderByClause)
         {
             if (string.IsNullOrEmpty(orderByClause))
                 throw new ArgumentNullException("orderByClause");
@@ -393,14 +398,14 @@ namespace Marr.Data.QGen
             return SortBuilder;
         }
 
-        public QueryBuilder<T> Take(int count)
+        public virtual QueryBuilder<T> Take(int count)
         {
             _enablePaging = true;
             _take = count;
             return this;
         }
 
-        public QueryBuilder<T> Skip(int count)
+        public virtual QueryBuilder<T> Skip(int count)
         {
             _enablePaging = true;
             _skip = count;
@@ -449,19 +454,19 @@ namespace Marr.Data.QGen
             return base.VisitMethodCall(expression);
         }
 
-        public QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, Expression<Func<TLeft, IEnumerable<TRight>>> rightEntity, Expression<Func<TLeft, TRight, bool>> filterExpression)
+        public virtual QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, Expression<Func<TLeft, IEnumerable<TRight>>> rightEntity, Expression<Func<TLeft, TRight, bool>> filterExpression)
         {
             MemberInfo rightMember = (rightEntity.Body as MemberExpression).Member;
             return this.Join(joinType, rightMember, filterExpression);
         }
 
-        public QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, Expression<Func<TLeft, TRight>> rightEntity, Expression<Func<TLeft, TRight, bool>> filterExpression)
+        public virtual QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, Expression<Func<TLeft, TRight>> rightEntity, Expression<Func<TLeft, TRight, bool>> filterExpression)
         {
             MemberInfo rightMember = (rightEntity.Body as MemberExpression).Member;
             return this.Join(joinType, rightMember, filterExpression);
         }
 
-        public QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, MemberInfo rightMember, Expression<Func<TLeft, TRight, bool>> filterExpression)
+        public virtual QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, MemberInfo rightMember, Expression<Func<TLeft, TRight, bool>> filterExpression)
         {
             _useAltName = true;
 
