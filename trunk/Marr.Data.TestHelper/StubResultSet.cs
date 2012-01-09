@@ -15,9 +15,9 @@ namespace Marr.Data.TestHelper
     /// </summary>
     public class StubResultSet
     {
-        int _currentRowIndex = -1;
-        List<StubRow> _rows = new List<StubRow>();
-        Dictionary<string, int> _fieldNames = new Dictionary<string, int>();
+        private int _currentRowIndex = -1;
+        private List<StubRow> _rows = new List<StubRow>();
+        protected Dictionary<string, int> _fieldNames = new Dictionary<string, int>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StubResultSet"/> class with the column names.

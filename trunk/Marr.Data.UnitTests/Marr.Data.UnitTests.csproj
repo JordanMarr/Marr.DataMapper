@@ -69,6 +69,7 @@
     <Compile Include="QGenTest.cs" />
     <Compile Include="QueryBuilderTest.cs" />
     <Compile Include="SimpleTypeQueryTest.cs" />
+    <Compile Include="StubEntityResultSetTest.cs" />
     <Compile Include="TestBase.cs" />
     <Compile Include="UnitOfWorkTest.cs" />
   </ItemGroup>
