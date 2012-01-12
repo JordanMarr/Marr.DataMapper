@@ -50,11 +50,8 @@ namespace Marr.Data.QGen
 
             if (filter != null)
             {
-                _sb.AppendFormat("{0} (", PrefixText);
-
+                _sb.AppendFormat("{0} ", PrefixText);
                 base.Visit(filter);
-
-                _sb.Append(")");
             }            
         }
 
@@ -220,7 +217,7 @@ namespace Marr.Data.QGen
             var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
             string fqColumn = GetFullyQualifiedColumnName((body.Object as MemberExpression).Member);
-            _sb.AppendFormat("{0} LIKE '%' + {1} + '%'", fqColumn, paramName);
+            _sb.AppendFormat("({0} LIKE '%' + {1} + '%')", fqColumn, paramName);
         }
 
         private void Write_StartsWith(MethodCallExpression body)
@@ -231,7 +228,7 @@ namespace Marr.Data.QGen
             var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
             string fqColumn = GetFullyQualifiedColumnName((body.Object as MemberExpression).Member);
-            _sb.AppendFormat("{0} LIKE {1} + '%'", fqColumn, paramName);
+            _sb.AppendFormat("({0} LIKE {1} + '%')", fqColumn, paramName);
         }
 
         private void Write_EndsWith(MethodCallExpression body)
@@ -242,7 +239,7 @@ namespace Marr.Data.QGen
             var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
             string fqColumn = GetFullyQualifiedColumnName((body.Object as MemberExpression).Member);
-            _sb.AppendFormat("{0} LIKE '%' + {1}", fqColumn, paramName);
+            _sb.AppendFormat("({0} LIKE '%' + {1})", fqColumn, paramName);
         }
 
         /// <summary>

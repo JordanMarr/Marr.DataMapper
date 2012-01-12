@@ -34,7 +34,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[Name],[t0].[Age],[t0].[BirthDate],[t0].[IsHappy] "));
             Assert.IsTrue(generatedSql.Contains("FROM [PersonTable] [t0]"));
-            Assert.IsTrue(generatedSql.Contains("((([t0].[Age] > @P0) AND [t0].[Name] LIKE @P1 + '%'))"));
+            Assert.IsTrue(generatedSql.Contains("WHERE (([t0].[Age] > @P0) AND ([t0].[Name] LIKE @P1 + '%'))"));
             Assert.IsFalse(generatedSql.Contains("ORDER BY"));
         }
 
@@ -73,7 +73,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[Name],[t0].[Age],[t0].[BirthDate],[t0].[IsHappy] "));
             Assert.IsTrue(generatedSql.Contains("FROM [PersonTable] [t0]"));
-            Assert.IsTrue(generatedSql.Contains("((([t0].[Age] > @P0) AND [t0].[Name] LIKE @P1 + '%'))"));
+            Assert.IsTrue(generatedSql.Contains("WHERE (([t0].[Age] > @P0) AND ([t0].[Name] LIKE @P1 + '%'))"));
             Assert.IsTrue(generatedSql.Contains("ORDER BY [t0].[Name],[t0].[ID] DESC"));
             Assert.AreEqual(db.Command.Parameters.Count, 2);
         }
@@ -95,7 +95,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[OrderName],[t1].[ID] AS OrderItemID,[t1].[OrderID],[t1].[ItemDescription],[t1].[Price] "));
             Assert.IsTrue(generatedSql.Contains("FROM [Order] [t0] LEFT JOIN [OrderItem] [t1]"));
-            Assert.IsTrue(generatedSql.Contains("([t1].[OrderID] > @P0)"));
+            Assert.IsTrue(generatedSql.Contains("WHERE ([t1].[OrderID] > @P0)"));
             Assert.IsTrue(generatedSql.Contains("ORDER BY [t1].[OrderItemID]"));
         }
 
@@ -151,7 +151,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[Name],[t0].[Age],[t0].[BirthDate],[t0].[IsHappy],[t0].[Pet_ID],[t0].[Pet_Name] "));
             Assert.IsTrue(generatedSql.Contains("FROM [PersonTable] [t0]"));
-            Assert.IsTrue(generatedSql.Contains("[t0].[Pet_Name] = @P0"));
+            Assert.IsTrue(generatedSql.Contains("WHERE ([t0].[Pet_Name] = @P0)"));
         }
     }
 }

@@ -116,7 +116,7 @@ namespace Marr.Data.UnitTests
             // Assert
             Assert.IsNotNull(queryText);
             Assert.IsTrue(queryText.Contains("DELETE FROM [PersonTable]"));
-            Assert.IsTrue(queryText.Contains("WHERE (([ID] = @P0))"));
+            Assert.IsTrue(queryText.Contains("WHERE ([ID] = @P0)"));
             Assert.AreEqual(command.Parameters["@P0"].Value, 5);
         }
 

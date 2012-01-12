@@ -40,6 +40,9 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
                     Order order2 = new Order { OrderName = "Test2" };
                     db.Insert(order2);
 
+                    Order order3 = new Order { OrderName = "Prod3" };
+                    db.Insert(order3);
+
                     var orderItems = new List<OrderItem>();
 
                     var results = (from o in db.Query<Order>()
@@ -49,6 +52,14 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 
                     Assert.IsTrue(results.Count == 1);
                     Assert.AreEqual(results[0].OrderName, "Test1");
+
+                    var results2 = (from o in db.Query<Order>()
+                                    where o.OrderName.StartsWith("Test")
+                                    select o).ToList();
+
+                    Assert.IsTrue(results2.Count == 2);
+                    Assert.AreEqual(results2[0].OrderName, "Test1");
+                    Assert.AreEqual(results2[1].OrderName, "Test2");
                 }
                 catch
                 {

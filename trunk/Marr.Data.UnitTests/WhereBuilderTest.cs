@@ -28,7 +28,7 @@ namespace Marr.Data.Tests
                 .OrWhere(p => p.Name == "Robert")
                 .OrderBy(p => p.Name).BuildQuery();
 
-            Assert.IsTrue(sqlQuery.Contains("WHERE (([t0].[Name] = @P0)) OR (([t0].[Name] = @P1))"));
+            Assert.IsTrue(sqlQuery.Contains("WHERE ([t0].[Name] = @P0) OR ([t0].[Name] = @P1)"));
         }
 
         [TestMethod]
@@ -40,7 +40,7 @@ namespace Marr.Data.Tests
                 .OrWhere("[Name] = 'Robert'")
                 .OrderBy(p => p.Name).BuildQuery();
 
-            Assert.IsTrue(sqlQuery.Contains("WHERE (([t0].[Name] = @P0)) OR [Name] = 'Robert'"));
+            Assert.IsTrue(sqlQuery.Contains("WHERE ([t0].[Name] = @P0) OR [Name] = 'Robert'"));
         }
 
         [TestMethod]
@@ -52,7 +52,7 @@ namespace Marr.Data.Tests
                 .OrWhere(p => p.Name == "Bob")
                 .OrderBy(p => p.Name).BuildQuery();
 
-            Assert.IsTrue(sqlQuery.Contains("WHERE [Name] = 'Robert' OR (([t0].[Name] = @P0))"));
+            Assert.IsTrue(sqlQuery.Contains("WHERE [Name] = 'Robert' OR ([t0].[Name] = @P0)"));
         }
 
         [TestMethod]
@@ -80,7 +80,7 @@ namespace Marr.Data.Tests
                 .AndWhere(p => p.Name == "Robert")
                 .OrderBy(p => p.Name).BuildQuery();
 
-            Assert.IsTrue(sqlQuery.Contains("WHERE (([t0].[Name] = @P0)) AND (([t0].[Name] = @P1))"));
+            Assert.IsTrue(sqlQuery.Contains("WHERE ([t0].[Name] = @P0) AND ([t0].[Name] = @P1)"));
         }
 
         [TestMethod]
@@ -92,7 +92,7 @@ namespace Marr.Data.Tests
                 .AndWhere("[Name] = 'Robert'")
                 .OrderBy(p => p.Name).BuildQuery();
 
-            Assert.IsTrue(sqlQuery.Contains("WHERE (([t0].[Name] = @P0)) AND [Name] = 'Robert'"));
+            Assert.IsTrue(sqlQuery.Contains("WHERE ([t0].[Name] = @P0) AND [Name] = 'Robert'"));
         }
 
         [TestMethod]
@@ -104,7 +104,7 @@ namespace Marr.Data.Tests
                 .AndWhere(p => p.Name == "Bob")
                 .OrderBy(p => p.Name).BuildQuery();
 
-            Assert.IsTrue(sqlQuery.Contains("WHERE [Name] = 'Robert' AND (([t0].[Name] = @P0))"));
+            Assert.IsTrue(sqlQuery.Contains("WHERE [Name] = 'Robert' AND ([t0].[Name] = @P0)"));
         }
 
         [TestMethod]
@@ -131,7 +131,7 @@ namespace Marr.Data.Tests
                 .Where(p => p.Name == "Bob" || p.Name == "Robert")
                 .AndWhere(p => p.Age > 30 && p.Age < 40).BuildQuery();
 
-            Assert.IsTrue(sqlQuery.Contains("WHERE ((([t0].[Name] = @P0) OR ([t0].[Name] = @P1))) AND ((([t0].[Age] > @P2) AND ([t0].[Age] < @P3)))"));
+            Assert.IsTrue(sqlQuery.Contains("WHERE (([t0].[Name] = @P0) OR ([t0].[Name] = @P1)) AND (([t0].[Age] > @P2) AND ([t0].[Age] < @P3))"));
         }
 
         [TestMethod]
@@ -143,7 +143,7 @@ namespace Marr.Data.Tests
                 .OrWhere(p => p.Name == "Robert")
                 .OrWhere(p => p.Name == "John").BuildQuery();
 
-            Assert.IsTrue(sqlQuery.Contains("WHERE (([t0].[Name] = @P0)) OR (([t0].[Name] = @P1)) OR (([t0].[Name] = @P2))"));
+            Assert.IsTrue(sqlQuery.Contains("WHERE ([t0].[Name] = @P0) OR ([t0].[Name] = @P1) OR ([t0].[Name] = @P2)"));
         }
 
         #endregion
