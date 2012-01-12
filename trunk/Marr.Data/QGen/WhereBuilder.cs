@@ -245,6 +245,19 @@ namespace Marr.Data.QGen
             _sb.AppendFormat("{0} LIKE '%' + {1}", fqColumn, paramName);
         }
 
+        /// <summary>
+        /// Appends the current where clause with another where clause.
+        /// </summary>
+        /// <param name="where">The second where clause that is being appended.</param>
+        /// <param name="appendType">AND / OR</param>
+        internal void Append(WhereBuilder<T> where, WhereAppendType appendType)
+        {
+            _constantWhereClause = string.Format("{0} {1} {2}",
+                this.ToString(),
+                appendType.ToString(),
+                where.ToString().Replace("WHERE ", string.Empty));
+        }
+
         public override string ToString()
         {
             if (string.IsNullOrEmpty(_constantWhereClause))
@@ -257,4 +270,10 @@ namespace Marr.Data.QGen
             }
         }
     } 
+
+    internal enum WhereAppendType
+    {
+        AND,
+        OR
+    }
 }

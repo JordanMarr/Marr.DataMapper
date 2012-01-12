@@ -22,20 +22,58 @@ namespace Marr.Data.QGen
         private List<SortColumn<T>> _sortExpressions;
         private bool _useAltName;
         private TableCollection _tables;
+        private IDataMapper _db;
+        private WhereBuilder<T> _whereBuilder;
 
         public SortBuilder()
         {
             // Used only for unit testing with mock frameworks
         }
 
-        public SortBuilder(QueryBuilder<T> baseBuilder, Dialect dialect, TableCollection tables, bool useAltName)
+        public SortBuilder(QueryBuilder<T> baseBuilder, IDataMapper db, WhereBuilder<T> whereBuilder, Dialect dialect, TableCollection tables, bool useAltName)
         {
             _baseBuilder = baseBuilder;
+            _db = db;
+            _whereBuilder = whereBuilder;
             _dialect = dialect;
             _sortExpressions = new List<SortColumn<T>>();
             _useAltName = useAltName;
             _tables = tables;
         }
+
+        #region - AndWhere / OrWhere -
+
+        public virtual SortBuilder<T> OrWhere(Expression<Func<T, bool>> filterExpression)
+        {
+            var orWhere = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, _useAltName, true);
+            _whereBuilder.Append(orWhere, WhereAppendType.OR);
+            return this;
+        }
+
+        public virtual SortBuilder<T> OrWhere(string whereClause)
+        {
+            var orWhere = new WhereBuilder<T>(whereClause, _useAltName);
+            _whereBuilder.Append(orWhere, WhereAppendType.OR);
+            return this;
+        }
+
+        public virtual SortBuilder<T> AndWhere(Expression<Func<T, bool>> filterExpression)
+        {
+            var andWhere = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, _useAltName, true);
+            _whereBuilder.Append(andWhere, WhereAppendType.AND);
+            return this;
+        }
+
+        public virtual SortBuilder<T> AndWhere(string whereClause)
+        {
+            var andWhere = new WhereBuilder<T>(whereClause, _useAltName);
+            _whereBuilder.Append(andWhere, WhereAppendType.AND);
+            return this;
+        }
+
+        #endregion
+
+        #region - Order -
 
         internal SortBuilder<T> Order(MemberInfo member)
         {
@@ -48,7 +86,7 @@ namespace Marr.Data.QGen
             _sortExpressions.Add(new SortColumn<T>(member, SortDirection.Desc));
             return this;
         }
-
+        
         public virtual SortBuilder<T> OrderBy(string orderByClause)
         {
             if (string.IsNullOrEmpty(orderByClause))
@@ -87,6 +125,10 @@ namespace Marr.Data.QGen
             return this;
         }
 
+        #endregion
+
+        #region - Paging -
+
         public virtual SortBuilder<T> Take(int count)
         {
             _baseBuilder.Take(count);
@@ -105,10 +147,18 @@ namespace Marr.Data.QGen
             return this;
         }
 
+        #endregion
+
+        #region - GetRowCount -
+
         public virtual int GetRowCount()
         {
             return _baseBuilder.GetRowCount();
         }
+
+        #endregion
+
+        #region - ToList / ToString / BuildQuery -
 
         public virtual List<T> ToList()
         {
@@ -158,10 +208,16 @@ namespace Marr.Data.QGen
             return sb.ToString();
         }
 
+        #endregion
+
+        #region - Implicit List<T> Operator -
+
         public static implicit operator List<T>(SortBuilder<T> builder)
         {
             return builder.ToList();
         }
+
+        #endregion
 
         #region IEnumerable<T> Members
 

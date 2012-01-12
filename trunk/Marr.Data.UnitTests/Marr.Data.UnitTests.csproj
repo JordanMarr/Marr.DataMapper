@@ -72,6 +72,7 @@
     <Compile Include="StubEntityResultSetTest.cs" />
     <Compile Include="TestBase.cs" />
     <Compile Include="UnitOfWorkTest.cs" />
+    <Compile Include="WhereBuilderTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Marr.Data.TestHelper\Marr.Data.TestHelper.csproj">

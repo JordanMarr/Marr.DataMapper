@@ -37,7 +37,7 @@ namespace Marr.Data.QGen
             {
                 // Lazy load
                 if (_sortBuilder == null)
-                    _sortBuilder = new SortBuilder<T>(this, _dialect, _tables, _useAltName);
+                    _sortBuilder = new SortBuilder<T>(this, _db, _whereBuilder, _dialect, _tables, _useAltName);
 
                 return _sortBuilder;
             }
