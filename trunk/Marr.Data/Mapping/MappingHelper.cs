@@ -67,11 +67,28 @@ namespace Marr.Data.Mapping
                 {
                     string msg = string.Format("The DataMapper was unable to load the following field: '{0}'.",
                         dataMap.ColumnInfo.Name);
+
                     throw new DataMappingException(msg, ex);
                 }
             }
             
             return ent;
+        }
+
+        public T LoadSimpleValueFromFirstColumn<T>(DbDataReader reader)
+        {
+            try
+            {
+                return (T)reader.GetValue(0);
+            }
+            catch (Exception ex)
+            {
+                string firstColumnName = reader.GetName(0);
+                string msg = string.Format("The DataMapper was unable to create a value of type '{0}' from the first column '{1}'.",
+                    typeof(T).Name, firstColumnName);
+
+                throw new DataMappingException(msg, ex);
+            }
         }
 
         /// <summary>

@@ -513,7 +513,7 @@ namespace Marr.Data
                     {
                         if (isSimpleType)
                         {
-                            return (T)reader.GetValue(0);
+                            return mappingHelper.LoadSimpleValueFromFirstColumn<T>(reader);
                         }
                         else
                         {
@@ -568,7 +568,7 @@ namespace Marr.Data
                 throw new ArgumentNullException("entityList", "ICollection instance cannot be null.");
 
             if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("sql", "A stored procedure name has not been specified for 'Query'.");
+                throw new ArgumentNullException("sql", "A query or stored procedure has not been specified for 'Query'.");
 
             var mappingHelper = new MappingHelper(Command);
             Type entityType = typeof(T);
@@ -586,15 +586,11 @@ namespace Marr.Data
                     {
                         if (isSimpleType)
                         {
-                            entityList.Add((T)reader.GetValue(0));
+                            entityList.Add(mappingHelper.LoadSimpleValueFromFirstColumn<T>(reader));
                         }
                         else
                         {
-                            // Create new entity
-                            object ent = mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false);
-
-                            // Add entity to return list
-                            entityList.Add((T)ent);
+                            entityList.Add((T)mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false));
                         }
                     }
                 }

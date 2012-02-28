@@ -72,5 +72,53 @@ namespace Marr.Data.Tests
 
             Assert.AreEqual("Person1", name);
         }
+
+        [TestMethod]
+        public void WhenQuerying_CastingError_ShouldGiveCustomErrorMessage()
+        {
+            // Create a result set with a long value and then
+            // purposefully cast it to a string to create a cast exception
+            StubResultSet rs = new StubResultSet("LongValue");
+            rs.AddRow(12345678L);
+            var db = CreateDB_ForQuery(rs);
+
+            bool exceptionWasThrown = false;
+
+            try
+            {
+                string name = db.Query<string>("SELECT [LongValue] FROM Tbl").FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                exceptionWasThrown = true;
+                Assert.IsInstanceOfType(ex, typeof(DataMappingException));
+            }
+
+            Assert.IsTrue(exceptionWasThrown);
+        }
+
+        [TestMethod]
+        public void WhenFinding_CastingError_ShouldGiveCustomErrorMessage()
+        {
+            // Create a result set with a long value and then
+            // purposefully cast it to a string to create a cast exception
+            StubResultSet rs = new StubResultSet("LongValue");
+            rs.AddRow(12345678L);
+            var db = CreateDB_ForQuery(rs);
+
+            bool exceptionWasThrown = false;
+
+            try
+            {
+                string name = db.Find<string>("SELECT [LongValue] FROM Tbl");
+            }
+            catch (Exception ex)
+            {
+                exceptionWasThrown = true;
+                Assert.IsInstanceOfType(ex, typeof(DataMappingException));
+            }
+
+            Assert.IsTrue(exceptionWasThrown);
+        }
     }
 }
