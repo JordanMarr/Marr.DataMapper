@@ -28,6 +28,10 @@ namespace Marr.Data
 {
     public class MapRepository
     {
+        private static readonly object _tablesLock = new object();
+        private static readonly object _columnsLock = new object();
+        private static readonly object _relationshipsLock = new object();
+
         private IDbTypeBuilder _dbTypeBuilder;
         private Dictionary<Type, IMapStrategy> _columnMapStrategies;
 
@@ -117,16 +121,20 @@ namespace Marr.Data
 
         internal string GetTableName(Type entityType)
         {
-            if (Tables.ContainsKey(entityType))
+            if (!Tables.ContainsKey(entityType))
             {
-                return Tables[entityType];
+                lock (_tablesLock)
+                {
+                    if (!Tables.ContainsKey(entityType))
+                    {
+                        string tableName = GetMapStrategy(entityType).MapTable(entityType);
+                        Tables.Add(entityType, tableName);
+                        return tableName;
+                    }
+                }
             }
-            else
-            {
-                string tableName = GetMapStrategy(entityType).MapTable(entityType);
-                Tables.Add(entityType, tableName);
-                return tableName;
-            }
+
+            return Tables[entityType];
         }
 
         #endregion
@@ -135,16 +143,20 @@ namespace Marr.Data
 
         public ColumnMapCollection GetColumns(Type entityType)
         {
-            if (Columns.ContainsKey(entityType))
+            if (!Columns.ContainsKey(entityType))
             {
-                return Columns[entityType];
+                lock (_columnsLock)
+                {
+                    if (!Columns.ContainsKey(entityType))
+                    {
+                        ColumnMapCollection columnMaps = GetMapStrategy(entityType).MapColumns(entityType);
+                        Columns.Add(entityType, columnMaps);
+                        return columnMaps;
+                    }
+                }
             }
-            else
-            {
-                ColumnMapCollection columnMaps = GetMapStrategy(entityType).MapColumns(entityType);
-                Columns.Add(entityType, columnMaps);
-                return columnMaps;
-            }
+
+            return Columns[entityType];
         }
 
         #endregion
@@ -153,16 +165,20 @@ namespace Marr.Data
 
         public RelationshipCollection GetRelationships(Type type)
         {
-            if (Relationships.ContainsKey(type))
+            if (!Relationships.ContainsKey(type))
             {
-                return Relationships[type];
+                lock (_relationshipsLock)
+                {
+                    if (!Relationships.ContainsKey(type))
+                    {
+                        RelationshipCollection relationships = GetMapStrategy(type).MapRelationships(type);
+                        Relationships.Add(type, relationships);
+                        return relationships;
+                    }
+                }
             }
-            else
-            {
-                RelationshipCollection relationships = GetMapStrategy(type).MapRelationships(type);
-                Relationships.Add(type, relationships);
-                return relationships;
-            }
+
+            return Relationships[type];
         }
         
         #endregion
