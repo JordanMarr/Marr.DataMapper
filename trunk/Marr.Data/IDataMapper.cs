@@ -28,7 +28,7 @@ namespace Marr.Data
     {
         #region - Contructor, Members -
 
-        string ProviderString { get; }
+        DbProviderFactory ProviderFactory { get; }
         DbCommand Command { get; }
 
         /// <summary>

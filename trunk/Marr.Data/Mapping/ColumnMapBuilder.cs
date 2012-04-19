@@ -141,13 +141,25 @@ namespace Marr.Data.Mapping
             return this;
         }
 
+        [Obsolete("Please use the Ignore function instead.")]
         public ColumnMapBuilder<T> RemoveColumnMap(Expression<Func<T, object>> property)
         {
-            string propertyName = property.GetMemberName();
-            return RemoveColumnMap(propertyName);
+            return Ignore(property);
         }
 
+        [Obsolete("Please use the Ignore function instead.")]
         public ColumnMapBuilder<T> RemoveColumnMap(string propertyName)
+        {
+            return Ignore(propertyName);
+        }
+
+        public ColumnMapBuilder<T> Ignore(Expression<Func<T, object>> property)
+        {
+            string propertyName = property.GetMemberName();
+            return Ignore(propertyName);
+        }
+
+        public ColumnMapBuilder<T> Ignore(string propertyName)
         {
             var columnMap = Columns.GetByFieldName(propertyName);
             Columns.Remove(columnMap);

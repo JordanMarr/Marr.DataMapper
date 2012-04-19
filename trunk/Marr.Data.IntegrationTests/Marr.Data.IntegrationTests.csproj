@@ -37,6 +37,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.configuration" />
@@ -62,6 +63,7 @@
     <Compile Include="DB_SqlServer\Entities\Order.cs" />
     <Compile Include="DB_SqlServer\IdentityTest.cs" />
     <Compile Include="DB_SqlServer\SqlServerTests.cs" />
+    <Compile Include="DB_SqlServerCe\LazyLoadedIntegrationTest.cs" />
     <Compile Include="Misc\InsertQueryTests.cs" />
     <Compile Include="Misc\UpdateQueryTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

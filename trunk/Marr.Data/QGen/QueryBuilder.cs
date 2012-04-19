@@ -188,7 +188,7 @@ namespace Marr.Data.QGen
             if (string.IsNullOrEmpty(_queryText))
                 throw new ArgumentNullException("The query text cannot be blank.");
 
-            var mappingHelper = new MappingHelper(_db.Command);
+            var mappingHelper = new MappingHelper(_db);
             _db.Command.CommandText = _queryText;
 
             try

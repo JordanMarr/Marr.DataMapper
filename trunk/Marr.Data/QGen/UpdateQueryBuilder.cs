@@ -33,7 +33,7 @@ namespace Marr.Data.QGen
             _tables = new TableCollection();
             _tables.Add(new Table(typeof(T)));
             _previousSqlMode = _db.SqlMode;
-            _mappingHelper = new MappingHelper(_db.Command);
+            _mappingHelper = new MappingHelper(_db);
             _mappings = MapRepository.Instance.GetColumns(typeof(T));
             _dialect = QueryFactory.CreateDialect(_db);
         }

@@ -32,8 +32,10 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
+            var db = MockRepository.GenerateStub<IDataMapper>();
+            db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
-            MappingHelper mappingHelper = new MappingHelper(command);
+            MappingHelper mappingHelper = new MappingHelper(db);
 
             Person person = new Person();
             person.ID = 1;
@@ -76,8 +78,10 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
+            var db = MockRepository.GenerateStub<IDataMapper>();
+            db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
-            MappingHelper mappingHelper = new MappingHelper(command);
+            MappingHelper mappingHelper = new MappingHelper(db);
 
             Person person = new Person();
             person.ID = 1;
@@ -125,8 +129,10 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
+            var db = MockRepository.GenerateStub<IDataMapper>();
+            db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
-            MappingHelper mappingHelper = new MappingHelper(command);
+            MappingHelper mappingHelper = new MappingHelper(db);
 
             Person person = new Person();
             person.ID = 1;
@@ -160,8 +166,10 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
+            var db = MockRepository.GenerateStub<IDataMapper>();
+            db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
-            MappingHelper mappingHelper = new MappingHelper(command);
+            MappingHelper mappingHelper = new MappingHelper(db);
 
             Person person = new Person();
             person.ID = 1;
@@ -191,8 +199,10 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
+            var db = MockRepository.GenerateStub<IDataMapper>();
+            db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
-            MappingHelper mappingHelper = new MappingHelper(command);
+            MappingHelper mappingHelper = new MappingHelper(db);
 
             Person person = new Person();
             person.ID = 1;
@@ -225,8 +235,10 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
+            var db = MockRepository.GenerateStub<IDataMapper>();
+            db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
-            MappingHelper mappingHelper = new MappingHelper(command);
+            MappingHelper mappingHelper = new MappingHelper(db);
 
             Person person = new Person();
             person.ID = 1;
@@ -256,8 +268,10 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
+            var db = MockRepository.GenerateStub<IDataMapper>();
+            db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
-            MappingHelper mappingHelper = new MappingHelper(command);
+            MappingHelper mappingHelper = new MappingHelper(db);
 
             Person person = new Person();
             person.ID = 1;
@@ -289,8 +303,10 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
+            var db = MockRepository.GenerateStub<IDataMapper>();
+            db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
-            MappingHelper mappingHelper = new MappingHelper(command);
+            MappingHelper mappingHelper = new MappingHelper(db);
 
             Person person = new Person();
             person.ID = 1;
@@ -320,8 +336,10 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
+            var db = MockRepository.GenerateStub<IDataMapper>();
+            db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
-            MappingHelper mappingHelper = new MappingHelper(command);
+            MappingHelper mappingHelper = new MappingHelper(db);
 
             Person person = new Person();
             person.ID = 1;
@@ -353,8 +371,10 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
+            var db = MockRepository.GenerateStub<IDataMapper>();
+            db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
-            MappingHelper mappingHelper = new MappingHelper(command);
+            MappingHelper mappingHelper = new MappingHelper(db);
 
             Person person = new Person();
             person.ID = 1;
@@ -386,8 +406,10 @@ namespace Marr.Data.UnitTests
         {
             // Arrange
             var command = new System.Data.SqlClient.SqlCommand();
+            var db = MockRepository.GenerateStub<IDataMapper>();
+            db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
-            MappingHelper mappingHelper = new MappingHelper(command);
+            MappingHelper mappingHelper = new MappingHelper(db);
 
             Person person = new Person();
             person.ID = 1;
@@ -424,8 +446,10 @@ namespace Marr.Data.UnitTests
             Person2 person = new Person2 { Name = "Bob", Age = 40, BirthDate = DateTime.Now };
             Dialect dialect = new SqlServerDialect();
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(typeof(Person2));
-            DbCommand command = new System.Data.SqlClient.SqlCommand();
-            var mappingHelper = new MappingHelper(command);
+            var command = new System.Data.SqlClient.SqlCommand();
+            var db = MockRepository.GenerateStub<IDataMapper>();
+            db.Expect(d => d.Command).Return(command);
+            var mappingHelper = new MappingHelper(db);
             mappingHelper.CreateParameters<Person2>(person, mappings, true);
             string targetTable = "PersonTable";
             InsertQuery query = new InsertQuery(dialect, mappings, command, targetTable);

@@ -10,12 +10,12 @@ namespace Marr.Data.Mapping
     internal class MappingHelper
     {
         private MapRepository _repos;
-        private DbCommand _command;
+        private IDataMapper _db;
 
-        public MappingHelper(DbCommand command)
+        public MappingHelper(IDataMapper db)
         {
             _repos = MapRepository.Instance;
-            _command = command;
+            _db = db;
         }
 
         /// <summary>
@@ -43,8 +43,6 @@ namespace Marr.Data.Mapping
 
         public object LoadExistingEntity(ColumnMapCollection mappings, DbDataReader reader, object ent, bool useAltName)
         {
-            MapRepository repository = MapRepository.Instance;
-
             // Populate entity fields from data reader
             foreach (ColumnMap dataMap in mappings)
             {
@@ -55,7 +53,7 @@ namespace Marr.Data.Mapping
                     object dbValue = reader.GetValue(ordinal);
 
                     // Handle conversions
-                    IConverter conversion = repository.GetConverter(dataMap.FieldType);
+                    IConverter conversion = _repos.GetConverter(dataMap.FieldType);
                     if (conversion != null)
                     {
                         dbValue = conversion.FromDB(dataMap, dbValue);
@@ -71,8 +69,33 @@ namespace Marr.Data.Mapping
                     throw new DataMappingException(msg, ex);
                 }
             }
-            
+
+            PrepareLazyLoadedProperties(ent);
+
             return ent;
+        }
+
+        private void PrepareLazyLoadedProperties(object ent)
+        {
+            // Handle lazy loaded properties
+            Type entType = ent.GetType();
+            if (_repos.Relationships.ContainsKey(entType))
+            {
+                Func<IDataMapper> dbCreate = () =>
+                {
+                    var db = new DataMapper(_db.ProviderFactory, _db.Command.Connection.ConnectionString);
+                    db.SqlMode = SqlModes.Text;
+                    return db;
+                };
+
+                var relationships = _repos.Relationships[entType];
+                foreach (var rel in relationships.Where(r => r.IsLazyLoaded))
+                {
+                    ILazyLoaded lazyLoaded = (ILazyLoaded)rel.LazyLoaded.Clone();
+                    lazyLoaded.Prepare(dbCreate, ent);
+                    _repos.ReflectionStrategy.SetFieldValue(ent, rel.Member.Name, lazyLoaded);
+                }
+            }
         }
 
         public T LoadSimpleValueFromFirstColumn<T>(DbDataReader reader)
@@ -102,7 +125,7 @@ namespace Marr.Data.Mapping
             if (!isAutoQuery)
             {
                 // Order columns (applies to Oracle and OleDb only)
-                mappings = columnMapCollection.OrderParameters(_command);
+                mappings = columnMapCollection.OrderParameters(_db.Command);
             }
 
             foreach (ColumnMap columnMap in mappings)
@@ -110,7 +133,7 @@ namespace Marr.Data.Mapping
                 if (columnMap.ColumnInfo.IsAutoIncrement)
                     continue;
 
-                var param = _command.CreateParameter();
+                var param = _db.Command.CreateParameter();
                 param.ParameterName = columnMap.ColumnInfo.Name;
                 param.Size = columnMap.ColumnInfo.Size;
                 param.Direction = columnMap.ColumnInfo.ParamDirection;
@@ -131,7 +154,7 @@ namespace Marr.Data.Mapping
                 // Note: the columnMap.DBType property was set when the ColumnMap was created
                 repos.DbTypeBuilder.SetDbType(param, columnMap.DBType);
 
-                _command.Parameters.Add(param);
+                _db.Command.Parameters.Add(param);
             }
         }
 
@@ -142,7 +165,7 @@ namespace Marr.Data.Mapping
         {
             foreach (ColumnMap dataMap in mappings)
             {
-                object output = _command.Parameters[dataMap.ColumnInfo.Name].Value;
+                object output = _db.Command.Parameters[dataMap.ColumnInfo.Name].Value;
                 _repos.ReflectionStrategy.SetFieldValue(entity, dataMap.FieldName, output);
             }
         }

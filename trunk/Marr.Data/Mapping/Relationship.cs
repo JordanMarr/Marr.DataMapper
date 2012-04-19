@@ -24,6 +24,7 @@ namespace Marr.Data.Mapping
     {
         private IRelationshipInfo _relationshipInfo;
         private MemberInfo _member;
+        private ILazyLoaded _lazyLoaded;
 
         public Relationship(MemberInfo member)
             : this(member, new RelationshipInfo())
@@ -96,5 +97,24 @@ namespace Marr.Data.Mapping
             }
         }
 
+        public bool IsLazyLoaded
+        {
+            get
+            {
+                return _lazyLoaded != null;
+            }
+        }
+
+        public ILazyLoaded LazyLoaded
+        {
+            get
+            {
+                return _lazyLoaded;
+            }
+            set
+            {
+                _lazyLoaded = value;
+            }
+        }
     }
 }

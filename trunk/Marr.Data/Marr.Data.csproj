@@ -74,6 +74,7 @@
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="GroupingKeyCollection.cs" />
     <Compile Include="IDataMapper.cs" />
+    <Compile Include="LazyLoaded.cs" />
     <Compile Include="UnitOfWork.cs" />
     <Compile Include="UnitOfWorkSharedContext.cs" />
     <Compile Include="Mapping\ColumnMapBuilder.cs" />

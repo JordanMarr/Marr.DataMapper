@@ -55,6 +55,20 @@ namespace Marr.Data.Mapping
             return this;
         }
 
+        /// <summary>
+        /// Sets a property to be lazy loaded, with a given query.
+        /// </summary>
+        /// <typeparam name="TChild"></typeparam>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        public RelationshipBuilder<T> LazyLoad<TChild>(Func<IDataMapper, T, TChild> query)
+        {
+            AssertCurrentPropertyIsSet();
+
+            Relationships[_currentPropertyName].LazyLoaded = new LazyLoaded<T, TChild>(query);
+            return this;
+        }
+
         public RelationshipBuilder<T> SetOneToOne()
         {
             AssertCurrentPropertyIsSet();
@@ -81,7 +95,14 @@ namespace Marr.Data.Mapping
             return this;
         }
 
+        [Obsolete("Please use the Ignore function instead.")]
         public RelationshipBuilder<T> RemoveRelationship(Expression<Func<T, object>> property)
+        {
+            Ignore(property);
+            return this;
+        }
+
+        public RelationshipBuilder<T> Ignore(Expression<Func<T, object>> property)
         {
             string propertyName = property.GetMemberName();
             Relationships.RemoveAll(r => r.Member.Name == propertyName);

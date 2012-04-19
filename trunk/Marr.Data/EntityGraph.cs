@@ -26,8 +26,9 @@ using System.Reflection;
 namespace Marr.Data
 {
     /// <summary>
-    /// Holds metadata about an object graph that is being queried and loaded.
+    /// Holds metadata about an object graph that is being queried and eagerly loaded.
     /// Contains all metadata needed to instantiate the object and fill it with data from a DataReader.
+    /// Does not iterate through lazy loaded child relationships.
     /// </summary>
     internal class EntityGraph : IEnumerable<EntityGraph>
     {
@@ -73,10 +74,13 @@ namespace Marr.Data
             Member = relationship != null ? relationship.Member : null;
             _entityReferences = new Dictionary<string, EntityReference>();
 
-            // Create and add children
+            // Create a new EntityGraph for each child relationship that is not lazy loaded
             foreach (Relationship childRelationship in this.Relationships)
             {
-                _children.Add(new EntityGraph(childRelationship.RelationshipInfo.EntityType, this, childRelationship));
+                if (!childRelationship.IsLazyLoaded)
+                {
+                    _children.Add(new EntityGraph(childRelationship.RelationshipInfo.EntityType, this, childRelationship));
+                }
             }
         }
 

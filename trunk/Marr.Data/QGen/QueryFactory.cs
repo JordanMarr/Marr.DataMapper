@@ -47,7 +47,7 @@ namespace Marr.Data.QGen
         {
             SelectQuery innerQuery = (SelectQuery)CreateSelectQuery(tables, dataMapper, where, orderBy, useAltName);
 
-            string providerString = dataMapper.ProviderString;
+            string providerString = dataMapper.ProviderFactory.ToString();
             switch (providerString)
             {
                 case DB_SqlClient:
@@ -65,7 +65,7 @@ namespace Marr.Data.QGen
         {
             SelectQuery innerQuery = (SelectQuery)CreateSelectQuery(tables, dataMapper, where, orderBy, useAltName);
 
-            string providerString = dataMapper.ProviderString;
+            string providerString = dataMapper.ProviderFactory.ToString();
             switch (providerString)
             {
                 case DB_SqlClient:
@@ -81,7 +81,7 @@ namespace Marr.Data.QGen
 
         public static Dialects.Dialect CreateDialect(IDataMapper dataMapper)
         {
-            string providerString = dataMapper.ProviderString;
+            string providerString = dataMapper.ProviderFactory.ToString();
             switch (providerString)
             {
                 case DB_SqlClient:

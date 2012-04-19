@@ -68,14 +68,14 @@ namespace Marr.Data
             _connectionString = connectionString;
         }
 
-        public string ProviderString
+        public DbProviderFactory ProviderFactory
         {
             get
             {
-                return _dbProviderFactory.ToString();
+                return _dbProviderFactory;
             }
         }
-
+        
         /// <summary>
         /// Creates a new command utilizing the connection string.
         /// </summary>
@@ -505,7 +505,7 @@ namespace Marr.Data
             try
             {
                 OpenConnection();
-                var mappingHelper = new MappingHelper(Command);
+                var mappingHelper = new MappingHelper(this);
 
                 using (DbDataReader reader = Command.ExecuteReader())
                 {
@@ -570,7 +570,7 @@ namespace Marr.Data
             if (string.IsNullOrEmpty(sql))
                 throw new ArgumentNullException("sql", "A query or stored procedure has not been specified for 'Query'.");
 
-            var mappingHelper = new MappingHelper(Command);
+            var mappingHelper = new MappingHelper(this);
             Type entityType = typeof(T);
             Command.CommandText = sql;
             ColumnMapCollection mappings = MapRepository.Instance.GetColumns(entityType);
@@ -631,7 +631,7 @@ namespace Marr.Data
             if (string.IsNullOrEmpty(sql))
                 throw new ArgumentNullException("sql", "sql");
 
-            var mappingHelper = new MappingHelper(Command);
+            var mappingHelper = new MappingHelper(this);
             Type parentType = typeof(T);
             Command.CommandText = sql;
 
@@ -795,7 +795,7 @@ namespace Marr.Data
             var previousSqlMode = this.SqlMode;
             SqlMode = SqlModes.Text;
 
-            var mappingHelper = new MappingHelper(Command);
+            var mappingHelper = new MappingHelper(this);
             if (tableName == null)
             {
                 tableName = MapRepository.Instance.GetTableName(typeof(T));
