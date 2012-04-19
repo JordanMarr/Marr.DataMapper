@@ -120,5 +120,33 @@ namespace Marr.Data.Tests
 
             Assert.IsTrue(exceptionWasThrown);
         }
+
+        [TestMethod]
+        public void IsSimpleTypeTest_TheFollowingTypesShouldBeSimpleTypes()
+        {
+            Type[] types = new[] { 
+                typeof(int), typeof(short), typeof(long), typeof(bool), typeof(DateTime), typeof(string), 
+                typeof(byte), typeof(decimal), typeof(double), typeof(Marr.Data.SqlModes)
+            };
+
+            foreach (Type type in types)
+            {
+                Assert.IsTrue(DataHelper.IsSimpleType(type), string.Format("{0} is not a simple type.", type.Name));
+            }
+        }
+
+        [TestMethod]
+        public void IsSimpleTypeTest_GenericsShouldBeAbleToBeSimpleTypes()
+        {
+            Type[] types = new[] { 
+                typeof(int?), typeof(short?), typeof(long?), typeof(bool?), typeof(DateTime?), typeof(string), 
+                typeof(byte?), typeof(decimal?), typeof(double?)
+            };
+
+            foreach (Type type in types)
+            {
+                Assert.IsTrue(DataHelper.IsSimpleType(type), string.Format("{0} is not a simple type.", type.Name));
+            }
+        }
     }
 }

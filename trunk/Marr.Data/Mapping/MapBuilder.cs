@@ -36,6 +36,20 @@ namespace Marr.Data.Mapping
         }
 
         /// <summary>
+        /// Creates column mappings for the given type.
+        /// Maps all properties that are simple types (int, string, DateTime, etc).  
+        /// ICollection properties are not included.
+        /// </summary>
+        /// <typeparam name="T">The type that is being built.</typeparam>
+        /// <returns><see cref="ColumnMapCollection"/></returns>
+        public ColumnMapBuilder<T> BuildColumnsFromSimpleTypes<T>()
+        {
+            return BuildColumns<T>(m => m.MemberType == MemberTypes.Property &&
+                DataHelper.IsSimpleType((m as PropertyInfo).PropertyType) &&
+                !typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType));
+        }
+
+        /// <summary>
         /// Creates column mappings for the given type.  
         /// Maps properties that are included in the include list.
         /// </summary>

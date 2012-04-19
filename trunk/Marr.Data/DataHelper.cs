@@ -143,11 +143,24 @@ namespace Marr.Data
         }
 
         /// <summary>
-        /// Determines if an entity is a primitive value or a string.
+        /// Determines if a type is not a complex object.
         /// </summary>
         public static bool IsSimpleType(Type type)
         {
-            return type.IsPrimitive || type.Equals(typeof(string));
+            Type underlyingType = !IsNullableType(type) ? type : type.GetGenericArguments()[0];
+
+            return
+                underlyingType.IsPrimitive ||
+                underlyingType.Equals(typeof(string)) ||
+                underlyingType.Equals(typeof(DateTime)) ||
+                underlyingType.Equals(typeof(decimal)) ||
+                underlyingType.IsEnum;
         }
+
+        public static bool IsNullableType(Type theType)
+        {
+            return (theType.IsGenericType && theType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)));
+        }
+
     }
 }

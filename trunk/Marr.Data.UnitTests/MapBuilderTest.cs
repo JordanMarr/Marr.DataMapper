@@ -33,7 +33,7 @@ namespace Marr.Data.UnitTests
 
             builder.BuildTable<Person>("PersonTable");
 
-            builder.BuildColumns<Person>()
+            builder.BuildColumnsFromSimpleTypes<Person>()
                 .For(p => p.ID)
                     .SetPrimaryKey()
                     .SetReturnValue()
@@ -127,6 +127,26 @@ namespace Marr.Data.UnitTests
             Assert.IsFalse(columns.All(c => c.ColumnInfo.Name.EndsWith("_p")));
         }
 
+        [TestMethod]
+        public void MapBuilder_ShouldOnlyMapSimpleTypes()
+        {
+            var mapBuilder = new MapBuilder();
+            var columns = mapBuilder.BuildColumnsFromSimpleTypes<EntityWithSimpleAndComplexProperties>();
+
+            Assert.AreEqual(2, columns.Columns.Count);
+        }
+
+        [TestMethod]
+        public void MapBuilder_IgnoringAnAlreadyExcludedColumn_ShouldNotThrowAnException()
+        {
+            var mapBuilder = new MapBuilder();
+            var columns = mapBuilder.BuildColumnsFromSimpleTypes<EntityWithSimpleAndComplexProperties>()
+                .Ignore(e => e.OneToOneChild) // Should already be ignored because it is not a simple type
+                .Ignore(e => e.Collection); // Should already be ignored because it is an ICollection
+
+            Assert.AreEqual(2, columns.Columns.Count);
+        }
+
         #endregion
 
         #region - Relationships -
@@ -154,4 +174,23 @@ namespace Marr.Data.UnitTests
         #endregion
 
     }
+
+    #region - MapBuilder Test Entity -
+
+    public class EntityWithSimpleAndComplexProperties
+    {
+        public int ID { get; set; }
+        public string Name { get; set; }
+
+        public EntityWithSimpleAndComplexPropertiesChild OneToOneChild { get; set; }
+        public List<string> Collection { get; set; }
+        
+    }
+
+    public class EntityWithSimpleAndComplexPropertiesChild
+    {
+        public int ID { get; set; }
+    }
+
+    #endregion
 }
