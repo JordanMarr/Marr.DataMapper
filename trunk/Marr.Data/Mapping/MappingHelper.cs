@@ -83,7 +83,7 @@ namespace Marr.Data.Mapping
             {
                 Func<IDataMapper> dbCreate = () =>
                 {
-                    var db = new DataMapper(_db.ProviderFactory, _db.Command.Connection.ConnectionString);
+                    var db = new DataMapper(_db.ProviderFactory, _db.ConnectionString);
                     db.SqlMode = SqlModes.Text;
                     return db;
                 };

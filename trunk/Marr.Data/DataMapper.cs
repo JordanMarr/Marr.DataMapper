@@ -65,7 +65,16 @@ namespace Marr.Data
                 throw new ArgumentNullException("connectionString cannot be null or empty.");
 
             _dbProviderFactory = dbProviderFactory;
+
             _connectionString = connectionString;
+        }
+
+        public string ConnectionString
+        {
+            get
+            {
+                return _connectionString;
+            }
         }
 
         public DbProviderFactory ProviderFactory

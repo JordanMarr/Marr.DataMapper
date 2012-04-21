@@ -28,6 +28,7 @@ namespace Marr.Data
     {
         #region - Contructor, Members -
 
+        string ConnectionString { get; }
         DbProviderFactory ProviderFactory { get; }
         DbCommand Command { get; }
 
