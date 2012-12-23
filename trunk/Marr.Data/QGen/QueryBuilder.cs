@@ -443,12 +443,12 @@ namespace Marr.Data.QGen
             if (expression.Method.Name == "OrderBy" || expression.Method.Name == "ThenBy")
             {
                 var memberExp = ((expression.Arguments[1] as UnaryExpression).Operand as System.Linq.Expressions.LambdaExpression).Body as System.Linq.Expressions.MemberExpression;
-                _sortBuilder.Order(memberExp.Member);
+                _sortBuilder.Order(memberExp.Expression.Type, memberExp.Member.Name);
             }
             if (expression.Method.Name == "OrderByDescending" || expression.Method.Name == "ThenByDescending")
             {
                 var memberExp = ((expression.Arguments[1] as UnaryExpression).Operand as System.Linq.Expressions.LambdaExpression).Body as System.Linq.Expressions.MemberExpression;
-                _sortBuilder.OrderByDescending(memberExp.Member);
+                _sortBuilder.OrderByDescending(memberExp.Expression.Type, memberExp.Member.Name);
             }
 
             return base.VisitMethodCall(expression);

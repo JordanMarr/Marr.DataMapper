@@ -75,15 +75,15 @@ namespace Marr.Data.QGen
 
         #region - Order -
 
-        internal SortBuilder<T> Order(MemberInfo member)
+        internal SortBuilder<T> Order(Type declaringType, string propertyName)
         {
-            _sortExpressions.Add(new SortColumn<T>(member, SortDirection.Asc));
+            _sortExpressions.Add(new SortColumn<T>(declaringType, propertyName, SortDirection.Asc));
             return this;
         }
 
-        internal SortBuilder<T> OrderByDescending(MemberInfo member)
+        internal SortBuilder<T> OrderByDescending(Type declaringType, string propertyName)
         {
-            _sortExpressions.Add(new SortColumn<T>(member, SortDirection.Desc));
+            _sortExpressions.Add(new SortColumn<T>(declaringType, propertyName, SortDirection.Desc));
             return this;
         }
         
@@ -184,18 +184,18 @@ namespace Marr.Data.QGen
                 if (sb.Length > 0)
                     sb.Append(",");
 
-                Table table = _tables.FindTable(sort.Member);
+                Table table = _tables.FindTable(sort.DeclaringType);
 
                 if (table == null)
                 {
                     string msg = string.Format("The property '{0} -> {1}' you are trying to reference in the 'ORDER BY' statement belongs to an entity that has not been joined in your query.  To reference this property, you must join the '{0}' entity using the Join method.",
-                        sort.Member.DeclaringType.Name,
-                        sort.Member.Name);
+                        sort.DeclaringType.Name,
+                        sort.PropertyName);
 
                     throw new DataMappingException(msg);
                 }
 
-                string columnName = sort.Member.GetColumnName(_useAltName);
+                string columnName = DataHelper.GetColumnName(sort.DeclaringType, sort.PropertyName, _useAltName);
                 sb.Append(_dialect.CreateToken(string.Format("{0}.{1}", table.Alias, columnName)));
 
                 if (sort.Direction == SortDirection.Desc)

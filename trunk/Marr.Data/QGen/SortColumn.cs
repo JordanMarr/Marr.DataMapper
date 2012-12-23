@@ -12,18 +12,21 @@ namespace Marr.Data.QGen
         public SortColumn(Expression<Func<T, object>> sortExpression, SortDirection direction)
         {
             MemberExpression me = GetMemberExpression(sortExpression.Body);
-            Member = me.Member;
+            DeclaringType = me.Expression.Type;
+            PropertyName = me.Member.Name;
             Direction = direction;
         }
 
-        public SortColumn(MemberInfo member, SortDirection direction)
+        public SortColumn(Type declaringType, string propertyName, SortDirection direction)
         {
-            Member = member;
+            DeclaringType = declaringType;
+            PropertyName = propertyName;
             Direction = direction;
         }
 
         public SortDirection Direction { get; private set; }
-        public MemberInfo Member { get; private set; }
+        public Type DeclaringType { get; private set; }
+        public string PropertyName { get; private set; }
 
         private MemberExpression GetMemberExpression(Expression exp)
         {

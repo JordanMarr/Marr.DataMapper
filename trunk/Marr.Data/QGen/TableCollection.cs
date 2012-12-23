@@ -41,9 +41,9 @@ namespace Marr.Data.QGen
         /// <summary>
         /// Tries to find a table for a given member.  
         /// </summary>
-        public Table FindTable(MemberInfo member)
+        public Table FindTable(Type declaringType)
         {
-            return this.EnumerateViewsAndTables().Where(t => t.EntityType == member.DeclaringType).FirstOrDefault();
+            return this.EnumerateViewsAndTables().Where(t => t.EntityType == declaringType).FirstOrDefault();
         }
 
         public Table this[int index]

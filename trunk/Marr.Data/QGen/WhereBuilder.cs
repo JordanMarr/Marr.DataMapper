@@ -109,7 +109,7 @@ namespace Marr.Data.QGen
         {
             if (isLeftSide)
             {
-                string fqColumn = GetFullyQualifiedColumnName(expression.Member);
+                string fqColumn = GetFullyQualifiedColumnName(expression.Member, expression.Expression.Type);
                 _sb.Append(fqColumn);
             }
             else
@@ -166,27 +166,27 @@ namespace Marr.Data.QGen
             return rightValue;
         }
 
-        protected string GetFullyQualifiedColumnName(MemberInfo member)
+        protected string GetFullyQualifiedColumnName(MemberInfo member, Type declaringType)
         {
             if (_tablePrefix)
             {
-                Table table = _tables.FindTable(member);
+                Table table = _tables.FindTable(declaringType);
 
                 if (table == null)
                 {
-                    string msg = string.Format("The property '{0} -> {1}' you are trying to reference in the 'WHERE' statement belongs to an entity that has not been joined in your query.  To reference this property, you must join the '{0}' entity using the Join method.", 
-                        member.DeclaringType.Name,
+                    string msg = string.Format("The property '{0} -> {1}' you are trying to reference in the 'WHERE' statement belongs to an entity that has not been joined in your query.  To reference this property, you must join the '{0}' entity using the Join method.",
+                        declaringType,
                         member.Name);
 
                     throw new DataMappingException(msg);
                 }
 
-                string columnName = member.GetColumnName(_useAltName);
+                string columnName = DataHelper.GetColumnName(declaringType, member.Name, _useAltName);
                 return _dialect.CreateToken(string.Format("{0}.{1}", table.Alias, columnName));
             }
             else
             {
-                string columnName = member.GetColumnName(_useAltName);
+                string columnName = DataHelper.GetColumnName(declaringType, member.Name, _useAltName);
                 return _dialect.CreateToken(columnName);
             }
         }
@@ -216,7 +216,8 @@ namespace Marr.Data.QGen
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
             var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
-            string fqColumn = GetFullyQualifiedColumnName((body.Object as MemberExpression).Member);
+            MemberExpression memberExp = (body.Object as MemberExpression);
+            string fqColumn = GetFullyQualifiedColumnName(memberExp.Member, memberExp.Expression.Type);
             _sb.AppendFormat("({0} LIKE '%' + {1} + '%')", fqColumn, paramName);
         }
 
@@ -227,7 +228,8 @@ namespace Marr.Data.QGen
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
             var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
-            string fqColumn = GetFullyQualifiedColumnName((body.Object as MemberExpression).Member);
+            MemberExpression memberExp = (body.Object as MemberExpression);
+            string fqColumn = GetFullyQualifiedColumnName(memberExp.Member, memberExp.Expression.Type);
             _sb.AppendFormat("({0} LIKE {1} + '%')", fqColumn, paramName);
         }
 
@@ -238,7 +240,8 @@ namespace Marr.Data.QGen
             string paramName = string.Concat(_paramPrefix, "P", _command.Parameters.Count.ToString());
             var parameter = new ParameterChainMethods(_command, paramName, value).Parameter;
 
-            string fqColumn = GetFullyQualifiedColumnName((body.Object as MemberExpression).Member);
+            MemberExpression memberExp = (body.Object as MemberExpression);
+            string fqColumn = GetFullyQualifiedColumnName(memberExp.Member, memberExp.Expression.Type);
             _sb.AppendFormat("({0} LIKE '%' + {1})", fqColumn, paramName);
         }
 

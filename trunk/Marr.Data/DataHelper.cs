@@ -73,18 +73,17 @@ namespace Marr.Data
             }
         }
 
-
         /// <summary>
         /// Returns the mapped column name, or the member name.
         /// </summary>
         /// <param name="member"></param>
         /// <returns></returns>
-        public static string GetColumnName(this MemberInfo member, bool useAltName)
+        public static string GetColumnName(Type declaringType, string propertyName, bool useAltName)
         {
             // Initialize column name as member name
-            string columnName = member.Name;
+            string columnName = propertyName;
 
-            var columnMap = MapRepository.Instance.GetColumns(member.DeclaringType).GetByFieldName(member.Name);
+            var columnMap = MapRepository.Instance.GetColumns(declaringType).GetByFieldName(propertyName);
             if (useAltName)
             {
                 columnName = columnMap.ColumnInfo.TryGetAltName();

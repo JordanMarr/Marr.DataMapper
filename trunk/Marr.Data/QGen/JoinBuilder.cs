@@ -31,7 +31,7 @@ namespace Marr.Data.QGen
 
         protected override Expression VisitMemberAccess(MemberExpression expression)
         {
-            string fqColumn = GetFullyQualifiedColumnName(expression.Member);
+            string fqColumn = GetFullyQualifiedColumnName(expression.Member, expression.Expression.Type);
             _sb.Append(fqColumn);
             return expression;
         }
