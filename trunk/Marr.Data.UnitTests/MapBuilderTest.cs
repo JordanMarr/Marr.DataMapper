@@ -56,7 +56,7 @@ namespace Marr.Data.UnitTests
         {
             var mapBuilder = new MapBuilder();
             var maps = mapBuilder.BuildColumns<UnmappedPerson>();
-            Assert.IsTrue(maps.Columns.Count == 5);
+            Assert.IsTrue(maps.MappedColumns.Count == 5);
             Assert.IsTrue(_mapRepository.Columns[_personType].Count == 5);
         }
 
@@ -65,7 +65,7 @@ namespace Marr.Data.UnitTests
         {
             var mapBuilder = new MapBuilder(false);
             var maps = mapBuilder.BuildColumns<UnmappedPerson>();
-            Assert.IsTrue(maps.Columns.Count == 6);
+            Assert.IsTrue(maps.MappedColumns.Count == 6);
             Assert.IsTrue(_mapRepository.Columns[_personType].Count == 6);
         }
 
@@ -74,11 +74,11 @@ namespace Marr.Data.UnitTests
         {
             var mapBuilder = new MapBuilder();
             var maps = mapBuilder.BuildColumnsExcept<UnmappedPerson>("ID", "Name");
-            Assert.IsTrue(maps.Columns.Count == 4);
-            Assert.IsNotNull(maps.Columns.GetByColumnName("Age"));
-            Assert.IsNotNull(maps.Columns.GetByColumnName("BirthDate"));
-            Assert.IsNotNull(maps.Columns.GetByColumnName("IsHappy"));
-            Assert.IsNotNull(maps.Columns.GetByColumnName("Pets"));
+            Assert.IsTrue(maps.MappedColumns.Count == 4);
+            Assert.IsNotNull(maps.MappedColumns.GetByColumnName("Age"));
+            Assert.IsNotNull(maps.MappedColumns.GetByColumnName("BirthDate"));
+            Assert.IsNotNull(maps.MappedColumns.GetByColumnName("IsHappy"));
+            Assert.IsNotNull(maps.MappedColumns.GetByColumnName("Pets"));
             Assert.IsNotNull(_mapRepository.Columns[_personType].GetByColumnName("Age"));
             Assert.IsNotNull(_mapRepository.Columns[_personType].GetByColumnName("BirthDate"));
             Assert.IsNotNull(_mapRepository.Columns[_personType].GetByColumnName("IsHappy"));
@@ -90,8 +90,8 @@ namespace Marr.Data.UnitTests
         {
             var mapBuilder = new MapBuilder();
             var maps = mapBuilder.BuildColumns<UnmappedPerson>("Name");
-            Assert.IsTrue(maps.Columns.Count == 1);
-            Assert.IsNotNull(maps.Columns.GetByColumnName("Name"));
+            Assert.IsTrue(maps.MappedColumns.Count == 1);
+            Assert.IsNotNull(maps.MappedColumns.GetByColumnName("Name"));
         }
 
         [TestMethod]
@@ -101,8 +101,8 @@ namespace Marr.Data.UnitTests
             var maps = mapBuilder.BuildColumns<UnmappedPerson>(m => 
                 m.MemberType == MemberTypes.Property && (m as PropertyInfo).PropertyType == typeof(DateTime));
 
-            Assert.IsTrue(maps.Columns.Count == 1);
-            Assert.IsTrue(maps.Columns[0].FieldType == typeof(DateTime));
+            Assert.IsTrue(maps.MappedColumns.Count == 1);
+            Assert.IsTrue(maps.MappedColumns[0].FieldType == typeof(DateTime));
         }
 
         [TestMethod]
@@ -110,7 +110,7 @@ namespace Marr.Data.UnitTests
         {
             var mapBuilder = new MapBuilder();
             var columns = mapBuilder.BuildColumns<Person>()
-                .Columns.PrefixAltNames("p_");
+                .MappedColumns.PrefixAltNames("p_");
 
             Assert.IsTrue(columns.All(c => c.ColumnInfo.AltName.StartsWith("p_")));
             Assert.IsFalse(columns.All(c => c.ColumnInfo.Name.StartsWith("p_")));
@@ -121,7 +121,7 @@ namespace Marr.Data.UnitTests
         {
             var mapBuilder = new MapBuilder();
             var columns = mapBuilder.BuildColumns<Person>()
-                .Columns.SuffixAltNames("_p");
+                .MappedColumns.SuffixAltNames("_p");
 
             Assert.IsTrue(columns.All(c => c.ColumnInfo.AltName.EndsWith("_p")));
             Assert.IsFalse(columns.All(c => c.ColumnInfo.Name.EndsWith("_p")));
@@ -133,7 +133,7 @@ namespace Marr.Data.UnitTests
             var mapBuilder = new MapBuilder();
             var columns = mapBuilder.BuildColumnsFromSimpleTypes<EntityWithSimpleAndComplexProperties>();
 
-            Assert.AreEqual(2, columns.Columns.Count);
+            Assert.AreEqual(2, columns.MappedColumns.Count);
         }
 
         [TestMethod]
@@ -144,7 +144,7 @@ namespace Marr.Data.UnitTests
                 .Ignore(e => e.OneToOneChild) // Should already be ignored because it is not a simple type
                 .Ignore(e => e.Collection); // Should already be ignored because it is an ICollection
 
-            Assert.AreEqual(2, columns.Columns.Count);
+            Assert.AreEqual(2, columns.MappedColumns.Count);
         }
 
         #endregion

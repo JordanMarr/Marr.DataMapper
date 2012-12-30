@@ -13,19 +13,20 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
         [TestInitialize]
         public void Setup()
         {
-            Mappings mappings = new Mappings();
+            FluentMappings mappings = new FluentMappings();
 
-            mappings.Columns.AutoMapSimpleTypeProperties<Building>();
-
-            mappings.Relationships.AutoMapICollectionOrComplexProperties<Building>()
-                .Ignore(b => b.Offices)
-                .Ignore(b => b.OfficesDynamic)
-                .For("_offices")
-                    .LazyLoad((db, building) => db.Query<Office>().Where(o => o.BuildingName == building.Name).ToList())
-                .For("_officesDynamic")
-                    .LazyLoad((db, building) => db.Query<Office>().Where(o => o.BuildingName == building.Name).ToList());
-
-            mappings.Columns.AutoMapSimpleTypeProperties<Office>();
+            mappings
+                .Entity<Building>()
+                    .Columns.AutoMapSimpleTypeProperties()
+                    .Relationships.AutoMapICollectionOrComplexProperties()
+                        .Ignore(b => b.Offices)
+                        .Ignore(b => b.OfficesDynamic)
+                        .For("_offices")
+                            .LazyLoad((db, building) => db.Query<Office>().Where(o => o.BuildingName == building.Name).ToList())
+                        .For("_officesDynamic")
+                            .LazyLoad((db, building) => db.Query<Office>().Where(o => o.BuildingName == building.Name).ToList())
+                .Entity<Office>()
+                    .Columns.AutoMapSimpleTypeProperties();
         }
 
         [TestMethod]

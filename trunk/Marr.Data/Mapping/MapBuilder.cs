@@ -91,7 +91,7 @@ namespace Marr.Data.Mapping
             strategy.ColumnPredicate = predicate;
             ColumnMapCollection columns = strategy.MapColumns(entityType);
             MapRepository.Instance.Columns[entityType] = columns;
-            return new ColumnMapBuilder<T>(columns);
+            return new ColumnMapBuilder<T>(null, columns);
         }
 
         /// <summary>
@@ -105,7 +105,7 @@ namespace Marr.Data.Mapping
             Type entityType = typeof(T);
             ColumnMapCollection columns = new ColumnMapCollection();
             MapRepository.Instance.Columns[entityType] = columns;
-            return new ColumnMapBuilder<T>(columns);
+            return new ColumnMapBuilder<T>(null, columns);
         }
         
         #endregion
@@ -162,7 +162,7 @@ namespace Marr.Data.Mapping
             strategy.RelationshipPredicate = predicate;
             RelationshipCollection relationships = strategy.MapRelationships(entityType);
             MapRepository.Instance.Relationships[entityType] = relationships;
-            return new RelationshipBuilder<T>(relationships);
+            return new RelationshipBuilder<T>(null, relationships);
         }
 
         /// <summary>
@@ -176,7 +176,7 @@ namespace Marr.Data.Mapping
             Type entityType = typeof(T);
             RelationshipCollection relationships = new RelationshipCollection();
             MapRepository.Instance.Relationships[entityType] = relationships;
-            return new RelationshipBuilder<T>(relationships);
+            return new RelationshipBuilder<T>(null, relationships);
         }
         
         #endregion
@@ -190,7 +190,7 @@ namespace Marr.Data.Mapping
         /// <returns></returns>
         public TableBuilder<T> BuildTable<T>()
         {
-            return new TableBuilder<T>();
+            return new TableBuilder<T>(null);
         }
 
         /// <summary>
@@ -200,7 +200,7 @@ namespace Marr.Data.Mapping
         /// <param name="tableName"></param>
         public TableBuilder<T> BuildTable<T>(string tableName)
         {
-            return new TableBuilder<T>().SetTableName(tableName);
+            return new TableBuilder<T>(null).SetTableName(tableName);
         }
 
         #endregion

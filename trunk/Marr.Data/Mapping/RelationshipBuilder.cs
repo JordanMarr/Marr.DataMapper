@@ -10,13 +10,15 @@ namespace Marr.Data.Mapping
     /// <summary>
     /// This class has fluent methods that are used to easily configure relationship mappings.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class RelationshipBuilder<T>
+    /// <typeparam name="TEntity"></typeparam>
+    public class RelationshipBuilder<TEntity>
     {
+        private FluentMappings.MappingsFluentEntity<TEntity> _fluentEntity;
         private string _currentPropertyName;
 
-        public RelationshipBuilder(RelationshipCollection relationships)
+        public RelationshipBuilder(FluentMappings.MappingsFluentEntity<TEntity> fluentEntity, RelationshipCollection relationships)
         {
+            _fluentEntity = fluentEntity;
             Relationships = relationships;
         }
 
@@ -32,7 +34,7 @@ namespace Marr.Data.Mapping
         /// </summary>
         /// <param name="property"></param>
         /// <returns></returns>
-        public RelationshipBuilder<T> For(Expression<Func<T, object>> property)
+        public RelationshipBuilder<TEntity> For(Expression<Func<TEntity, object>> property)
         {
             return For(property.GetMemberName());
         }
@@ -42,7 +44,7 @@ namespace Marr.Data.Mapping
         /// </summary>
         /// <param name="propertyName"></param>
         /// <returns></returns>
-        public RelationshipBuilder<T> For(string propertyName)
+        public RelationshipBuilder<TEntity> For(string propertyName)
         {
             _currentPropertyName = propertyName;
 
@@ -61,52 +63,76 @@ namespace Marr.Data.Mapping
         /// <typeparam name="TChild"></typeparam>
         /// <param name="query"></param>
         /// <returns></returns>
-        public RelationshipBuilder<T> LazyLoad<TChild>(Func<IDataMapper, T, TChild> query)
+        public RelationshipBuilder<TEntity> LazyLoad<TChild>(Func<IDataMapper, TEntity, TChild> query)
         {
             AssertCurrentPropertyIsSet();
 
-            Relationships[_currentPropertyName].LazyLoaded = new LazyLoaded<T, TChild>(query);
+            Relationships[_currentPropertyName].LazyLoaded = new LazyLoaded<TEntity, TChild>(query);
             return this;
         }
 
-        public RelationshipBuilder<T> SetOneToOne()
+        public RelationshipBuilder<TEntity> SetOneToOne()
         {
             AssertCurrentPropertyIsSet();
             SetOneToOne(_currentPropertyName);
             return this;
         }
 
-        public RelationshipBuilder<T> SetOneToOne(string propertyName)
+        public RelationshipBuilder<TEntity> SetOneToOne(string propertyName)
         {
             Relationships[propertyName].RelationshipInfo.RelationType = RelationshipTypes.One;
             return this;
         }
 
-        public RelationshipBuilder<T> SetOneToMany()
+        public RelationshipBuilder<TEntity> SetOneToMany()
         {
             AssertCurrentPropertyIsSet();
             SetOneToMany(_currentPropertyName);
             return this;
         }
 
-        public RelationshipBuilder<T> SetOneToMany(string propertyName)
+        public RelationshipBuilder<TEntity> SetOneToMany(string propertyName)
         {
             Relationships[propertyName].RelationshipInfo.RelationType = RelationshipTypes.Many;
             return this;
         }
 
-        [Obsolete("Please use the Ignore function instead.")]
-        public RelationshipBuilder<T> RemoveRelationship(Expression<Func<T, object>> property)
-        {
-            Ignore(property);
-            return this;
-        }
-
-        public RelationshipBuilder<T> Ignore(Expression<Func<T, object>> property)
+        public RelationshipBuilder<TEntity> Ignore(Expression<Func<TEntity, object>> property)
         {
             string propertyName = property.GetMemberName();
             Relationships.RemoveAll(r => r.Member.Name == propertyName);
             return this;
+        }
+
+        public FluentMappings.MappingsFluentTables<TEntity> Tables
+        {
+            get
+            {
+                if (_fluentEntity == null)
+                {
+                    throw new Exception("This property is not compatible with the obsolete 'MapBuilder' class.");
+                }
+
+                return _fluentEntity.Table;
+            }
+        }
+
+        public FluentMappings.MappingsFluentColumns<TEntity> Columns
+        {
+            get
+            {
+                if (_fluentEntity == null)
+                {
+                    throw new Exception("This property is not compatible with the obsolete 'MapBuilder' class.");
+                }
+
+                return _fluentEntity.Columns;
+            }
+        }
+
+        public FluentMappings.MappingsFluentEntity<TNewEntity> Entity<TNewEntity>()
+        {
+            return new FluentMappings.MappingsFluentEntity<TNewEntity>(true);
         }
 
         /// <summary>
@@ -120,13 +146,13 @@ namespace Marr.Data.Mapping
 
             // Find the field that matches the given field name
             strategy.RelationshipPredicate = mi => mi.Name == fieldName;
-            Relationship relationship = strategy.MapRelationships(typeof(T)).FirstOrDefault();
+            Relationship relationship = strategy.MapRelationships(typeof(TEntity)).FirstOrDefault();
 
             if (relationship == null)
             {
                 throw new DataMappingException(string.Format("Could not find the field '{0}' in '{1}'.",
                     fieldName,
-                    typeof(T).Name));
+                    typeof(TEntity).Name));
             }
             else
             {

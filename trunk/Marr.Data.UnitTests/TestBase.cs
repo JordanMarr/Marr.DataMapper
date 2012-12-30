@@ -43,24 +43,27 @@ namespace Marr.Data.UnitTests
 
             return new DataMapper(dbFactory, "connString...");
         }
-
+        
         protected void InitMappings()
         {
-            MapBuilder builder = new MapBuilder();
+            FluentMappings mappings = new FluentMappings();
 
-            builder.BuildTable<Person>("PersonTable");
-
-            builder.BuildColumns<Person>()
-                .SetReturnValue("ID")
-                .SetPrimaryKey("ID")
-                .SetAutoIncrement("ID");
-
-            builder.BuildRelationships<Person>();
-
-            builder.BuildColumns<Pet>()
-                .SetPrimaryKey("ID")
-                .SetAltName("ID", "Pet_ID")
-                .SetAltName("Name", "Pet_Name");
+            mappings
+                .Entity<Person>()
+                    .Table.MapTable("PersonTable")
+                    .Columns.AutoMapSimpleTypeProperties()
+                        .For(p => p.ID)
+                            .SetPrimaryKey()
+                            .SetReturnValue()
+                            .SetAutoIncrement()
+                    .Relationships.AutoMapICollectionOrComplexProperties()
+                .Entity<Pet>()
+                    .Columns.AutoMapSimpleTypeProperties()
+                        .For(p => p.ID)
+                            .SetPrimaryKey()
+                            .SetAltName("Pet_ID")
+                        .For(p => p.Name)
+                            .SetAltName("Pet_Name");
         }
 
     }

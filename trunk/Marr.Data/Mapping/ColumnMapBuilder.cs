@@ -11,20 +11,22 @@ namespace Marr.Data.Mapping
     /// <summary>
     /// This class has fluent methods that are used to easily configure column mappings.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class ColumnMapBuilder<T>
+    /// <typeparam name="TEntity"></typeparam>
+    public class ColumnMapBuilder<TEntity>
     {
+        private FluentMappings.MappingsFluentEntity<TEntity> _fluentEntity;
         private string _currentPropertyName;
 
-        public ColumnMapBuilder(ColumnMapCollection columns)
+        public ColumnMapBuilder(FluentMappings.MappingsFluentEntity<TEntity> fluentEntity, ColumnMapCollection mappedColumns)
         {
-            Columns = columns;
+            _fluentEntity = fluentEntity;
+            MappedColumns = mappedColumns;
         }
 
         /// <summary>
         /// Gets the list of column mappings that are being configured.
         /// </summary>
-        public ColumnMapCollection Columns { get; private set; }
+        public ColumnMapCollection MappedColumns { get; private set; }
 
         #region - Fluent Methods -
 
@@ -33,7 +35,7 @@ namespace Marr.Data.Mapping
         /// </summary>
         /// <param name="property"></param>
         /// <returns></returns>
-        public ColumnMapBuilder<T> For(Expression<Func<T, object>> property)
+        public ColumnMapBuilder<TEntity> For(Expression<Func<TEntity, object>> property)
         {
             For(property.GetMemberName());
             return this;
@@ -44,12 +46,12 @@ namespace Marr.Data.Mapping
         /// </summary>
         /// <param name="property"></param>
         /// <returns></returns>
-        public ColumnMapBuilder<T> For(string propertyName)
+        public ColumnMapBuilder<TEntity> For(string propertyName)
         {
             _currentPropertyName = propertyName;
 
             // Try to add the column map if it doesn't exist
-            if (Columns.GetByFieldName(_currentPropertyName) == null)
+            if (MappedColumns.GetByFieldName(_currentPropertyName) == null)
             {
                 TryAddColumnMapForField(_currentPropertyName);
             }
@@ -57,113 +59,132 @@ namespace Marr.Data.Mapping
             return this;
         }
 
-        public ColumnMapBuilder<T> SetPrimaryKey()
+        public ColumnMapBuilder<TEntity> SetPrimaryKey()
         {
             AssertCurrentPropertyIsSet();
             return SetPrimaryKey(_currentPropertyName);
         }
 
-        public ColumnMapBuilder<T> SetPrimaryKey(string propertyName)
+        public ColumnMapBuilder<TEntity> SetPrimaryKey(string propertyName)
         {
-            Columns.GetByFieldName(propertyName).ColumnInfo.IsPrimaryKey = true;
+            MappedColumns.GetByFieldName(propertyName).ColumnInfo.IsPrimaryKey = true;
             return this;
         }
 
-        public ColumnMapBuilder<T> SetAutoIncrement()
+        public ColumnMapBuilder<TEntity> SetAutoIncrement()
         {
             AssertCurrentPropertyIsSet();
             return SetAutoIncrement(_currentPropertyName);
         }
 
-        public ColumnMapBuilder<T> SetAutoIncrement(string propertyName)
+        public ColumnMapBuilder<TEntity> SetAutoIncrement(string propertyName)
         {
-            Columns.GetByFieldName(propertyName).ColumnInfo.IsAutoIncrement = true;
+            MappedColumns.GetByFieldName(propertyName).ColumnInfo.IsAutoIncrement = true;
             return this;
         }
 
-        public ColumnMapBuilder<T> SetColumnName(string columnName)
+        public ColumnMapBuilder<TEntity> SetColumnName(string columnName)
         {
             AssertCurrentPropertyIsSet();
             return SetColumnName(_currentPropertyName, columnName);
         }
 
-        public ColumnMapBuilder<T> SetColumnName(string propertyName, string columnName)
+        public ColumnMapBuilder<TEntity> SetColumnName(string propertyName, string columnName)
         {
-            Columns.GetByFieldName(propertyName).ColumnInfo.Name = columnName;
+            MappedColumns.GetByFieldName(propertyName).ColumnInfo.Name = columnName;
             return this;
         }
 
-        public ColumnMapBuilder<T> SetReturnValue()
+        public ColumnMapBuilder<TEntity> SetReturnValue()
         {
             AssertCurrentPropertyIsSet();
             return SetReturnValue(_currentPropertyName);
         }
 
-        public ColumnMapBuilder<T> SetReturnValue(string propertyName)
+        public ColumnMapBuilder<TEntity> SetReturnValue(string propertyName)
         {
-            Columns.GetByFieldName(propertyName).ColumnInfo.ReturnValue = true;
+            MappedColumns.GetByFieldName(propertyName).ColumnInfo.ReturnValue = true;
             return this;
         }
 
-        public ColumnMapBuilder<T> SetSize(int size)
+        public ColumnMapBuilder<TEntity> SetSize(int size)
         {
             AssertCurrentPropertyIsSet();
             return SetSize(_currentPropertyName, size);
         }
 
-        public ColumnMapBuilder<T> SetSize(string propertyName, int size)
+        public ColumnMapBuilder<TEntity> SetSize(string propertyName, int size)
         {
-            Columns.GetByFieldName(propertyName).ColumnInfo.Size = size;
+            MappedColumns.GetByFieldName(propertyName).ColumnInfo.Size = size;
             return this;
         }
 
-        public ColumnMapBuilder<T> SetAltName(string altName)
+        public ColumnMapBuilder<TEntity> SetAltName(string altName)
         {
             AssertCurrentPropertyIsSet();
             return SetAltName(_currentPropertyName, altName);
         }
 
-        public ColumnMapBuilder<T> SetAltName(string propertyName, string altName)
+        public ColumnMapBuilder<TEntity> SetAltName(string propertyName, string altName)
         {
-            Columns.GetByFieldName(propertyName).ColumnInfo.AltName = altName;
+            MappedColumns.GetByFieldName(propertyName).ColumnInfo.AltName = altName;
             return this;
         }
 
-        public ColumnMapBuilder<T> SetParamDirection(ParameterDirection direction)
+        public ColumnMapBuilder<TEntity> SetParamDirection(ParameterDirection direction)
         {
             AssertCurrentPropertyIsSet();
             return SetParamDirection(_currentPropertyName, direction);
         }
 
-        public ColumnMapBuilder<T> SetParamDirection(string propertyName, ParameterDirection direction)
+        public ColumnMapBuilder<TEntity> SetParamDirection(string propertyName, ParameterDirection direction)
         {
-            Columns.GetByFieldName(propertyName).ColumnInfo.ParamDirection = direction;
+            MappedColumns.GetByFieldName(propertyName).ColumnInfo.ParamDirection = direction;
             return this;
         }
 
-        [Obsolete("Please use the Ignore function instead.")]
-        public ColumnMapBuilder<T> RemoveColumnMap(Expression<Func<T, object>> property)
-        {
-            return Ignore(property);
-        }
-
-        [Obsolete("Please use the Ignore function instead.")]
-        public ColumnMapBuilder<T> RemoveColumnMap(string propertyName)
-        {
-            return Ignore(propertyName);
-        }
-
-        public ColumnMapBuilder<T> Ignore(Expression<Func<T, object>> property)
+        public ColumnMapBuilder<TEntity> Ignore(Expression<Func<TEntity, object>> property)
         {
             string propertyName = property.GetMemberName();
             return Ignore(propertyName);
         }
 
-        public ColumnMapBuilder<T> Ignore(string propertyName)
+        public ColumnMapBuilder<TEntity> Ignore(string propertyName)
         {
-            var columnMap = Columns.GetByFieldName(propertyName);
-            Columns.Remove(columnMap);
+            var columnMap = MappedColumns.GetByFieldName(propertyName);
+            MappedColumns.Remove(columnMap);
             return this;
+        }
+
+        public FluentMappings.MappingsFluentTables<TEntity> Tables
+        {
+            get
+            {
+                if (_fluentEntity == null)
+                {
+                    throw new Exception("This property is not compatible with the obsolete 'MapBuilder' class.");
+                }
+
+                return _fluentEntity.Table;
+            }
+        }
+
+        public FluentMappings.MappingsFluentRelationships<TEntity> Relationships
+        {
+            get
+            {
+                if (_fluentEntity == null)
+                {
+                    throw new Exception("This property is not compatible with the obsolete 'MapBuilder' class.");
+                }
+
+                return _fluentEntity.Relationships;
+            }
+        }
+
+        public FluentMappings.MappingsFluentEntity<TNewEntity> Entity<TNewEntity>()
+        {
+            return new FluentMappings.MappingsFluentEntity<TNewEntity>(true);
         }
 
         /// <summary>
@@ -177,17 +198,17 @@ namespace Marr.Data.Mapping
 
             // Find the field that matches the given field name
             strategy.ColumnPredicate = mi => mi.Name == fieldName;
-            ColumnMap columnMap = strategy.MapColumns(typeof(T)).FirstOrDefault();
+            ColumnMap columnMap = strategy.MapColumns(typeof(TEntity)).FirstOrDefault();
 
             if (columnMap == null)
             {
                 throw new DataMappingException(string.Format("Could not find the field '{0}' in '{1}'.",
                     fieldName,
-                    typeof(T).Name));
+                    typeof(TEntity).Name));
             }
             else
             {
-                Columns.Add(columnMap);
+                MappedColumns.Add(columnMap);
             }
         }
 

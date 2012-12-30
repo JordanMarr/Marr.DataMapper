@@ -23,28 +23,6 @@ namespace Marr.Data.UnitTests
             InitMappings();
         }
 
-        public void InitMappings()
-        {
-            Mappings mappings = new Mappings();
-
-            mappings.Tables.MapTable<Person>("PersonTable");
-
-            mappings.Columns.AutoMapSimpleTypeProperties<Person>()
-                .For(p => p.ID)
-                    .SetPrimaryKey()
-                    .SetReturnValue()
-                    .SetAutoIncrement();                
-
-            mappings.Relationships.AutoMapICollectionOrComplexProperties<Person>();
-
-            mappings.Columns.AutoMapSimpleTypeProperties<Pet>()
-                .For(p => p.ID)
-                    .SetPrimaryKey()
-                    .SetAltName("Pet_ID")
-                .For(p => p.Name)
-                    .SetAltName("Pet_Name");
-        }
-
         [TestMethod]
         public void Find_ShouldMapToEntity()
         {

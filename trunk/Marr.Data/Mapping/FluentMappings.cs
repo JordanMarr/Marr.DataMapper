@@ -11,43 +11,58 @@ namespace Marr.Data.Mapping
     /// <summary>
     /// Provides a fluent interface for mapping domain entities and properties to database tables and columns.
     /// </summary>
-    public class Mappings
+    public class FluentMappings
     {
         private bool _publicOnly;
 
-        public Mappings()
+        public FluentMappings()
             : this(true)
         { }
 
-        public Mappings(bool publicOnly)
+        public FluentMappings(bool publicOnly)
         {
             _publicOnly = publicOnly;
-            Columns = new MapBuilderColumns(publicOnly);
-            Tables = new MapBuilderTables();
-            Relationships = new MapBuilderRelationships(publicOnly);
+            
         }
 
-        /// <summary>
-        /// Contains methods that map entity properties to database table and view column names;
-        /// </summary>
-        public MapBuilderColumns Columns { get; private set; }
+        public MappingsFluentEntity<TEntity> Entity<TEntity>()
+        {
+            return new MappingsFluentEntity<TEntity>(_publicOnly);
+        }
 
-        /// <summary>
-        /// Contains methods that map entity classes to database table names.
-        /// </summary>
-        public MapBuilderTables Tables { get; private set; }
+        public class MappingsFluentEntity<TEntity>
+        {
+            public MappingsFluentEntity(bool publicOnly)
+            {
+                Columns = new MappingsFluentColumns<TEntity>(this, publicOnly);
+                Table = new MappingsFluentTables<TEntity>(this);
+                Relationships = new MappingsFluentRelationships<TEntity>(this, publicOnly);
+            }
 
-        /// <summary>
-        /// Contains methods that map sub-entities with database table and view column names.
-        /// </summary>
-        public MapBuilderRelationships Relationships { get; private set; }
+            /// <summary>
+            /// Contains methods that map entity properties to database table and view column names;
+            /// </summary>
+            public MappingsFluentColumns<TEntity> Columns { get; private set; }
 
-        public class MapBuilderColumns
+            /// <summary>
+            /// Contains methods that map entity classes to database table names.
+            /// </summary>
+            public MappingsFluentTables<TEntity> Table { get; private set; }
+
+            /// <summary>
+            /// Contains methods that map sub-entities with database table and view column names.
+            /// </summary>
+            public MappingsFluentRelationships<TEntity> Relationships { get; private set; }
+        }
+
+        public class MappingsFluentColumns<TEntity>
         {
             private bool _publicOnly;
+            private FluentMappings.MappingsFluentEntity<TEntity> _fluentEntity;
 
-            public MapBuilderColumns(bool publicOnly)
+            public MappingsFluentColumns(FluentMappings.MappingsFluentEntity<TEntity> fluentEntity, bool publicOnly)
             {
+                _fluentEntity = fluentEntity;
                 _publicOnly = publicOnly;
             }
 
@@ -57,9 +72,9 @@ namespace Marr.Data.Mapping
             /// </summary>
             /// <typeparam name="T">The type that is being built.</typeparam>
             /// <returns><see cref="ColumnMapCollection"/></returns>
-            public ColumnMapBuilder<T> AutoMapAllProperties<T>()
+            public ColumnMapBuilder<TEntity> AutoMapAllProperties()
             {
-                return AutoMapPropertiesWhere<T>(m => m.MemberType == MemberTypes.Property &&
+                return AutoMapPropertiesWhere(m => m.MemberType == MemberTypes.Property &&
                     !typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType));
             }
 
@@ -70,9 +85,9 @@ namespace Marr.Data.Mapping
             /// </summary>
             /// <typeparam name="T">The type that is being built.</typeparam>
             /// <returns><see cref="ColumnMapCollection"/></returns>
-            public ColumnMapBuilder<T> AutoMapSimpleTypeProperties<T>()
+            public ColumnMapBuilder<TEntity> AutoMapSimpleTypeProperties()
             {
-                return AutoMapPropertiesWhere<T>(m => m.MemberType == MemberTypes.Property &&
+                return AutoMapPropertiesWhere(m => m.MemberType == MemberTypes.Property &&
                     DataHelper.IsSimpleType((m as PropertyInfo).PropertyType) &&
                     !typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType));
             }
@@ -83,14 +98,14 @@ namespace Marr.Data.Mapping
             /// <typeparam name="T">The type that is being built.</typeparam>
             /// <param name="predicate">Determines whether a mapping should be created based on the member info.</param>
             /// <returns><see cref="ColumnMapConfigurator"/></returns>
-            public ColumnMapBuilder<T> AutoMapPropertiesWhere<T>(Func<MemberInfo, bool> predicate)
+            public ColumnMapBuilder<TEntity> AutoMapPropertiesWhere(Func<MemberInfo, bool> predicate)
             {
-                Type entityType = typeof(T);
+                Type entityType = typeof(TEntity);
                 ConventionMapStrategy strategy = new ConventionMapStrategy(_publicOnly);
                 strategy.ColumnPredicate = predicate;
                 ColumnMapCollection columns = strategy.MapColumns(entityType);
                 MapRepository.Instance.Columns[entityType] = columns;
-                return new ColumnMapBuilder<T>(columns);
+                return new ColumnMapBuilder<TEntity>(_fluentEntity, columns);
             }
 
             /// <summary>
@@ -99,25 +114,32 @@ namespace Marr.Data.Mapping
             /// </summary>
             /// <typeparam name="T"></typeparam>
             /// <returns></returns>
-            public ColumnMapBuilder<T> MapProperties<T>()
+            public ColumnMapBuilder<TEntity> MapProperties()
             {
-                Type entityType = typeof(T);
+                Type entityType = typeof(TEntity);
                 ColumnMapCollection columns = new ColumnMapCollection();
                 MapRepository.Instance.Columns[entityType] = columns;
-                return new ColumnMapBuilder<T>(columns);
+                return new ColumnMapBuilder<TEntity>(_fluentEntity, columns);
             }
         }
 
-        public class MapBuilderTables
+        public class MappingsFluentTables<TEntity>
         {
+            private FluentMappings.MappingsFluentEntity<TEntity> _fluentEntity;
+
+            public MappingsFluentTables(FluentMappings.MappingsFluentEntity<TEntity> fluentEntity)
+            {
+                _fluentEntity = fluentEntity;
+            }
+
             /// <summary>
             /// Provides a fluent table mapping interface.
             /// </summary>
             /// <typeparam name="T"></typeparam>
             /// <returns></returns>
-            public TableBuilder<T> AutoMapTable<T>()
+            public TableBuilder<TEntity> AutoMapTable<T>()
             {
-                return new TableBuilder<T>();
+                return new TableBuilder<TEntity>(_fluentEntity);
             }
 
             /// <summary>
@@ -125,18 +147,20 @@ namespace Marr.Data.Mapping
             /// </summary>
             /// <typeparam name="T"></typeparam>
             /// <param name="tableName"></param>
-            public TableBuilder<T> MapTable<T>(string tableName)
+            public TableBuilder<TEntity> MapTable(string tableName)
             {
-                return new TableBuilder<T>().SetTableName(tableName);
+                return new TableBuilder<TEntity>(_fluentEntity).SetTableName(tableName);
             }
         }
 
-        public class MapBuilderRelationships
+        public class MappingsFluentRelationships<TEntity>
         {
+            private FluentMappings.MappingsFluentEntity<TEntity> _fluentEntity;
             private bool _publicOnly;
 
-            public MapBuilderRelationships(bool publicOnly)
+            public MappingsFluentRelationships(FluentMappings.MappingsFluentEntity<TEntity> fluentEntity, bool publicOnly)
             {
+                _fluentEntity = fluentEntity;
                 _publicOnly = publicOnly;
             }
 
@@ -144,11 +168,10 @@ namespace Marr.Data.Mapping
             /// Creates relationship mappings for the given type.
             /// Maps all properties that implement ICollection or are not "simple types".
             /// </summary>
-            /// <typeparam name="T"></typeparam>
             /// <returns></returns>
-            public RelationshipBuilder<T> AutoMapICollectionOrComplexProperties<T>()
+            public RelationshipBuilder<TEntity> AutoMapICollectionOrComplexProperties()
             {
-                return AutoMapPropertiesWhere<T>(m =>
+                return AutoMapPropertiesWhere(m =>
                     m.MemberType == MemberTypes.Property &&
                     (
                         typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType) || !DataHelper.IsSimpleType((m as PropertyInfo).PropertyType)
@@ -161,11 +184,10 @@ namespace Marr.Data.Mapping
             /// Creates relationship mappings for the given type.
             /// Maps all properties that implement ICollection.
             /// </summary>
-            /// <typeparam name="T">The type that is being built.</typeparam>
             /// <returns><see cref="RelationshipBuilder"/></returns>
-            public RelationshipBuilder<T> AutoMapICollectionProperties<T>()
+            public RelationshipBuilder<TEntity> AutoMapICollectionProperties()
             {
-                return AutoMapPropertiesWhere<T>(m =>
+                return AutoMapPropertiesWhere(m =>
                     m.MemberType == MemberTypes.Property &&
                     typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType));
             }
@@ -174,11 +196,10 @@ namespace Marr.Data.Mapping
             /// Creates relationship mappings for the given type.
             /// Maps all properties that are not "simple types".
             /// </summary>
-            /// <typeparam name="T"></typeparam>
             /// <returns></returns>
-            public RelationshipBuilder<T> AutoMapComplexTypeProperties<T>()
+            public RelationshipBuilder<TEntity> AutoMapComplexTypeProperties<T>()
             {
-                return AutoMapPropertiesWhere<T>(m =>
+                return AutoMapPropertiesWhere(m =>
                     m.MemberType == MemberTypes.Property &&
                     !DataHelper.IsSimpleType((m as PropertyInfo).PropertyType));
             }
@@ -186,31 +207,29 @@ namespace Marr.Data.Mapping
             /// <summary>
             /// Creates relationship mappings for the given type if they match the predicate.
             /// </summary>
-            /// <typeparam name="T">The type that is being built.</typeparam>
             /// <param name="predicate">Determines whether a mapping should be created based on the member info.</param>
             /// <returns><see cref="RelationshipBuilder"/></returns>
-            public RelationshipBuilder<T> AutoMapPropertiesWhere<T>(Func<MemberInfo, bool> predicate)
+            public RelationshipBuilder<TEntity> AutoMapPropertiesWhere(Func<MemberInfo, bool> predicate)
             {
-                Type entityType = typeof(T);
+                Type entityType = typeof(TEntity);
                 ConventionMapStrategy strategy = new ConventionMapStrategy(_publicOnly);
                 strategy.RelationshipPredicate = predicate;
                 RelationshipCollection relationships = strategy.MapRelationships(entityType);
                 MapRepository.Instance.Relationships[entityType] = relationships;
-                return new RelationshipBuilder<T>(relationships);
+                return new RelationshipBuilder<TEntity>(_fluentEntity, relationships);
             }
 
             /// <summary>
             /// Creates a RelationshipBuilder that starts out with no pre-populated relationships.
             /// All relationships must be added manually using the builder.
             /// </summary>
-            /// <typeparam name="T"></typeparam>
             /// <returns></returns>
-            public RelationshipBuilder<T> MapProperties<T>()
+            public RelationshipBuilder<TEntity> MapProperties<T>()
             {
                 Type entityType = typeof(T);
                 RelationshipCollection relationships = new RelationshipCollection();
                 MapRepository.Instance.Relationships[entityType] = relationships;
-                return new RelationshipBuilder<T>(relationships);
+                return new RelationshipBuilder<TEntity>(_fluentEntity, relationships);
             }
         }
     }
