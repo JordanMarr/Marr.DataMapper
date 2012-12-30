@@ -25,20 +25,19 @@ namespace Marr.Data.UnitTests
 
         public void InitMappings()
         {
-            MapBuilder builder = new MapBuilder();
+            Mappings mappings = new Mappings();
 
-            builder.BuildTable<Person>()
-                .SetTableName("PersonTable");
+            mappings.Tables.MapTable<Person>("PersonTable");
 
-            builder.BuildColumns<Person>()
+            mappings.Columns.AutoMapSimpleTypeProperties<Person>()
                 .For(p => p.ID)
                     .SetPrimaryKey()
                     .SetReturnValue()
-                    .SetAutoIncrement();
+                    .SetAutoIncrement();                
 
-            builder.BuildRelationships<Person>();
+            mappings.Relationships.AutoMapICollectionOrComplexProperties<Person>();
 
-            builder.BuildColumns<Pet>()
+            mappings.Columns.AutoMapSimpleTypeProperties<Pet>()
                 .For(p => p.ID)
                     .SetPrimaryKey()
                     .SetAltName("Pet_ID")

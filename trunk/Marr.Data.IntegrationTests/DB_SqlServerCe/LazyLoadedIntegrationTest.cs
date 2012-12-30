@@ -13,11 +13,11 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
         [TestInitialize]
         public void Setup()
         {
-            MapBuilder builder = new MapBuilder();
+            Mappings mappings = new Mappings();
 
-            builder.BuildColumns<Building>();
+            mappings.Columns.AutoMapSimpleTypeProperties<Building>();
 
-            builder.BuildRelationships<Building>()
+            mappings.Relationships.AutoMapICollectionOrComplexProperties<Building>()
                 .Ignore(b => b.Offices)
                 .Ignore(b => b.OfficesDynamic)
                 .For("_offices")
@@ -25,7 +25,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
                 .For("_officesDynamic")
                     .LazyLoad((db, building) => db.Query<Office>().Where(o => o.BuildingName == building.Name).ToList());
 
-            builder.BuildColumns<Office>();
+            mappings.Columns.AutoMapSimpleTypeProperties<Office>();
         }
 
         [TestMethod]
