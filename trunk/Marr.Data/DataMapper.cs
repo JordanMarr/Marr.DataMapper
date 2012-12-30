@@ -573,6 +573,11 @@ namespace Marr.Data
         /// <returns>Returns a list of the specified type.</returns>
         public ICollection<T> Query<T>(string sql, ICollection<T> entityList)
         {
+            return Query<T>(sql, entityList, false);
+        }
+
+        internal ICollection<T> Query<T>(string sql, ICollection<T> entityList, bool useAltName)
+        {
             if (entityList == null)
                 throw new ArgumentNullException("entityList", "ICollection instance cannot be null.");
 
@@ -599,7 +604,7 @@ namespace Marr.Data
                         }
                         else
                         {
-                            entityList.Add((T)mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false));
+                            entityList.Add((T)mappingHelper.CreateAndLoadEntity<T>(mappings, reader, useAltName));
                         }
                     }
                 }

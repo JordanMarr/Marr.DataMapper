@@ -17,11 +17,7 @@ namespace Marr.Data.QGen
         public string Generate()
         {
             // Decide which type of paging query to create
-
-            bool isView = _innerQuery.Tables[0] is View;
-            bool isJoin = _innerQuery.Tables.Count > 1;
-            
-            if (isView || isJoin)
+            if (_innerQuery.IsView || _innerQuery.IsJoin)
             {
                 return ComplexRowCount();
             }
@@ -86,7 +82,11 @@ namespace Marr.Data.QGen
                 if (sb.Length > 0)
                     sb.AppendLine(", ");
 
-                sb.AppendFormat(_innerQuery.Dialect.CreateToken(string.Concat(baseTable.Alias, ".", _innerQuery.NameOrAltName(col.ColumnInfo))));
+                string colName = _innerQuery.IsView ?
+                    _innerQuery.NameOrAltName(col.ColumnInfo) :
+                    col.ColumnInfo.Name;
+
+                sb.AppendFormat(_innerQuery.Dialect.CreateToken(string.Concat(baseTable.Alias, ".", colName)));
             }
 
             return sb.ToString();

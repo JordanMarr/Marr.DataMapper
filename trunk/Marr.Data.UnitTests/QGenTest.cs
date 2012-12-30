@@ -133,6 +133,8 @@ namespace Marr.Data.UnitTests
             db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
             MappingHelper mappingHelper = new MappingHelper(db);
+            var orderBy = MockRepository.GenerateStub<ISortQueryBuilder>();
+            orderBy.Expect(o => o.BuildQuery()).Return("");
 
             Person person = new Person();
             person.ID = 1;
@@ -146,7 +148,7 @@ namespace Marr.Data.UnitTests
             TableCollection tables = new TableCollection { new Table(typeof(Person)) };
             Expression<Func<Person, bool>> filter = p => p.Name == "John" && p.Age > 15 || p.Age < 5 && p.Age > 1;
             var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
-            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), orderBy, false);
 
             // Act
             string queryText = query.Generate();
@@ -170,6 +172,8 @@ namespace Marr.Data.UnitTests
             db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
             MappingHelper mappingHelper = new MappingHelper(db);
+            var orderBy = MockRepository.GenerateStub<ISortQueryBuilder>();
+            orderBy.Expect(o => o.BuildQuery()).Return("");
 
             Person person = new Person();
             person.ID = 1;
@@ -183,7 +187,7 @@ namespace Marr.Data.UnitTests
             TableCollection tables = new TableCollection { new Table(typeof(Person)) };
             Expression<Func<Person, bool>> filter = p => p.Name.Contains("John");
             var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
-            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), orderBy, false);
 
             // Act
             string queryText = query.Generate();
@@ -203,6 +207,8 @@ namespace Marr.Data.UnitTests
             db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
             MappingHelper mappingHelper = new MappingHelper(db);
+            var orderBy = MockRepository.GenerateStub<ISortQueryBuilder>();
+            orderBy.Expect(o => o.BuildQuery()).Return("");
 
             Person person = new Person();
             person.ID = 1;
@@ -218,7 +224,7 @@ namespace Marr.Data.UnitTests
             TableCollection tables = new TableCollection { new Table(typeof(Person)) };
             Expression<Func<Person, bool>> filter = p => p.Name.Contains(john);
             var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
-            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), orderBy, false);
 
             // Act
             string queryText = query.Generate();
@@ -239,6 +245,8 @@ namespace Marr.Data.UnitTests
             db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
             MappingHelper mappingHelper = new MappingHelper(db);
+            var orderBy = MockRepository.GenerateStub<ISortQueryBuilder>();
+            orderBy.Expect(o => o.BuildQuery()).Return("");
 
             Person person = new Person();
             person.ID = 1;
@@ -252,7 +260,7 @@ namespace Marr.Data.UnitTests
             TableCollection tables = new TableCollection { new Table(typeof(Person)) };
             Expression<Func<Person, bool>> filter = p => p.Name.StartsWith("John");
             var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
-            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), orderBy, false);
 
             // Act
             string queryText = query.Generate();
@@ -272,6 +280,8 @@ namespace Marr.Data.UnitTests
             db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
             MappingHelper mappingHelper = new MappingHelper(db);
+            var orderBy = MockRepository.GenerateStub<ISortQueryBuilder>();
+            orderBy.Expect(o => o.BuildQuery()).Return("");
 
             Person person = new Person();
             person.ID = 1;
@@ -287,7 +297,7 @@ namespace Marr.Data.UnitTests
             TableCollection tables = new TableCollection { new Table(typeof(Person)) };
             Expression<Func<Person, bool>> filter = p => p.Name.StartsWith(john);
             var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
-            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), orderBy, false);
 
             // Act
             string queryText = query.Generate();
@@ -307,6 +317,8 @@ namespace Marr.Data.UnitTests
             db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
             MappingHelper mappingHelper = new MappingHelper(db);
+            var orderBy = MockRepository.GenerateStub<ISortQueryBuilder>();
+            orderBy.Expect(o => o.BuildQuery()).Return("");
 
             Person person = new Person();
             person.ID = 1;
@@ -320,7 +332,7 @@ namespace Marr.Data.UnitTests
             TableCollection tables = new TableCollection { new Table(typeof(Person)) };
             Expression<Func<Person, bool>> filter = p => p.Name.EndsWith("John");
             var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
-            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), orderBy, false);
 
             // Act
             string queryText = query.Generate();
@@ -340,6 +352,8 @@ namespace Marr.Data.UnitTests
             db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
             MappingHelper mappingHelper = new MappingHelper(db);
+            var orderBy = MockRepository.GenerateStub<ISortQueryBuilder>();
+            orderBy.Expect(o => o.BuildQuery()).Return("");
 
             Person person = new Person();
             person.ID = 1;
@@ -355,7 +369,7 @@ namespace Marr.Data.UnitTests
             TableCollection tables = new TableCollection { new Table(typeof(Person)) };
             Expression<Func<Person, bool>> filter = p => p.Name.EndsWith(john);
             var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
-            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), orderBy, false);
 
             // Act
             string queryText = query.Generate();
@@ -375,6 +389,8 @@ namespace Marr.Data.UnitTests
             db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
             MappingHelper mappingHelper = new MappingHelper(db);
+            var orderBy = MockRepository.GenerateStub<ISortQueryBuilder>();
+            orderBy.Expect(o => o.BuildQuery()).Return("");
 
             Person person = new Person();
             person.ID = 1;
@@ -388,7 +404,7 @@ namespace Marr.Data.UnitTests
             TableCollection tables = new TableCollection { new Table(typeof(Person)) };
             Expression<Func<Person, bool>> filter = p => p.Age > 5 && p.Name.Contains("John");
             var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
-            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), orderBy, false);
 
             // Act
             string queryText = query.Generate();
@@ -410,6 +426,8 @@ namespace Marr.Data.UnitTests
             db.Expect(d => d.Command).Return(command);
             ColumnMapCollection columns = MapRepository.Instance.GetColumns(typeof(Person));
             MappingHelper mappingHelper = new MappingHelper(db);
+            var orderBy = MockRepository.GenerateStub<ISortQueryBuilder>();
+            orderBy.Expect(o => o.BuildQuery()).Return("");
 
             Person person = new Person();
             person.ID = 1;
@@ -423,7 +441,7 @@ namespace Marr.Data.UnitTests
             TableCollection tables = new TableCollection { new Table(typeof(Person)) };
             Expression<Func<Person, bool>> filter = p => p.Name.Contains("John") && p.Age > 5;
             var where = new WhereBuilder<Person>(command, new SqlServerDialect(), filter, tables, false, true);
-            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), "", false);
+            IQuery query = new SelectQuery(new SqlServerDialect(), tables, where.ToString(), orderBy, false);
 
             // Act
             string queryText = query.Generate();

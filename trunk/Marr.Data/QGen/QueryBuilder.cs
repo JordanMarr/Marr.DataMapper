@@ -26,6 +26,7 @@ namespace Marr.Data.QGen
         private WhereBuilder<T> _whereBuilder;
         private SortBuilder<T> _sortBuilder;
         private bool _useAltName = false;
+        private bool _isGraph = false;
         private string _queryText;
         private List<MemberInfo> _childrenToLoad;
         private bool _enablePaging = false;
@@ -82,22 +83,45 @@ namespace Marr.Data.QGen
         /// <summary>
         /// Overrides the base table name that will be used in the query.
         /// </summary>
-        [Obsolete("This property is obsolete.  Use the 'From' method instead.")]
-        public virtual QueryBuilder<T> Table(string tableName)
+        [Obsolete("This method is obsolete.  Use either the FromTable or FromView method instead.", true)]
+        public virtual QueryBuilder<T> From(string tableName)
         {
-            return From(tableName);
+            return FromView(tableName);
         }
 
         /// <summary>
-        /// Overrides the base table or view name that will be used in the query.
+        /// Overrides the base view name that will be used in the query.
+        /// Will try to use the mapped "AltName" values when loading the columns.
         /// </summary>
-        public virtual QueryBuilder<T> From(string tableOrView)
+        public virtual QueryBuilder<T> FromView(string viewName)
         {
-            if (string.IsNullOrEmpty(tableOrView))
-                throw new ArgumentNullException("tableOrView");
+            if (string.IsNullOrEmpty(viewName))
+                throw new ArgumentNullException("view");
+
+            _useAltName = true;
+
+            // Replace the base table with a view with tables
+            View view = new View(viewName, _tables.ToArray());
+            _tables.ReplaceBaseTable(view);
+
+            //// Override the base table name
+            //_tables[0].Name = view;
+            return this;
+        }
+
+        /// <summary>
+        /// Overrides the base table name that will be used in the query.
+        /// Will not try to use the mapped "AltName" values when loading the  columns.
+        /// </summary>
+        public virtual QueryBuilder<T> FromTable(string table)
+        {
+            if (string.IsNullOrEmpty(table))
+                throw new ArgumentNullException("view");
+
+            _useAltName = false;
 
             // Override the base table name
-            _tables[0].Name = tableOrView;
+            _tables[0].Name = table;
             return this;
         }
 
@@ -152,6 +176,7 @@ namespace Marr.Data.QGen
             View view = new View(_tables[0].Name, tablesInView.ToArray());
             _tables.ReplaceBaseTable(view);
 
+            _isGraph = true;
             _useAltName = true;
             return this;
         }
@@ -211,9 +236,8 @@ namespace Marr.Data.QGen
 
             // Generate a row count query
             string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
-            string sort = SortBuilder.ToString();
 
-            IQuery query = QueryFactory.CreateRowCountSelectQuery(_tables, _db, where, sort, _useAltName);
+            IQuery query = QueryFactory.CreateRowCountSelectQuery(_tables, _db, where, SortBuilder, _useAltName);
             string queryText = query.Generate();
 
             _db.SqlMode = SqlModes.Text;
@@ -233,13 +257,13 @@ namespace Marr.Data.QGen
 
             BuildQueryOrAppendClauses();
 
-            if (_useAltName) // _useAltName is only set to true for graphs
+            if (_isGraph)
             {
                 _results = (List<T>)_db.QueryToGraph<T>(_queryText, EntGraph, _childrenToLoad);
             }
             else
             {
-                _results = (List<T>)_db.Query<T>(_queryText, _results);
+                _results = (List<T>)_db.Query<T>(_queryText, _results, _useAltName);
             }
 
             // Return to previous sql mode
@@ -277,16 +301,15 @@ namespace Marr.Data.QGen
         {
             // Generate a query
             string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
-            string sort = SortBuilder.ToString();
 
             IQuery query = null;
             if (_enablePaging)
             {
-                query = QueryFactory.CreatePagingSelectQuery(_tables, _db, where, sort, _useAltName, _skip, _take);
+                query = QueryFactory.CreatePagingSelectQuery(_tables, _db, where, SortBuilder, _useAltName, _skip, _take);
             }
             else
             {
-                query = QueryFactory.CreateSelectQuery(_tables, _db, where, sort, _useAltName);
+                query = QueryFactory.CreateSelectQuery(_tables, _db, where, SortBuilder, _useAltName);
             }
 
             _queryText = query.Generate();
@@ -342,7 +365,7 @@ namespace Marr.Data.QGen
 
         public virtual SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
         {
-            _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, _useAltName, true);
+            _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, false, true);
             return SortBuilder;
         }
 
@@ -469,6 +492,7 @@ namespace Marr.Data.QGen
         public virtual QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, MemberInfo rightMember, Expression<Func<TLeft, TRight, bool>> filterExpression)
         {
             _useAltName = true;
+            _isGraph = true;
 
             if (!_childrenToLoad.ContainsMember(rightMember))
                 _childrenToLoad.Add(rightMember);

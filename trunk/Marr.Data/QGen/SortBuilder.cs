@@ -14,7 +14,7 @@ namespace Marr.Data.QGen
     /// It also has some methods that coincide with Linq methods, to provide Linq compatibility.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class SortBuilder<T> : IEnumerable<T>, IQueryBuilder
+    public class SortBuilder<T> : IEnumerable<T>, ISortQueryBuilder
     {
         private string _constantOrderByClause;
         private QueryBuilder<T> _baseBuilder;
@@ -170,7 +170,7 @@ namespace Marr.Data.QGen
             return _baseBuilder.BuildQuery();
         }
 
-        public override string ToString()
+        public virtual string BuildQuery(bool useAltName)
         {
             if (!string.IsNullOrEmpty(_constantOrderByClause))
             {
@@ -195,7 +195,7 @@ namespace Marr.Data.QGen
                     throw new DataMappingException(msg);
                 }
 
-                string columnName = DataHelper.GetColumnName(sort.DeclaringType, sort.PropertyName, _useAltName);
+                string columnName = DataHelper.GetColumnName(sort.DeclaringType, sort.PropertyName, useAltName);
                 sb.Append(_dialect.CreateToken(string.Format("{0}.{1}", table.Alias, columnName)));
 
                 if (sort.Direction == SortDirection.Desc)
@@ -206,6 +206,11 @@ namespace Marr.Data.QGen
                 sb.Insert(0, " ORDER BY ");
 
             return sb.ToString();
+        }
+
+        public override string ToString()
+        {
+            return BuildQuery(_useAltName);
         }
 
         #endregion

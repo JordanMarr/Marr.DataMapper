@@ -9,10 +9,10 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer.Entities
     [Table("Order")]
     public class Order
     {
-        [Column(IsPrimaryKey = true, IsAutoIncrement=true, ReturnValue=true)]
+        [Column(IsPrimaryKey = true, IsAutoIncrement=true, ReturnValue=true, AltName = "oID")]
         public int ID { get; set; }
 
-        [Column]
+        [Column(AltName = "oOrderName")]
         public string OrderName { get; set; }
 
         [Relationship] // 1-M
@@ -22,16 +22,16 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer.Entities
     [Table("OrderItem")]
     public class OrderItem
     {
-        [Column("ID", AltName = "OrderItemID", IsPrimaryKey = true, IsAutoIncrement=true, ReturnValue=true)]
+        [Column("ID", AltName = "oiID", IsPrimaryKey = true, IsAutoIncrement=true, ReturnValue=true)]
         public int ID { get; set; }
 
-        [Column]
+        [Column(AltName = "oiOrderID")]
         public int OrderID { get; set; }
 
-        [Column]
+        [Column(AltName = "oiItemDescription")]
         public string ItemDescription { get; set; }
 
-        [Column]
+        [Column(AltName = "oiPrice")]
         public decimal Price { get; set; }
 
         [Relationship] // 1-1
@@ -41,10 +41,10 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer.Entities
     [Table("Receipt")]
     public class Receipt
     {
-        [Column]
+        [Column(AltName = "rOrderItemID")]
         public int OrderItemID { get; set; }
 
-        [Column]
+        [Column(AltName = "rAmountPaid")]
         public decimal? AmountPaid { get; set; }
     }
 

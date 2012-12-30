@@ -37,13 +37,13 @@ namespace Marr.Data.QGen
             return new DeleteQuery(dialect, targetTable, whereClause);
         }
 
-        public static IQuery CreateSelectQuery(TableCollection tables, IDataMapper dataMapper, string where, string orderBy, bool useAltName)
+        public static IQuery CreateSelectQuery(TableCollection tables, IDataMapper dataMapper, string where, ISortQueryBuilder orderBy, bool useAltName)
         {
             Dialect dialect = CreateDialect(dataMapper);
             return new SelectQuery(dialect, tables, where, orderBy, useAltName);
         }
 
-        public static IQuery CreateRowCountSelectQuery(TableCollection tables, IDataMapper dataMapper, string where, string orderBy, bool useAltName)
+        public static IQuery CreateRowCountSelectQuery(TableCollection tables, IDataMapper dataMapper, string where, ISortQueryBuilder orderBy, bool useAltName)
         {
             SelectQuery innerQuery = (SelectQuery)CreateSelectQuery(tables, dataMapper, where, orderBy, useAltName);
 
@@ -61,7 +61,7 @@ namespace Marr.Data.QGen
             }
         }
 
-        public static IQuery CreatePagingSelectQuery(TableCollection tables, IDataMapper dataMapper, string where, string orderBy, bool useAltName, int skip, int take)
+        public static IQuery CreatePagingSelectQuery(TableCollection tables, IDataMapper dataMapper, string where, ISortQueryBuilder orderBy, bool useAltName, int skip, int take)
         {
             SelectQuery innerQuery = (SelectQuery)CreateSelectQuery(tables, dataMapper, where, orderBy, useAltName);
 

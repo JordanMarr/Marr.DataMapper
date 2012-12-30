@@ -16,17 +16,33 @@ namespace Marr.Data.QGen
     {
         public Dialect Dialect { get; set; }
         public string WhereClause { get; set; }
-        public string OrderBy { get; set; }
+        public ISortQueryBuilder OrderBy { get; set; }
         public TableCollection Tables { get; set; }
         public bool UseAltName;
 
-        public SelectQuery(Dialect dialect, TableCollection tables, string whereClause, string orderBy, bool useAltName)
+        public SelectQuery(Dialect dialect, TableCollection tables, string whereClause, ISortQueryBuilder orderBy, bool useAltName)
         {
             Dialect = dialect;
             Tables = tables;
             WhereClause = whereClause;
             OrderBy = orderBy;
             UseAltName = useAltName;
+        }
+
+        public bool IsView
+        {
+            get
+            {
+                return Tables[0] is View;
+            }
+        }
+
+        public bool IsJoin
+        {
+            get
+            {
+                return Tables.Count > 1;
+            }
         }
 
         public virtual string Generate()
@@ -120,7 +136,7 @@ namespace Marr.Data.QGen
 
         public void BuildOrderClause(StringBuilder sql)
         {
-            sql.Append(OrderBy);
+            sql.Append(OrderBy.ToString());
         }       
 
         private string TranslateJoin(JoinType join)

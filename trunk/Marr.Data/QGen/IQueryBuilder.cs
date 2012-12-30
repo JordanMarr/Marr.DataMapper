@@ -9,4 +9,9 @@ namespace Marr.Data.QGen
     {
         string BuildQuery();
     }
+
+    public interface ISortQueryBuilder : IQueryBuilder
+    {
+        string BuildQuery(bool useAltNames);
+    }
 }

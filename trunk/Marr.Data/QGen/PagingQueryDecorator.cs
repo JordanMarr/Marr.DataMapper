@@ -18,7 +18,7 @@ namespace Marr.Data.QGen
 
         public PagingQueryDecorator(SelectQuery innerQuery, int skip, int take)
         {
-            if (string.IsNullOrEmpty(innerQuery.OrderBy))
+            if (string.IsNullOrEmpty(innerQuery.OrderBy.ToString()))
             {
                 throw new DataMappingException("A paged query must specify an order by clause.");
             }
@@ -31,11 +31,8 @@ namespace Marr.Data.QGen
         public string Generate()
         {
             // Decide which type of paging query to create
-
-            bool isView = _innerQuery.Tables[0] is View;
-            bool isJoin = _innerQuery.Tables.Count > 1;
-
-            if (isView || isJoin)
+            
+            if (_innerQuery.IsView || _innerQuery.IsJoin)
             {
                 return ComplexPaging();
             }
@@ -108,8 +105,9 @@ namespace Marr.Data.QGen
                 if (pksAdded > 0)
                     sql.Append(" AND ");
 
-                string pkName = _innerQuery.NameOrAltName(pk.ColumnInfo);
-                sql.AppendFormat("ON cte.{0} = {1} ", pkName, _innerQuery.Dialect.CreateToken(string.Concat("t0", ".", pkName)));
+                string cteQueryPkName = _innerQuery.NameOrAltName(pk.ColumnInfo);
+                string outerQueryPkName = _innerQuery.IsJoin ? pk.ColumnInfo.Name : _innerQuery.NameOrAltName(pk.ColumnInfo);
+                sql.AppendFormat("ON cte.{0} = {1} ", cteQueryPkName, _innerQuery.Dialect.CreateToken(string.Concat("t0", ".", outerQueryPkName)));
                 pksAdded++;
             }
             sql.AppendLine();
@@ -142,10 +140,11 @@ namespace Marr.Data.QGen
 
         private void BuildGroupColumn(StringBuilder sql)
         {
-            sql.AppendFormat(", ROW_NUMBER() OVER (PARTITION BY {0} {1}) As GroupRow ", BuildBaseTablePKColumns(), _innerQuery.OrderBy);
+            bool isView = _innerQuery.IsView;
+            sql.AppendFormat(", ROW_NUMBER() OVER (PARTITION BY {0} {1}) As GroupRow ", BuildBaseTablePKColumns(isView), _innerQuery.OrderBy.BuildQuery(isView));
         }
 
-        private string BuildBaseTablePKColumns()
+        private string BuildBaseTablePKColumns(bool useAltName = true)
         {
             Table baseTable = GetBaseTable();
 
@@ -155,7 +154,11 @@ namespace Marr.Data.QGen
                 if (sb.Length > 0)
                     sb.AppendLine(", ");
 
-                sb.AppendFormat(_innerQuery.Dialect.CreateToken(string.Concat(baseTable.Alias, ".", _innerQuery.NameOrAltName(col.ColumnInfo))));
+                string columnName = useAltName ?
+                    _innerQuery.NameOrAltName(col.ColumnInfo) :
+                    col.ColumnInfo.Name;
+
+                sb.AppendFormat(_innerQuery.Dialect.CreateToken(string.Concat(baseTable.Alias, ".", columnName)));
             }
 
             return sb.ToString();
@@ -163,7 +166,7 @@ namespace Marr.Data.QGen
 
         private void BuildRowNumberColumn(StringBuilder sql)
         {
-            string orderBy = _innerQuery.OrderBy;
+            string orderBy = _innerQuery.OrderBy.ToString();
             // Remove table prefixes from order columns
             foreach (Table t in _innerQuery.Tables)
             {
