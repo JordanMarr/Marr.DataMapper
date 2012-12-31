@@ -156,6 +156,18 @@ namespace Marr.Data.Mapping
             return this;
         }
 
+        public ColumnMapBuilder<TEntity> PrefixAltNames(string prefix)
+        {
+            MappedColumns.PrefixAltNames(prefix);
+            return this;
+        }
+
+        public ColumnMapBuilder<TEntity> SuffixAltNames(string suffix)
+        {
+            MappedColumns.SuffixAltNames(suffix);
+            return this;
+        }
+
         public FluentMappings.MappingsFluentTables<TEntity> Tables
         {
             get
