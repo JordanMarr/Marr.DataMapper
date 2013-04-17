@@ -8,7 +8,7 @@ using System.Linq;
 namespace Marr.Data.IntegrationTests.DB_SqlServerCe
 {
     [TestClass]
-    public class TvSeries : TestBase
+    public class ParentReferenceTests : TestBase
     {
         [TestInitialize]
         public void Setup()
@@ -30,23 +30,44 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
                             .SetAltName("EpisodeId")
                         .For(e => e.Title)
                             .SetAltName("EpisodeTitle")
-                    .Relationships.MapProperties<Episode>()
-                        .For("_series")
-                            .LazyLoad<Series>((db, e) => db.Query<Series>().Where(s => s.Id == e.SeriesId).ToList().FirstOrDefault());
+                        .Relationships.AutoMapICollectionOrComplexProperties();
         }
 
         [TestMethod]
-        public void OneToManyChild_Should_LazyLoadParent()
+        public void OneToMany_ChildrenShouldGetReferenceToParent()
         {
             using (var db = CreateSqlServerCeDB())
             {
                 db.SqlMode = SqlModes.Text;
 
-                List<Series> results1 = db.Query<Series>().Join<Series, Episode>(JoinType.Inner, s => s.Episodes, (s, e) => s.Id == e.SeriesId);
-                List<Episode> results2 = db.Query<Episode>().Join<Episode, Series>(JoinType.Inner, e => e.Series, (e, s) => e.SeriesId == s.Id);
+                List<Series> series = db.Query<Series>().Join<Series, Episode>(JoinType.Inner, s => s.Episodes, (s, e) => s.Id == e.SeriesId);
 
-                Assert.IsNotNull(results1[0].Episodes[0].Series);
-                Assert.IsNotNull(results2[0].Series);
+                Assert.IsNotNull(series[0].Episodes[0].Series);
+                foreach (var s in series)
+                {
+                    foreach (var e in s.Episodes)
+                    {
+                        Assert.AreEqual(s.Id, e.Series.Id);
+                        Assert.IsTrue(e.Series.Episodes.Count > 0);
+                    }
+                }
+            }
+        }
+
+        [TestMethod]
+        public void ManyChildren_Should_LoadParent_AsOneToOne()
+        {
+            using (var db = CreateSqlServerCeDB())
+            {
+                db.SqlMode = SqlModes.Text;
+
+                List<Episode> episodes = db.Query<Episode>().Join<Episode, Series>(JoinType.Inner, e => e.Series, (e, s) => e.SeriesId == s.Id);
+
+                Assert.IsNotNull(episodes[0].Series);
+                foreach (var e in episodes)
+                {
+                    Assert.AreEqual(e.SeriesId, e.Series.Id);
+                }
             }
         }
     }
@@ -60,18 +81,12 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
 
     public class Episode
     {
-        private dynamic _series;
-
         public int Id { get; set; }
         public int SeriesId { get; set; }
         public string Title { get; set; }
-        public Series Series
-        {
-            get
-            {
-                return _series;
-            }
-        }
+
+        // This relationship references back to the parent
+        public Series Series { get; set; }
     }
 
 }
