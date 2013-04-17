@@ -75,6 +75,7 @@
     <Compile Include="DB_Access\Entities\OptionType.cs" />
     <Compile Include="DB_SqlServerCe\Entities\Order.cs" />
     <Compile Include="DB_Access\Entities\Product.cs" />
+    <Compile Include="DB_SqlServerCe\TvSeries.cs" />
     <Compile Include="DB_SqlServer\Entities\Order.cs" />
     <Compile Include="DB_SqlServer\IdentityTest.cs" />
     <Compile Include="DB_SqlServer\SqlServerTests.cs" />
