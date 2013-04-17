@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marr.Data", "Marr.Data\Marr.Data.csproj", "{F6FC6BE7-0847-4817-A1ED-223DC647C3D7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marr.Data.IntegrationTests", "Marr.Data.IntegrationTests\Marr.Data.IntegrationTests.csproj", "{F5248BE0-5ECC-4358-A284-FC3E97C5294F}"
@@ -15,6 +15,13 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marr.Data.UnitTests", "Marr.Data.UnitTests\Marr.Data.UnitTests.csproj", "{164FE31B-D0E2-4BE9-8738-58127D7E0FB0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marr.Data.TestHelper", "Marr.Data.TestHelper\Marr.Data.TestHelper.csproj", "{DC6E5BDC-26E4-40EB-B4E7-BF755004B73A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{FAD734C8-5F75-4AD8-A523-51E3F94279D0}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\NuGet.Config = .nuget\NuGet.Config
+		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution

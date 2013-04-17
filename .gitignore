@@ -21,7 +21,6 @@
 *.log
 *.lib
 *.sbr
-*.sdf
 *.opensdf
 *.unsuccessfulbuild
 ipch/
