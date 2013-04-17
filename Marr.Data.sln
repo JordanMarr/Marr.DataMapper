@@ -1,0 +1,66 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marr.Data", "Marr.Data\Marr.Data.csproj", "{F6FC6BE7-0847-4817-A1ED-223DC647C3D7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marr.Data.IntegrationTests", "Marr.Data.IntegrationTests\Marr.Data.IntegrationTests.csproj", "{F5248BE0-5ECC-4358-A284-FC3E97C5294F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E1CC311A-04CA-4CDF-A389-1E95FCC93E34}"
+	ProjectSection(SolutionItems) = preProject
+		Local.testsettings = Local.testsettings
+		Marr.Data.vsmdi = Marr.Data.vsmdi
+		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marr.Data.UnitTests", "Marr.Data.UnitTests\Marr.Data.UnitTests.csproj", "{164FE31B-D0E2-4BE9-8738-58127D7E0FB0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marr.Data.TestHelper", "Marr.Data.TestHelper\Marr.Data.TestHelper.csproj", "{DC6E5BDC-26E4-40EB-B4E7-BF755004B73A}"
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 5
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs26
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = Marr.Data\\Marr.Data.csproj
+		SccProjectName1 = Marr.Data
+		SccLocalPath1 = Marr.Data
+		SccProjectUniqueName2 = Marr.Data.IntegrationTests\\Marr.Data.IntegrationTests.csproj
+		SccProjectName2 = Marr.Data.IntegrationTests
+		SccLocalPath2 = Marr.Data.IntegrationTests
+		SccProjectUniqueName3 = Marr.Data.UnitTests\\Marr.Data.UnitTests.csproj
+		SccProjectName3 = Marr.Data.UnitTests
+		SccLocalPath3 = Marr.Data.UnitTests
+		SccProjectUniqueName4 = Marr.Data.TestHelper\\Marr.Data.TestHelper.csproj
+		SccProjectName4 = Marr.Data.TestHelper
+		SccLocalPath4 = Marr.Data.TestHelper
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = Marr.Data.vsmdi
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F6FC6BE7-0847-4817-A1ED-223DC647C3D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6FC6BE7-0847-4817-A1ED-223DC647C3D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6FC6BE7-0847-4817-A1ED-223DC647C3D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6FC6BE7-0847-4817-A1ED-223DC647C3D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5248BE0-5ECC-4358-A284-FC3E97C5294F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5248BE0-5ECC-4358-A284-FC3E97C5294F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5248BE0-5ECC-4358-A284-FC3E97C5294F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5248BE0-5ECC-4358-A284-FC3E97C5294F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{164FE31B-D0E2-4BE9-8738-58127D7E0FB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{164FE31B-D0E2-4BE9-8738-58127D7E0FB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{164FE31B-D0E2-4BE9-8738-58127D7E0FB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{164FE31B-D0E2-4BE9-8738-58127D7E0FB0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC6E5BDC-26E4-40EB-B4E7-BF755004B73A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC6E5BDC-26E4-40EB-B4E7-BF755004B73A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC6E5BDC-26E4-40EB-B4E7-BF755004B73A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC6E5BDC-26E4-40EB-B4E7-BF755004B73A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
