@@ -15,10 +15,6 @@ License along with this library. If not, see <http://www.gnu.org/licenses/>. */
 
 using System;
 using System.Reflection;
-/* * 
- * The FastReflection library was written by Renaud Bédard (renaud.bedard@gmail.com)
- * http://theinstructionlimit.com/?p=76
- * */
 
 namespace Marr.Data
 {
