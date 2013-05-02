@@ -17,9 +17,7 @@ namespace Marr.Data.UnitTests
         [TestInitialize]
         public void Init()
         {
-            // Reset MapRepository default values before each test
-            MapRepository.Instance.DbTypeBuilder = new DbTypeBuilder();
-            MapRepository.Instance.TypeConverters.Clear();
+            ResetMapRepository();
         }
 
         #region - AddParameter Tests -

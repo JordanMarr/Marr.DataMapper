@@ -46,6 +46,8 @@ namespace Marr.Data.UnitTests
         
         protected void InitMappings()
         {
+            ResetMapRepository();
+
             FluentMappings mappings = new FluentMappings();
 
             mappings
@@ -66,5 +68,17 @@ namespace Marr.Data.UnitTests
                             .SetAltName("Pet_Name");
         }
 
+        /// <summary>
+        /// Ensures that the MapRepository singleton state is reset.
+        /// This prevents unit test from affecting each other by changing shared state.
+        /// </summary>
+        protected void ResetMapRepository()
+        {
+            MapRepository.Instance.Tables.Clear();
+            MapRepository.Instance.Columns.Clear();
+            MapRepository.Instance.Relationships.Clear();
+            MapRepository.Instance.DbTypeBuilder = new Marr.Data.Parameters.DbTypeBuilder();
+            MapRepository.Instance.TypeConverters.Clear();
+        }
     }
 }
