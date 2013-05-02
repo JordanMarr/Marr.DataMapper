@@ -18,10 +18,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marr.Data.TestHelper", "Mar
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{FAD734C8-5F75-4AD8-A523-51E3F94279D0}"
 	ProjectSection(SolutionItems) = preProject
+		.nuget\create_mdm_release_package.bat = .nuget\create_mdm_release_package.bat
+		.nuget\mdm_release.nuspec = .nuget\mdm_release.nuspec
 		.nuget\NuGet.Config = .nuget\NuGet.Config
 		.nuget\NuGet.exe = .nuget\NuGet.exe
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "packages", "packages", "{9D2D8945-D86D-4211-A391-4A5D227DA19A}"
 EndProject
 Global
 	GlobalSection(TestCaseManagementSettings) = postSolution
@@ -51,5 +55,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9D2D8945-D86D-4211-A391-4A5D227DA19A} = {FAD734C8-5F75-4AD8-A523-51E3F94279D0}
 	EndGlobalSection
 EndGlobal
