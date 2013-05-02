@@ -136,15 +136,7 @@
     <Compile Include="Reflection\ReflectionHelper.cs" />
     <Compile Include="SqlModesEnum.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="NuGet\Tools\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="NuGet\NuGet.exe" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="NuGet\marrdatamapper.nuspec" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>
