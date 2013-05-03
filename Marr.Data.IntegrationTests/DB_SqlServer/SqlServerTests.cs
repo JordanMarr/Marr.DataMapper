@@ -597,6 +597,81 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
         }
 
         [TestMethod]
+        public void Test_Linq_Clauses_Mixed_With_FromView()
+        {
+            using (var db = CreateSqlServerDB())
+            {
+                try
+                {
+                    db.BeginTransaction();
+
+                    // Insert 10 orders
+                    for (int i = 1; i < 11; i++)
+                    {
+                        Order order = new Order { OrderName = "Order" + (i.ToString().PadLeft(2, '0')) };
+                        db.Insert<Order>()
+                            .Entity(order)
+                            .GetIdentity()
+                            .Execute();
+
+                        Assert.IsTrue(order.ID > 0, "Identity value should have been returned.");
+
+                        OrderItem orderItem1 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc1", Price = 5.5m };
+                        OrderItem orderItem2 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc2", Price = 6.6m };
+                        db.Insert(orderItem1);
+                        db.Insert(orderItem2);
+                    }
+
+                    db.SqlMode = SqlModes.Text;
+
+                    var orderItems = db.Query<OrderItem>()
+                        .FromView("V_Orders")
+                        .Where(oi => oi.Price > 6m)
+                        .ToList();
+
+                    Assert.IsTrue(orderItems.Count > 0);
+
+                    var orderItems2 = db.Query<OrderItem>()
+                        .FromView("V_Orders")
+                        .Where(oi => oi.Price > 6m)
+                        .AndWhere(oi => oi.Price < 100)
+                        .ToList();
+
+                    Assert.IsTrue(orderItems2.Count > 0);
+
+                    var orderItems3 = db.Query<OrderItem>()
+                        .FromView("V_Orders")
+                        .Where<OrderItem>(oi => oi.Price > 6m)
+                        .ToList();
+
+                    Assert.IsTrue(orderItems3.Count > 0);
+
+                    var orderItems4 = db.Query<OrderItem>()
+                        .FromView("V_Orders")
+                        .Where("oiPrice > 6")
+                        .ToList();
+
+                    Assert.IsTrue(orderItems4.Count > 0);
+
+                    var orderItems5 = db.Query<OrderItem>()
+                        .FromView("V_Orders")
+                        .OrderBy(oi => oi.Price)
+                        .ToList();
+
+                    Assert.IsTrue(orderItems5.Count > 0);
+                }
+                catch
+                {
+                    throw;
+                }
+                finally
+                {
+                    db.RollBack();
+                }
+            }
+        }
+
+        [TestMethod]
         public void TestQueryBuilders()
         {
             using (var db = CreateSqlServerDB())
