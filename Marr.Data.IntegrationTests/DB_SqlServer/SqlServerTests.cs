@@ -624,41 +624,13 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 
                     db.SqlMode = SqlModes.Text;
 
-                    var orderItems = db.Query<OrderItem>()
-                        .FromView("V_Orders")
-                        .Where(oi => oi.Price > 6m)
-                        .ToList();
-
-                    Assert.IsTrue(orderItems.Count > 0);
-
-                    var orderItems2 = db.Query<OrderItem>()
-                        .FromView("V_Orders")
-                        .Where(oi => oi.Price > 6m)
-                        .AndWhere(oi => oi.Price < 100)
-                        .ToList();
-
-                    Assert.IsTrue(orderItems2.Count > 0);
-
-                    var orderItems3 = db.Query<OrderItem>()
+                    var orders = db.Query<Order>()
+                        .Graph(o => o.OrderItems)
                         .FromView("V_Orders")
                         .Where<OrderItem>(oi => oi.Price > 6m)
                         .ToList();
 
-                    Assert.IsTrue(orderItems3.Count > 0);
-
-                    var orderItems4 = db.Query<OrderItem>()
-                        .FromView("V_Orders")
-                        .Where("oiPrice > 6")
-                        .ToList();
-
-                    Assert.IsTrue(orderItems4.Count > 0);
-
-                    var orderItems5 = db.Query<OrderItem>()
-                        .FromView("V_Orders")
-                        .OrderBy(oi => oi.Price)
-                        .ToList();
-
-                    Assert.IsTrue(orderItems5.Count > 0);
+                    Assert.IsTrue(orders.Count > 0);
                 }
                 catch
                 {

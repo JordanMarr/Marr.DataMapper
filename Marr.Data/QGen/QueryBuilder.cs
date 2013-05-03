@@ -107,8 +107,15 @@ namespace Marr.Data.QGen
             _isFromView = true;
 
             // Replace the base table with a view with tables
-            View view = new View(viewName, _tables.ToArray());
-            _tables.ReplaceBaseTable(view);
+            if (_tables[0] is View)
+            {
+                (_tables[0] as View).Name = viewName;
+            }
+            else
+            {
+                View view = new View(viewName, _tables.ToArray());
+                _tables.ReplaceBaseTable(view);
+            }
 
             return this;
         }
@@ -397,14 +404,16 @@ namespace Marr.Data.QGen
         public virtual SortBuilder<T> Where<TObj>(Expression<Func<TObj, bool>> filterExpression)
         {
             bool useAltNames = _isFromView || _isGraph;
-            _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, useAltNames, true);
+            bool addTablePrefixToColumns = true;
+            _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, useAltNames, addTablePrefixToColumns);
             return SortBuilder;
         }
 
         public virtual SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
         {
             bool useAltNames = _isFromView || _isGraph;
-            _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, useAltNames, true);
+            bool addTablePrefixToColumns = true;
+            _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, useAltNames, addTablePrefixToColumns);
             return SortBuilder;
         }
 
