@@ -107,6 +107,12 @@ namespace Marr.Data.QGen
             return this;
         }
 
+        public virtual SortBuilder<T> OrderBy(Expression<Func<T, object>> sortExpression, SortDirection sortDirection)
+        {
+            _sortExpressions.Add(new SortColumn<T>(sortExpression, sortDirection));
+            return this;
+        }
+
         public virtual SortBuilder<T> OrderByDescending(Expression<Func<T, object>> sortExpression)
         {
             _sortExpressions.Add(new SortColumn<T>(sortExpression, SortDirection.Desc));
@@ -116,6 +122,12 @@ namespace Marr.Data.QGen
         public virtual SortBuilder<T> ThenBy(Expression<Func<T, object>> sortExpression)
         {
             _sortExpressions.Add(new SortColumn<T>(sortExpression, SortDirection.Asc));
+            return this;
+        }
+
+        public virtual SortBuilder<T> ThenBy(Expression<Func<T, object>> sortExpression, SortDirection sortDirection)
+        {
+            _sortExpressions.Add(new SortColumn<T>(sortExpression, sortDirection));
             return this;
         }
 
