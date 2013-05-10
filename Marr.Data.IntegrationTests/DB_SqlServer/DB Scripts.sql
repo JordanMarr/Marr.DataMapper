@@ -2,9 +2,9 @@
 GO
 /****** Object:  Database [MarrDataSqlServerTests]    Script Date: 01/02/2012 17:02:08 ******/
 CREATE DATABASE [MarrDataSqlServerTests] ON  PRIMARY 
-( NAME = N'MarrDataSqlServerTests', FILENAME = N'c:\Program Files\Microsoft SQL Server\MSSQL10_50.SQLEXPRESS\MSSQL\DATA\MarrDataSqlServerTests.mdf' , SIZE = 3072KB , MAXSIZE = UNLIMITED, FILEGROWTH = 1024KB )
+( NAME = N'MarrDataSqlServerTests', FILENAME = N'c:\Program Files\Microsoft SQL Server\MSSQL11.SQLEXPRESS\MSSQL\DATA\MarrDataSqlServerTests.mdf' , SIZE = 3072KB , MAXSIZE = UNLIMITED, FILEGROWTH = 1024KB )
  LOG ON 
-( NAME = N'MarrDataSqlServerTests_log', FILENAME = N'c:\Program Files\Microsoft SQL Server\MSSQL10_50.SQLEXPRESS\MSSQL\DATA\MarrDataSqlServerTests_log.ldf' , SIZE = 1024KB , MAXSIZE = 2048GB , FILEGROWTH = 10%)
+( NAME = N'MarrDataSqlServerTests_log', FILENAME = N'c:\Program Files\Microsoft SQL Server\MSSQL11.SQLEXPRESS\MSSQL\DATA\MarrDataSqlServerTests_log.ldf' , SIZE = 1024KB , MAXSIZE = 2048GB , FILEGROWTH = 10%)
 GO
 ALTER DATABASE [MarrDataSqlServerTests] SET COMPATIBILITY_LEVEL = 100
 GO

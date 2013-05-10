@@ -96,7 +96,7 @@ namespace Marr.Data.UnitTests
             Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[OrderName],[t1].[ID] AS OrderItemID,[t1].[OrderID],[t1].[ItemDescription],[t1].[Price] "));
             Assert.IsTrue(generatedSql.Contains("FROM [Order] [t0] LEFT JOIN [OrderItem] [t1]"));
             Assert.IsTrue(generatedSql.Contains("WHERE ([t1].[OrderID] > @P0)"));
-            Assert.IsTrue(generatedSql.Contains("ORDER BY [t1].[OrderItemID]"));
+            Assert.IsTrue(generatedSql.Contains("ORDER BY [OrderItemID]"));
         }
 
         [TestMethod]
