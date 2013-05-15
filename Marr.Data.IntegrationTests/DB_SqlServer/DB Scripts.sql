@@ -1,80 +1,6 @@
-﻿USE [master]
+﻿USE [MarrDataSqlServerTests]
 GO
-/****** Object:  Database [MarrDataSqlServerTests]    Script Date: 01/02/2012 17:02:08 ******/
-CREATE DATABASE [MarrDataSqlServerTests] ON  PRIMARY 
-( NAME = N'MarrDataSqlServerTests', FILENAME = N'c:\Program Files\Microsoft SQL Server\MSSQL11.SQLEXPRESS\MSSQL\DATA\MarrDataSqlServerTests.mdf' , SIZE = 3072KB , MAXSIZE = UNLIMITED, FILEGROWTH = 1024KB )
- LOG ON 
-( NAME = N'MarrDataSqlServerTests_log', FILENAME = N'c:\Program Files\Microsoft SQL Server\MSSQL11.SQLEXPRESS\MSSQL\DATA\MarrDataSqlServerTests_log.ldf' , SIZE = 1024KB , MAXSIZE = 2048GB , FILEGROWTH = 10%)
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET COMPATIBILITY_LEVEL = 100
-GO
-IF (1 = FULLTEXTSERVICEPROPERTY('IsFullTextInstalled'))
-begin
-EXEC [MarrDataSqlServerTests].[dbo].[sp_fulltext_database] @action = 'enable'
-end
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET ANSI_NULL_DEFAULT OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET ANSI_NULLS OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET ANSI_PADDING OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET ANSI_WARNINGS OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET ARITHABORT OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET AUTO_CLOSE OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET AUTO_CREATE_STATISTICS ON
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET AUTO_SHRINK OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET AUTO_UPDATE_STATISTICS ON
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET CURSOR_CLOSE_ON_COMMIT OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET CURSOR_DEFAULT  GLOBAL
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET CONCAT_NULL_YIELDS_NULL OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET NUMERIC_ROUNDABORT OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET QUOTED_IDENTIFIER OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET RECURSIVE_TRIGGERS OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET  DISABLE_BROKER
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET AUTO_UPDATE_STATISTICS_ASYNC OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET DATE_CORRELATION_OPTIMIZATION OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET TRUSTWORTHY OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET ALLOW_SNAPSHOT_ISOLATION OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET PARAMETERIZATION SIMPLE
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET READ_COMMITTED_SNAPSHOT OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET HONOR_BROKER_PRIORITY OFF
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET  READ_WRITE
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET RECOVERY SIMPLE
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET  MULTI_USER
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET PAGE_VERIFY CHECKSUM
-GO
-ALTER DATABASE [MarrDataSqlServerTests] SET DB_CHAINING OFF
-GO
-USE [MarrDataSqlServerTests]
-GO
-/****** Object:  User [jmarr]    Script Date: 01/02/2012 17:02:08 ******/
-CREATE USER [jmarr] FOR LOGIN [jmarr] WITH DEFAULT_SCHEMA=[dbo]
-GO
-/****** Object:  Table [dbo].[Receipt]    Script Date: 01/02/2012 17:02:10 ******/
+/****** Object:  Table [dbo].[Receipt]    Script Date: 05/15/2013 02:23:24 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -84,7 +10,7 @@ CREATE TABLE [dbo].[Receipt](
 	[AmountPaid] [decimal](18, 0) NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[OrderItem]    Script Date: 01/02/2012 17:02:10 ******/
+/****** Object:  Table [dbo].[OrderItem]    Script Date: 05/15/2013 02:23:24 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -104,7 +30,7 @@ CREATE TABLE [dbo].[OrderItem](
 GO
 SET ANSI_PADDING OFF
 GO
-/****** Object:  Table [dbo].[Order]    Script Date: 01/02/2012 17:02:10 ******/
+/****** Object:  Table [dbo].[Order]    Script Date: 05/15/2013 02:23:24 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -122,14 +48,15 @@ CREATE TABLE [dbo].[Order](
 GO
 SET ANSI_PADDING OFF
 GO
-/****** Object:  View [dbo].[V_OrdersReceipts]    Script Date: 01/02/2012 17:02:12 ******/
+/****** Object:  View [dbo].[V_OrdersReceipts]    Script Date: 05/15/2013 02:23:24 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 CREATE VIEW [dbo].[V_OrdersReceipts]
 AS
-SELECT     o.ID, o.OrderName, oi.ID AS Expr1, oi.OrderID, oi.ItemDescription, oi.Price, r.OrderItemID, r.AmountPaid
+SELECT     o.ID AS oID, o.OrderName AS oOrderName, oi.ID AS oiID, oi.OrderID AS oiOrderID, oi.ItemDescription AS oiItemDescription, oi.Price AS oiPrice, r.OrderItemID AS rOrderItemID, 
+                      r.AmountPaid AS rAmountPaid
 FROM         dbo.[Order] AS o LEFT OUTER JOIN
                       dbo.OrderItem AS oi ON o.ID = oi.OrderID LEFT OUTER JOIN
                       dbo.Receipt AS r ON oi.ID = r.OrderItemID
@@ -276,14 +203,14 @@ End
 GO
 EXEC sys.sp_addextendedproperty @name=N'MS_DiagramPaneCount', @value=1 , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'VIEW',@level1name=N'V_OrdersReceipts'
 GO
-/****** Object:  View [dbo].[V_Orders]    Script Date: 01/02/2012 17:02:12 ******/
+/****** Object:  View [dbo].[V_Orders]    Script Date: 05/15/2013 02:23:24 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 CREATE VIEW [dbo].[V_Orders]
 AS
-SELECT     o.ID, o.OrderName, oi.ID AS OrderItemID, oi.OrderID, oi.ItemDescription, oi.Price
+SELECT     o.ID AS oID, o.OrderName AS oOrderName, oi.ID AS oiID, oi.OrderID AS oiOrderID, oi.ItemDescription AS oiItemDescription, oi.Price AS oiPrice
 FROM         dbo.[Order] AS o LEFT OUTER JOIN
                       dbo.OrderItem AS oi ON o.ID = oi.OrderID
 GO
@@ -292,7 +219,7 @@ Begin DesignProperties =
    Begin PaneConfigurations = 
       Begin PaneConfiguration = 0
          NumPanes = 4
-         Configuration = "(H (1[40] 4[20] 2[20] 3) )"
+         Configuration = "(H (1[41] 4[20] 2[13] 3) )"
       End
       Begin PaneConfiguration = 1
          NumPanes = 3
@@ -400,7 +327,7 @@ Begin DesignProperties =
    Begin CriteriaPane = 
       Begin ColumnWidths = 11
          Column = 1440
-         Alias = 900
+         Alias = 2265
          Table = 1170
          Output = 720
          Append = 1400
