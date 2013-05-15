@@ -25,5 +25,13 @@ namespace Marr.Data.IntegrationTests
             var db = new DataMapper(System.Data.OleDb.OleDbFactory.Instance, ConfigurationManager.ConnectionStrings["DB_Access"].ConnectionString);
             return db;
         }
+
+        protected IDataMapper CreateSqliteDB()
+        {
+            var db = new DataMapper(System.Data.SQLite.SQLiteFactory.Instance, ConfigurationManager.ConnectionStrings["DB_Sqlite"].ConnectionString);
+            db.SqlMode = SqlModes.Text;
+
+            return db;
+        }
     }
 }

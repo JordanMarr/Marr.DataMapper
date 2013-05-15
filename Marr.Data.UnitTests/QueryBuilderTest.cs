@@ -96,7 +96,7 @@ namespace Marr.Data.UnitTests
             Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[OrderName],[t1].[ID] AS OrderItemID,[t1].[OrderID],[t1].[ItemDescription],[t1].[Price] "));
             Assert.IsTrue(generatedSql.Contains("FROM [Order] [t0] LEFT JOIN [OrderItem] [t1]"));
             Assert.IsTrue(generatedSql.Contains("WHERE ([t1].[OrderID] > @P0)"));
-            Assert.IsTrue(generatedSql.Contains("ORDER BY [t1].[OrderItemID]"));
+            Assert.IsTrue(generatedSql.Contains("ORDER BY [OrderItemID]"));
         }
 
         [TestMethod]
@@ -152,6 +152,24 @@ namespace Marr.Data.UnitTests
             Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[Name],[t0].[Age],[t0].[BirthDate],[t0].[IsHappy],[t0].[Pet_ID],[t0].[Pet_Name] "));
             Assert.IsTrue(generatedSql.Contains("FROM [PersonTable] [t0]"));
             Assert.IsTrue(generatedSql.Contains("WHERE ([t0].[Pet_Name] = @P0)"));
+        }
+
+        [TestMethod]
+        public void should_use_sortDirection_supplied_in_overload()
+        {
+            // Arrange
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, "Data Source=a;Initial Catalog=a;User Id=a;Password=a;");
+            QueryBuilder<Person> builder = new QueryBuilder<Person>(db, new SqlServerDialect());
+            builder.OrderBy(p => p.ID, SortDirection.Asc).OrderBy(p => p.Name, SortDirection.Desc);
+
+            // Act
+            string generatedSql = builder.BuildQuery();
+
+            // Assert
+            Assert.IsTrue(generatedSql.Contains("SELECT [t0].[ID],[t0].[Name],[t0].[Age],[t0].[BirthDate],[t0].[IsHappy] "));
+            Assert.IsTrue(generatedSql.Contains("FROM [PersonTable]"));
+            Assert.IsFalse(generatedSql.Contains("WHERE"));
+            Assert.IsTrue(generatedSql.Contains("ORDER BY [t0].[ID],[t0].[Name] DESC"));
         }
     }
 }

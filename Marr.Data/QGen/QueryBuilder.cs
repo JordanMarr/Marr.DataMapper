@@ -253,7 +253,7 @@ namespace Marr.Data.QGen
             string queryText = query.Generate();
 
             _db.SqlMode = SqlModes.Text;
-            int count = (int)_db.ExecuteScalar(queryText);
+            int count = Convert.ToInt32(_db.ExecuteScalar(queryText));
 
             _db.SqlMode = previousSqlMode;
             return count;
@@ -438,9 +438,21 @@ namespace Marr.Data.QGen
             return SortBuilder;
         }
 
+        public virtual SortBuilder<T> OrderBy(Expression<Func<T, object>> sortExpression, SortDirection sortDirection)
+        {
+            SortBuilder.OrderBy(sortExpression, sortDirection);
+            return SortBuilder;
+        }
+
         public virtual SortBuilder<T> ThenBy(Expression<Func<T, object>> sortExpression)
         {
             SortBuilder.OrderBy(sortExpression);
+            return SortBuilder;
+        }
+
+        public virtual SortBuilder<T> ThenBy(Expression<Func<T, object>> sortExpression, SortDirection sortDirection)
+        {
+            SortBuilder.OrderBy(sortExpression, sortDirection);
             return SortBuilder;
         }
 

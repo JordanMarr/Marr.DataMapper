@@ -218,7 +218,7 @@ namespace Marr.Data.QGen
 
             MemberExpression memberExp = (body.Object as MemberExpression);
             string fqColumn = GetFullyQualifiedColumnName(memberExp.Member, memberExp.Expression.Type);
-            _sb.AppendFormat("({0} LIKE '%' + {1} + '%')", fqColumn, paramName);
+            _sb.AppendFormat(_dialect.ContainsFormat, fqColumn, paramName);
         }
 
         private void Write_StartsWith(MethodCallExpression body)
@@ -230,7 +230,7 @@ namespace Marr.Data.QGen
 
             MemberExpression memberExp = (body.Object as MemberExpression);
             string fqColumn = GetFullyQualifiedColumnName(memberExp.Member, memberExp.Expression.Type);
-            _sb.AppendFormat("({0} LIKE {1} + '%')", fqColumn, paramName);
+            _sb.AppendFormat(_dialect.StartsWithFormat, fqColumn, paramName);
         }
 
         private void Write_EndsWith(MethodCallExpression body)
@@ -242,7 +242,7 @@ namespace Marr.Data.QGen
 
             MemberExpression memberExp = (body.Object as MemberExpression);
             string fqColumn = GetFullyQualifiedColumnName(memberExp.Member, memberExp.Expression.Type);
-            _sb.AppendFormat("({0} LIKE '%' + {1})", fqColumn, paramName);
+            _sb.AppendFormat(_dialect.EndsWithFormat, fqColumn, paramName);
         }
 
         /// <summary>
