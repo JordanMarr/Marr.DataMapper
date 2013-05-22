@@ -17,6 +17,45 @@ namespace Marr.Data.Tests
             InitMappings();
         }
 
+        #region - Nulls in Where -
+
+        [TestMethod]
+        public void WhereIsNull()
+        {
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, @"Data Source=jordan-pc\sqlexpress;Initial Catalog=MyBigFishBowl;Persist Security Info=True;User ID=jmarr;Password=password");
+            string sqlQuery = db.Query<Person>()
+                .Where(p => p.Name == null)
+                .BuildQuery();
+
+            Assert.IsTrue(sqlQuery.Contains("WHERE ([t0].[Name] IS NULL)"));
+        }
+
+        [TestMethod]
+        public void WhereIsNotNull()
+        {
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, @"Data Source=jordan-pc\sqlexpress;Initial Catalog=MyBigFishBowl;Persist Security Info=True;User ID=jmarr;Password=password");
+            string sqlQuery = db.Query<Person>()
+                .Where(p => p.Name != null)
+                .BuildQuery();
+
+            Assert.IsTrue(sqlQuery.Contains("WHERE ([t0].[Name] IS NOT NULL)"));
+        }
+
+        [TestMethod]
+        public void WhereIsNullWithOtherParameters()
+        {
+            var db = new DataMapper(System.Data.SqlClient.SqlClientFactory.Instance, @"Data Source=jordan-pc\sqlexpress;Initial Catalog=MyBigFishBowl;Persist Security Info=True;User ID=jmarr;Password=password");
+            string sqlQuery = db.Query<Person>()
+                .Where(p => p.ID == 1 || p.Name == null || p.ID == 2)
+                .BuildQuery();
+
+            Assert.IsTrue(sqlQuery.Contains("[t0].[ID] = @P0"));
+            Assert.IsTrue(sqlQuery.Contains("[t0].[Name] IS NULL"));
+            Assert.IsTrue(sqlQuery.Contains("[t0].[ID] = @P1"));
+        }
+
+        #endregion
+
         #region - OrWhere -
 
         [TestMethod]
