@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Linq.Expressions;
 using Marr.Data.Mapping.Strategies;
 
@@ -56,6 +54,23 @@ namespace Marr.Data.Mapping
 
             return this;
         }
+
+
+        /// <summary>
+        /// Sets a property to be lazy loaded, with a given query.
+        /// </summary>
+        /// <typeparam name="TChild"></typeparam>
+        /// <param name="query"></param>
+        /// <param name="condition">condition in which a child could exist. eg. avoid call to db if foreign key is 0 or null</param>
+        /// <returns></returns>
+        public RelationshipBuilder<TEntity> LazyLoad<TChild>(Func<IDataMapper, TEntity, TChild> query, Func<TEntity, bool> condition)
+        {
+            AssertCurrentPropertyIsSet();
+
+            Relationships[_currentPropertyName].LazyLoaded = new LazyLoaded<TEntity, TChild>(query, condition);
+            return this;
+        }
+
 
         /// <summary>
         /// Sets a property to be lazy loaded, with a given query.

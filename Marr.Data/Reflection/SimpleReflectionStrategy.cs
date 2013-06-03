@@ -1,56 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Linq.Expressions;
 using System.Reflection;
-using Marr.Data;
 
 namespace Marr.Data.Reflection
 {
     public class SimpleReflectionStrategy : IReflectionStrategy
     {
-        /// <summary>
-        /// Sets an entity field value by name to the passed in 'val'.
-        /// </summary>
-        public void SetFieldValue<T>(T entity, string fieldName, object val)
+
+        private static readonly Dictionary<string, MemberInfo> MemberCache = new Dictionary<string, MemberInfo>();
+        private static readonly Dictionary<string, GetterDelegate> GetterCache = new Dictionary<string, GetterDelegate>();
+        private static readonly Dictionary<string, SetterDelegate> SetterCache = new Dictionary<string, SetterDelegate>();
+
+
+        private static MemberInfo GetMember(Type entityType, string name)
         {
-            MemberInfo member = entity.GetType().GetMember(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)[0];
-
-            try
+            MemberInfo member;
+            var key = entityType.FullName + name;
+            if (!MemberCache.TryGetValue(key, out member))
             {
-                // Handle DB null values
-                if (val == DBNull.Value)
-                {
-                    if (member.MemberType == MemberTypes.Field)
-                        (member as FieldInfo).SetValue(entity, ReflectionHelper.GetDefaultValue((member as FieldInfo).FieldType));
-
-                    else if (member.MemberType == MemberTypes.Property)
-                    {
-                        var pi = (member as PropertyInfo);
-                        if (pi.CanWrite)
-                            (member as PropertyInfo).SetValue(entity, ReflectionHelper.GetDefaultValue((member as PropertyInfo).PropertyType), null);
-
-                    }
-                }
-                else
-                {
-                    if (member.MemberType == MemberTypes.Field)
-                        (member as FieldInfo).SetValue(entity, val);
-
-                    else if (member.MemberType == MemberTypes.Property)
-                    {
-                        var pi = (member as PropertyInfo);
-                        if (pi.CanWrite)
-                            (member as PropertyInfo).SetValue(entity, val, null);
-
-                    }
-                }
+                member = entityType.GetMember(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)[0];
+                MemberCache[key] = member;
             }
-            catch (Exception ex)
-            {
-                string msg = string.Format("The DataMapper was unable to load the following field: {0}.  \nDetails: {1}", fieldName, ex.Message);
-                throw new DataMappingException(msg, ex);
-            }
+
+            return member;
         }
 
         /// <summary>
@@ -58,28 +31,132 @@ namespace Marr.Data.Reflection
         /// </summary>
         public object GetFieldValue(object entity, string fieldName)
         {
-            MemberInfo member = entity.GetType().GetMember(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)[0];
+            var member = GetMember(entity.GetType(), fieldName);
 
             if (member.MemberType == MemberTypes.Field)
             {
                 return (member as FieldInfo).GetValue(entity);
             }
-            else if (member.MemberType == MemberTypes.Property)
+            if (member.MemberType == MemberTypes.Property)
             {
-                if ((member as PropertyInfo).CanRead)
-                    return (member as PropertyInfo).GetValue(entity, null);
+                return BuildGetter(entity.GetType(), fieldName)(entity);
             }
             throw new DataMappingException(string.Format("The DataMapper could not get the value for {0}.{1}.", entity.GetType().Name, fieldName));
         }
 
+
         /// <summary>
-        /// Instantiantes a type using the FastReflector library for increased speed.
+        /// Instantiates a type using the FastReflector library for increased speed.
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
         public object CreateInstance(Type type)
         {
             return Activator.CreateInstance(type);
+        }
+
+
+
+
+        public GetterDelegate BuildGetter(Type type, string memberName)
+        {
+            GetterDelegate getter;
+            var key = type.FullName + memberName;
+            if (!GetterCache.TryGetValue(key, out getter))
+            {
+                getter = GetPropertyGetter(GetMember(type, memberName));
+            }
+
+            return getter;
+        }
+
+        public SetterDelegate BuildSetter(Type type, string memberName)
+        {
+            SetterDelegate setter;
+            var key = type.FullName + memberName;
+            if (!SetterCache.TryGetValue(key, out setter))
+            {
+                setter = GetPropertySetter(GetMember(type, memberName));
+            }
+
+            return setter;
+        }
+
+
+        private static SetterDelegate GetPropertySetter(MemberInfo memberInfo)
+        {
+            switch (memberInfo.MemberType)
+            {
+                case MemberTypes.Property:
+                    {
+                        var prop = (PropertyInfo)memberInfo;
+#if NO_EXPRESSIONS
+                        return (o, convertedValue) =>
+                        {
+                            propertySetMethod.Invoke(o, new[] { convertedValue });
+                            return;
+                        };
+#else
+                        var instance = Expression.Parameter(typeof(object), "i");
+                        var argument = Expression.Parameter(typeof(object), "a");
+
+                        var instanceParam = Expression.Convert(instance, prop.DeclaringType);
+                        var valueParam = Expression.Convert(argument, prop.PropertyType);
+
+                        var setterCall = Expression.Call(instanceParam, prop.GetSetMethod(true), valueParam);
+
+                        return Expression.Lambda<SetterDelegate>(setterCall, instance, argument).Compile();
+#endif
+                    }
+                case MemberTypes.Field:
+                    {
+                        return ((instance, value) => ((FieldInfo)memberInfo).SetValue(instance, value));
+                    }
+                default:
+                    {
+                        throw new ArgumentException("Member needs to property of field.");
+                    }
+            }
+        }
+
+        private static GetterDelegate GetPropertyGetter(MemberInfo memberInfo)
+        {
+
+            switch (memberInfo.MemberType)
+            {
+                case MemberTypes.Property:
+                    {
+
+                        var getMethodInfo = ((PropertyInfo)memberInfo).GetGetMethod(true);
+
+#if NO_EXPRESSIONS
+			return o => propertyInfo.GetGetMethod().Invoke(o, new object[] { });
+#else
+
+                        var oInstanceParam = Expression.Parameter(typeof(object), "oInstanceParam");
+                        var instanceParam = Expression.Convert(oInstanceParam, memberInfo.DeclaringType);
+
+                        var exprCallPropertyGetFn = Expression.Call(instanceParam, getMethodInfo);
+                        var oExprCallPropertyGetFn = Expression.Convert(exprCallPropertyGetFn, typeof(object));
+
+                        var propertyGetFn = Expression.Lambda<GetterDelegate>
+                            (
+                                oExprCallPropertyGetFn,
+                                oInstanceParam
+                            ).Compile();
+
+                        return propertyGetFn;
+                    }
+                case MemberTypes.Field:
+                    {
+                        return (instance => ((FieldInfo)memberInfo).GetValue(instance));
+                    }
+                default:
+                    {
+                        throw new ArgumentException("Member needs to property of field.");
+                    }
+            }
+#endif
         }
     }
 }
