@@ -631,6 +631,14 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
                         .ToList();
 
                     Assert.IsTrue(orders.Count > 0);
+
+                    var orderItems = db.Query<OrderItem>()
+                        .FromView("V_Orders")
+                        .Where(oi => oi.Price > 6)
+                        .OrWhere(oi => oi.Price > 6.1m)     // Test using OrWhere method in the SortBuilder
+                        .ToList();
+
+                    Assert.IsTrue(orderItems.Count > 0);
                 }
                 catch
                 {
