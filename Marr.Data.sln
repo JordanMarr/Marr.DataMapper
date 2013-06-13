@@ -5,13 +5,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marr.Data", "Marr.Data\Marr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marr.Data.IntegrationTests", "Marr.Data.IntegrationTests\Marr.Data.IntegrationTests.csproj", "{F5248BE0-5ECC-4358-A284-FC3E97C5294F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E1CC311A-04CA-4CDF-A389-1E95FCC93E34}"
-	ProjectSection(SolutionItems) = preProject
-		Local.testsettings = Local.testsettings
-		Marr.Data.vsmdi = Marr.Data.vsmdi
-		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marr.Data.UnitTests", "Marr.Data.UnitTests\Marr.Data.UnitTests.csproj", "{164FE31B-D0E2-4BE9-8738-58127D7E0FB0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Marr.Data.TestHelper", "Marr.Data.TestHelper\Marr.Data.TestHelper.csproj", "{DC6E5BDC-26E4-40EB-B4E7-BF755004B73A}"
