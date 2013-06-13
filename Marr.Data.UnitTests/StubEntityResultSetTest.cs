@@ -7,7 +7,7 @@ using Marr.Data.UnitTests;
 using Marr.Data.TestHelper;
 using Marr.Data.UnitTests.Entities;
 
-namespace Marr.Data.Tests
+namespace Marr.Data.UnitTests
 {
     [TestClass]
     public class StubEntityResultSetTest : TestBase

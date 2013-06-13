@@ -6,7 +6,7 @@ using Marr.Data.UnitTests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Marr.Data.TestHelper;
 
-namespace Marr.Data.Tests
+namespace Marr.Data.UnitTests
 {
     [TestClass]
     public class SimpleTypeQueryTest : TestBase

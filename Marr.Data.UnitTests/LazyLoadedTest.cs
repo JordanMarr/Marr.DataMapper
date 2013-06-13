@@ -9,7 +9,7 @@ using Marr.Data.TestHelper;
 using Rhino.Mocks;
 using Marr.Data.Mapping;
 
-namespace Marr.Data.Tests
+namespace Marr.Data.UnitTests
 {
     [TestClass]
     public class LazyLoadedTest : TestBase

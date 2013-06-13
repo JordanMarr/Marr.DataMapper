@@ -7,11 +7,17 @@ using Rhino.Mocks;
 using Marr.Data.Mapping;
 using Marr.Data.UnitTests.Entities;
 using Marr.Data.TestHelper;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Marr.Data.UnitTests
 {
     public class TestBase
     {
+        public TestBase()
+        {
+            ResetMapRepository();
+        }
+
         protected DbCommand _command;
         protected DbConnection _connection;
         protected DbParameterCollection _parameters;
@@ -46,8 +52,6 @@ namespace Marr.Data.UnitTests
         
         protected void InitMappings()
         {
-            ResetMapRepository();
-
             FluentMappings mappings = new FluentMappings();
 
             mappings

@@ -3,11 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Configuration;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Marr.Data.IntegrationTests
 {
     public class TestBase
     {
+        public TestBase()
+        {
+            ResetMapRepository();
+        }
+
         protected IDataMapper CreateSqlServerCeDB()
         {
             var db = new DataMapper(System.Data.SqlServerCe.SqlCeProviderFactory.Instance, ConfigurationManager.ConnectionStrings["DB_SqlServerCe"].ConnectionString);
@@ -32,6 +38,19 @@ namespace Marr.Data.IntegrationTests
             db.SqlMode = SqlModes.Text;
 
             return db;
+        }
+
+        /// <summary>
+        /// Ensures that the MapRepository singleton state is reset.
+        /// This prevents unit test from affecting each other by changing shared state.
+        /// </summary>
+        protected void ResetMapRepository()
+        {
+            MapRepository.Instance.Tables.Clear();
+            MapRepository.Instance.Columns.Clear();
+            MapRepository.Instance.Relationships.Clear();
+            MapRepository.Instance.DbTypeBuilder = new Marr.Data.Parameters.DbTypeBuilder();
+            MapRepository.Instance.TypeConverters.Clear();
         }
     }
 }

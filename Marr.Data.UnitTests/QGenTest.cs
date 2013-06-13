@@ -10,7 +10,7 @@ using Marr.Data.Mapping;
 using Marr.Data;
 using System.Data.Common;
 using Marr.Data.QGen.Dialects;
-using Marr.Data.Tests.Entities;
+using Marr.Data.UnitTests.Entities;
 using System.Linq.Expressions;
 
 namespace Marr.Data.UnitTests

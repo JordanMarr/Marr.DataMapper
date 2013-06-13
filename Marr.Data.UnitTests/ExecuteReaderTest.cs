@@ -9,7 +9,7 @@ using Marr.Data.UnitTests.Entities;
 using Marr.Data.TestHelper;
 using System.Data.Common;
 
-namespace Marr.Data.Tests
+namespace Marr.Data.UnitTests
 {
     [TestClass]
     public class ExecuteReaderTest : TestBase

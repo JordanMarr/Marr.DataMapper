@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rhino.Mocks;
 using System.Data.Common;
 
-namespace Marr.Data.Tests
+namespace Marr.Data.UnitTests
 {
     [TestClass]
     public class UnitOfWorkTest

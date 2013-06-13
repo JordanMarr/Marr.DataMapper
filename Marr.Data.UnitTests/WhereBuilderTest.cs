@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Marr.Data.UnitTests.Entities;
 using Marr.Data.UnitTests;
 
-namespace Marr.Data.Tests
+namespace Marr.Data.UnitTests
 {
     [TestClass]
     public class WhereBuilderTest : TestBase

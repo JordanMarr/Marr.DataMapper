@@ -8,7 +8,7 @@
     <ProjectGuid>{164FE31B-D0E2-4BE9-8738-58127D7E0FB0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Marr.Data.Tests</RootNamespace>
+    <RootNamespace>Marr.Data.UnitTests</RootNamespace>
     <AssemblyName>Marr.Data.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
