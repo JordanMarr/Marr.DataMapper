@@ -67,20 +67,41 @@ namespace Marr.Data.QGen
             // COLUMNS
             foreach (Table join in Tables)
             {
+                // Track added view columns to avoid adding duplicates to the select statement
+                // Duplicates can occur when multiple members in a graph have a property that maps to a shared view column
+                // Ex: Order -> OrderItem: if both the Order and OrderItem classes had a property that mapped to a ShipDate column in the orders view:
+                // This should be allowed, but the ShipDate column should not be selected twice.
+                var viewColumnHash = new HashSet<string>(); 
+
                 for (int i = 0; i < join.Columns.Count; i++)
                 {
                     var c = join.Columns[i];
 
-                    if (sql.Length > startIndex)
-                        sql.Append(",");
-
                     if (join is View)
                     {
-                        string token = string.Concat(join.Alias, ".", NameOrAltName(c.ColumnInfo));
+                        string nameOrAltName = NameOrAltName(c.ColumnInfo);
+
+                        if (!viewColumnHash.Contains(nameOrAltName))
+                            viewColumnHash.Add(nameOrAltName);
+                        else
+                            continue;   // Do not add duplicate
+
+                        if (sql.Length > startIndex)
+                            sql.Append(",");
+
+                        string token = string.Concat(join.Alias, ".", nameOrAltName);
                         sql.Append(Dialect.CreateToken(token));
                     }
                     else
                     {
+                        if (!viewColumnHash.Contains(c.ColumnInfo.Name))
+                            viewColumnHash.Add(c.ColumnInfo.Name);
+                        else
+                            continue;   // Do not add duplicate
+
+                        if (sql.Length > startIndex)
+                            sql.Append(",");
+
                         string token = string.Concat(join.Alias, ".", c.ColumnInfo.Name);
                         sql.Append(Dialect.CreateToken(token));
 
