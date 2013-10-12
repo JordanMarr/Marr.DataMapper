@@ -58,7 +58,7 @@ namespace Marr.Data.Mapping
                         dbValue = dataMap.Converter.FromDB(dataMap, dbValue);
                     }
 
-                    if (dbValue != DBNull.Value)
+                    if (dbValue != DBNull.Value && dataMap.CanWrite)
                     {
                         dataMap.Setter(ent, dbValue);
                     }
@@ -132,7 +132,7 @@ namespace Marr.Data.Mapping
 
             foreach (ColumnMap columnMap in mappings)
             {
-                if (columnMap.ColumnInfo.IsAutoIncrement)
+                if (columnMap.ColumnInfo.IsAutoIncrement || !columnMap.CanRead)
                     continue;
 
                 var param = _db.Command.CreateParameter();
@@ -164,8 +164,11 @@ namespace Marr.Data.Mapping
         {
             foreach (ColumnMap dataMap in mappings)
             {
-                object output = _db.Command.Parameters[dataMap.ColumnInfo.Name].Value;
-                dataMap.Setter(entity, output);
+                if (dataMap.CanWrite)
+                {
+                    object output = _db.Command.Parameters[dataMap.ColumnInfo.Name].Value;
+                    dataMap.Setter(entity, output);
+                }
             }
         }
 
@@ -176,7 +179,10 @@ namespace Marr.Data.Mapping
         {
             foreach (ColumnMap dataMap in mappings)
             {
-                dataMap.Setter(entity, Convert.ChangeType(value, dataMap.FieldType));
+                if (dataMap.CanWrite)
+                {
+                    dataMap.Setter(entity, Convert.ChangeType(value, dataMap.FieldType));
+                }
             }
         }
 

@@ -56,6 +56,18 @@ namespace Marr.Data.Mapping
 
             Getter = MapRepository.Instance.ReflectionStrategy.BuildGetter(member.DeclaringType, FieldName);
             Setter = MapRepository.Instance.ReflectionStrategy.BuildSetter(member.DeclaringType, FieldName);
+
+            if (member.MemberType == MemberTypes.Property)
+            {
+                PropertyInfo pi = (PropertyInfo)member;
+                CanRead = pi.CanRead;
+                CanWrite = pi.CanWrite;
+            }
+            else if (member.MemberType == MemberTypes.Field)
+            {
+                CanRead = true;
+                CanWrite = true;
+            }
         }
 
         public string FieldName { get; set; }
@@ -66,5 +78,7 @@ namespace Marr.Data.Mapping
         public GetterDelegate Getter { get; private set; }
         public SetterDelegate Setter { get; private set; }
         public IConverter Converter { get; private set; }
+        public bool CanRead { get; private set; }
+        public bool CanWrite { get; private set; }
     }
 }

@@ -12,7 +12,6 @@ namespace Marr.Data.Reflection
         private static readonly Dictionary<string, GetterDelegate> GetterCache = new Dictionary<string, GetterDelegate>();
         private static readonly Dictionary<string, SetterDelegate> SetterCache = new Dictionary<string, SetterDelegate>();
 
-
         private static MemberInfo GetMember(Type entityType, string name)
         {
             MemberInfo member;
@@ -44,7 +43,6 @@ namespace Marr.Data.Reflection
             throw new DataMappingException(string.Format("The DataMapper could not get the value for {0}.{1}.", entity.GetType().Name, fieldName));
         }
 
-
         /// <summary>
         /// Instantiates a type using the FastReflector library for increased speed.
         /// </summary>
@@ -54,9 +52,6 @@ namespace Marr.Data.Reflection
         {
             return Activator.CreateInstance(type);
         }
-
-
-
 
         public GetterDelegate BuildGetter(Type type, string memberName)
         {
@@ -82,7 +77,6 @@ namespace Marr.Data.Reflection
             return setter;
         }
 
-
         private static SetterDelegate GetPropertySetter(MemberInfo memberInfo)
         {
             switch (memberInfo.MemberType)
@@ -90,6 +84,10 @@ namespace Marr.Data.Reflection
                 case MemberTypes.Property:
                     {
                         var prop = (PropertyInfo)memberInfo;
+
+                        if (!prop.CanWrite)
+                            return null;
+
 #if NO_EXPRESSIONS
                         return (o, convertedValue) =>
                         {
@@ -127,7 +125,12 @@ namespace Marr.Data.Reflection
                 case MemberTypes.Property:
                     {
 
-                        var getMethodInfo = ((PropertyInfo)memberInfo).GetGetMethod(true);
+                        var prop = (PropertyInfo)memberInfo;
+
+                        if (!prop.CanRead)
+                            return null;
+
+                        var getMethodInfo = (prop).GetGetMethod(true);
 
 #if NO_EXPRESSIONS
 			return o => propertyInfo.GetGetMethod().Invoke(o, new object[] { });
