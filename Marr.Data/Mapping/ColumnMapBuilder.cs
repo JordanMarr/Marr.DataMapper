@@ -156,6 +156,30 @@ namespace Marr.Data.Mapping
             return this;
         }
 
+        /// <summary>
+        /// Provides an extension point to alter column data before it is loaded into a mapped domain object.
+        /// </summary>
+        /// <param name="fromDB">A function that takes an object and then returns a converted object.</param>
+        /// <returns></returns>
+        public ColumnMapBuilder<TEntity> FromDB(Func<object, object> fromDB)
+        {
+            AssertCurrentPropertyIsSet();
+            MappedColumns.GetByFieldName(_currentPropertyName).FromDB = fromDB;
+            return this;
+        }
+
+        /// <summary>
+        /// Provides an extension point to alter domain object data before it is loaded into a mapped column parameter.
+        /// </summary>
+        /// <param name="toDB">A function that takes an object and then returns a converted object.</param>
+        /// <returns></returns>
+        public ColumnMapBuilder<TEntity> ToDB(Func<object, object> toDB)
+        {
+            AssertCurrentPropertyIsSet();
+            MappedColumns.GetByFieldName(_currentPropertyName).ToDB = toDB;
+            return this;
+        }
+
         public ColumnMapBuilder<TEntity> PrefixAltNames(string prefix)
         {
             MappedColumns.PrefixAltNames(prefix);

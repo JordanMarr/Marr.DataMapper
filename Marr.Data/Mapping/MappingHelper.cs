@@ -52,10 +52,16 @@ namespace Marr.Data.Mapping
                     int ordinal = reader.GetOrdinal(colName);
                     object dbValue = reader.GetValue(ordinal);
 
-                    // Handle conversions
+                    // Handle data type conversions
                     if (dataMap.Converter != null)
                     {
                         dbValue = dataMap.Converter.FromDB(dataMap, dbValue);
+                    }
+
+                    // Handle column conversions (specified during fluent mapping)
+                    if (dataMap.FromDB != null)
+                    {
+                        dbValue = dataMap.FromDB(dbValue);
                     }
 
                     if (dbValue != DBNull.Value && dataMap.CanWrite)
@@ -144,9 +150,16 @@ namespace Marr.Data.Mapping
 
                 param.Value = val ?? DBNull.Value; // Convert nulls to DBNulls
 
+                // Handle data type conversions
                 if (columnMap.Converter != null)
                 {
                     param.Value = columnMap.Converter.ToDB(param.Value);
+                }
+
+                // Handle column conversions (specified during fluent mapping)
+                if (columnMap.ToDB != null)
+                {
+                    param.Value = columnMap.ToDB(param.Value);
                 }
 
                 // Set the appropriate DbType property depending on the parameter type
