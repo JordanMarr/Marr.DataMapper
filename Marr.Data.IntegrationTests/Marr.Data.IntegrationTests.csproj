@@ -90,6 +90,7 @@
     <Compile Include="DB_SqlServer\IdentityTest.cs" />
     <Compile Include="DB_SqlServer\SqlServerTests.cs" />
     <Compile Include="DB_SqlServerCe\LazyLoadedIntegrationTest.cs" />
+    <Compile Include="DB_SqlServer\ToFromDbTests.cs" />
     <Compile Include="Misc\InsertQueryTests.cs" />
     <Compile Include="Misc\UpdateQueryTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
