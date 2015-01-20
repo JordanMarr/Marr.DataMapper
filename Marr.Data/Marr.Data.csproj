@@ -57,6 +57,7 @@
     <Compile Include="DataHelper.cs" />
     <Compile Include="DataMapper.cs" />
     <Compile Include="DataMappingException.cs" />
+    <Compile Include="EagerLoaded.cs" />
     <Compile Include="EntityGraph.cs" />
     <Compile Include="EntityMerger.cs" />
     <Compile Include="EntityReference.cs" />

@@ -132,11 +132,22 @@ namespace Marr.Data.Mapping
                 _fluentEntity = fluentEntity;
             }
 
+			/// <summary>
+			/// Provides a fluent table mapping interface.
+			/// </summary>
+			/// <typeparam name="T"></typeparam>
+			/// <returns></returns>
+			public TableBuilder<TEntity> AutoMapTable()
+			{
+				return new TableBuilder<TEntity>(_fluentEntity);
+			}
+
             /// <summary>
             /// Provides a fluent table mapping interface.
             /// </summary>
             /// <typeparam name="T"></typeparam>
             /// <returns></returns>
+			[Obsolete("AutoMapTable<T>() is deprecated. Please use AutoMapTable() instead.")]
             public TableBuilder<TEntity> AutoMapTable<T>()
             {
                 return new TableBuilder<TEntity>(_fluentEntity);
@@ -192,11 +203,24 @@ namespace Marr.Data.Mapping
                     typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType));
             }
 
+			/// <summary>
+			/// Creates relationship mappings for the given type.
+			/// Maps all properties that are not "simple types".
+			/// </summary>
+			/// <returns></returns>
+			public RelationshipBuilder<TEntity> AutoMapComplexTypeProperties()
+			{
+				return AutoMapPropertiesWhere(m =>
+					m.MemberType == MemberTypes.Property &&
+					!DataHelper.IsSimpleType((m as PropertyInfo).PropertyType));
+			}
+
             /// <summary>
             /// Creates relationship mappings for the given type.
             /// Maps all properties that are not "simple types".
             /// </summary>
             /// <returns></returns>
+			[Obsolete("AutoMapComplexTypeProperties<T>() is deprecated. Please use AutoMapComplexTypeProperties() instead.")]
             public RelationshipBuilder<TEntity> AutoMapComplexTypeProperties<T>()
             {
                 return AutoMapPropertiesWhere(m =>
@@ -219,11 +243,25 @@ namespace Marr.Data.Mapping
                 return new RelationshipBuilder<TEntity>(_fluentEntity, relationships);
             }
 
+			/// <summary>
+			/// Creates a RelationshipBuilder that starts out with no pre-populated relationships.
+			/// All relationships must be added manually using the builder.
+			/// </summary>
+			/// <returns></returns>
+			public RelationshipBuilder<TEntity> MapProperties()
+			{
+				Type entityType = typeof(TEntity);
+				RelationshipCollection relationships = new RelationshipCollection();
+				MapRepository.Instance.Relationships[entityType] = relationships;
+				return new RelationshipBuilder<TEntity>(_fluentEntity, relationships);
+			}
+
             /// <summary>
             /// Creates a RelationshipBuilder that starts out with no pre-populated relationships.
             /// All relationships must be added manually using the builder.
             /// </summary>
             /// <returns></returns>
+			[Obsolete("MapProperties<T>() is deprecated. Please use MapProperties() instead.")]
             public RelationshipBuilder<TEntity> MapProperties<T>()
             {
                 Type entityType = typeof(T);

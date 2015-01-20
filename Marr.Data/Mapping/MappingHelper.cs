@@ -78,10 +78,30 @@ namespace Marr.Data.Mapping
                 }
             }
 
+			LoadEagerLoadedProperties(ent);
             PrepareLazyLoadedProperties(ent);
 
             return ent;
         }
+
+		private void LoadEagerLoadedProperties(object ent)
+		{
+			// Load eager loaded properties
+			Type entType = ent.GetType();
+			if (_repos.Relationships.ContainsKey(entType))
+			{
+				var relationships = _repos.Relationships[entType];
+				foreach (var rel in relationships.Where(r => r.IsEagerLoaded))
+				{
+					using (var db = new DataMapper(_db.ProviderFactory, _db.ConnectionString))
+					{
+						// NOTE: If parent _db is in a transaction, new db will be outside of that transaction.
+						object eagerLoadedValue = rel.EagerLoaded.Load(db, ent);
+						rel.Setter(ent, eagerLoadedValue);
+					}
+				}
+			}
+		}
 
         private void PrepareLazyLoadedProperties(object ent)
         {
@@ -99,9 +119,9 @@ namespace Marr.Data.Mapping
                 var relationships = _repos.Relationships[entType];
                 foreach (var rel in relationships.Where(r => r.IsLazyLoaded))
                 {
-                    var lazyLoaded = (ILazyLoaded)rel.LazyLoaded.Clone();
-                    lazyLoaded.Prepare(dbCreate, ent);
-                    rel.Setter(ent, lazyLoaded);
+                    var lazyLoadedProxy = (ILazyLoaded)rel.LazyLoaded.Clone();
+                    lazyLoadedProxy.Prepare(dbCreate, ent);
+                    rel.Setter(ent, lazyLoadedProxy);
                 }
             }
         }

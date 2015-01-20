@@ -7,7 +7,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE TABLE [dbo].[Receipt](
 	[OrderItemID] [int] NULL,
-	[AmountPaid] [decimal](18, 0) NULL
+	[AmountPaid] [decimal](18, 2) NULL
 ) ON [PRIMARY]
 GO
 /****** Object:  Table [dbo].[OrderItem]    Script Date: 05/15/2013 02:23:24 ******/
@@ -21,7 +21,7 @@ CREATE TABLE [dbo].[OrderItem](
 	[ID] [int] IDENTITY(1,1) NOT NULL,
 	[OrderID] [int] NULL,
 	[ItemDescription] [varchar](50) NULL,
-	[Price] [decimal](18, 0) NULL,
+	[Price] [decimal](18, 2) NULL,
  CONSTRAINT [PK_OrderItem] PRIMARY KEY CLUSTERED 
 (
 	[ID] ASC

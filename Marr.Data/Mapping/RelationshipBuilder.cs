@@ -86,6 +86,18 @@ namespace Marr.Data.Mapping
             return this;
         }
 
+		public RelationshipBuilder<TEntity> EagerLoad<TChild>(Func<IDataMapper, TEntity, TChild> query, Func<TEntity, bool> condition = null)
+		{
+			AssertCurrentPropertyIsSet();
+
+			Relationships[_currentPropertyName].EagerLoaded = new EagerLoaded<TEntity, TChild>
+				{
+					Query = query,
+					Condition = condition
+				};
+			return this;
+		}
+
         public RelationshipBuilder<TEntity> SetOneToOne()
         {
             AssertCurrentPropertyIsSet();
