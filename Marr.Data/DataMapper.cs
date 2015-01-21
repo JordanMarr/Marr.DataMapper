@@ -557,6 +557,17 @@ namespace Marr.Data
             return new QueryBuilder<T>(this, dialect);
         }
 
+		/// <summary>
+		/// Provides IQueryable support.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <returns></returns>
+		public QGen.Queryable<T> Querable<T>()
+		{
+			var qEnt = new QuerableEntityContext<T>(this.Query<T>());
+			return new QGen.Queryable<T>(qEnt);
+		}
+		
         /// <summary>
         /// Returns the results of a query.
         /// Uses a List of type T to return the data.

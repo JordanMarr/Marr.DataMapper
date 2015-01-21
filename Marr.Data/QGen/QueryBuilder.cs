@@ -432,6 +432,13 @@ namespace Marr.Data.QGen
             return SortBuilder;
         }
 
+		// Used by QuerableEntityContext / IQueryable
+		internal SortBuilder<T> AddSortExpression(Expression exp, SortDirection dir)
+		{
+			SortBuilder.AddSortExpression(exp, dir);
+			return SortBuilder;
+		}
+
         public virtual SortBuilder<T> OrderBy(Expression<Func<T, object>> sortExpression)
         {
             SortBuilder.OrderBy(sortExpression);

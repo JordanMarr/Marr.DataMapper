@@ -9,6 +9,15 @@ namespace Marr.Data.QGen
 {
     public class SortColumn<T>
     {
+		// Used by QuerableEntityContext / IQueryable
+		public SortColumn(Expression expression, SortDirection direction)
+		{
+			MemberExpression me = (expression as LambdaExpression).Body as MemberExpression;
+			DeclaringType = me.Expression.Type;
+			PropertyName = me.Member.Name;
+			Direction = direction;
+		}
+
         public SortColumn(Expression<Func<T, object>> sortExpression, SortDirection direction)
         {
             MemberExpression me = GetMemberExpression(sortExpression.Body);

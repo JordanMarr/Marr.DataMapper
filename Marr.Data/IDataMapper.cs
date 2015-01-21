@@ -184,6 +184,13 @@ namespace Marr.Data
         /// <returns>Returns a QueryBuilder of T.</returns>
         QueryBuilder<T> Query<T>();
 
+		/// <summary>
+		/// Provides IQueryable support.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <returns></returns>
+		QGen.Queryable<T> Querable<T>();
+
         /// <summary>
         /// Returns the results of a query.
         /// Uses a List of type T to return the data.
