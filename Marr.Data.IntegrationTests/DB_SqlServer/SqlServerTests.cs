@@ -720,7 +720,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
                     }
                     
                     // Try to get entire graph, including orderitems and receipts
-                    var orders = db.Query<Order>().FromView("V_OrdersReceipts").Graph(o => o.OrderItems, o => o.OrderItems[0].ItemReceipt).ToList();
+                    var orders = db.Query<Order>().FromView("V_OrdersReceipts").Graph(o => o.OrderItems, o => o.OrderItems.First().ItemReceipt).ToList();
                     Assert.IsTrue(orders.Count > 0);
                     Assert.IsNotNull(orders[0].OrderItems);
                     Assert.IsNotNull(orders[0].OrderItems[0].ItemReceipt);
