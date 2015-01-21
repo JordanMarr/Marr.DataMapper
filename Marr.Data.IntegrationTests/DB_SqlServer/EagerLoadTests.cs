@@ -76,15 +76,9 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 				OrderName = "Order 2"
 			};
 
-			_db.Insert<Entities.FluentMappedOrder>()
-				.Entity(order1)
-				.GetIdentity()
-				.Execute();
+			_db.Insert<Entities.FluentMappedOrder>(order1);
 
-			_db.Insert<Entities.FluentMappedOrder>()
-				.Entity(order2)
-				.GetIdentity()
-				.Execute();
+			_db.Insert<Entities.FluentMappedOrder>(order2);
 
 			foreach (var order in (new[] { order1, order2 }))
 			{
@@ -97,10 +91,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 						Price = 5.5m
 					};
 
-					_db.Insert<Entities.FluentMappedOrderItem>()
-						.Entity(oi)
-						.GetIdentity()
-						.Execute();
+					_db.Insert<Entities.FluentMappedOrderItem>(oi);
 
 					var receipt = new Entities.FluentMappedReceipt
 					{

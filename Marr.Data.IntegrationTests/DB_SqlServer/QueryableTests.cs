@@ -127,28 +127,16 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 					db.Delete<Order>(o => o.ID > 0);
 
 					Order order1 = new Order { OrderName = "GroupA" };
-					db.Insert<Order>()
-						.Entity(order1)
-						.GetIdentity()
-						.Execute();
+					db.Insert<Order>(order1);
 
 					Order order2 = new Order { OrderName = "GroupB" };
-					db.Insert<Order>()
-						.Entity(order2)
-						.GetIdentity()
-						.Execute();
+					db.Insert<Order>(order2);
 
 					Order order3 = new Order { OrderName = "GroupA" };
-					db.Insert<Order>()
-						.Entity(order3)
-						.GetIdentity()
-						.Execute();
+					db.Insert<Order>(order3);
 
 					Order order4 = new Order { OrderName = "Test" };
-					db.Insert<Order>()
-						.Entity(order4)
-						.GetIdentity()
-						.Execute();
+					db.Insert<Order>(order4);
 
 					var orders = db.Querable<Order>()
 						.Where(o => o.OrderName.StartsWith("Group"))
