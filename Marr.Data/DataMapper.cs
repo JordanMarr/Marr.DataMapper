@@ -1,4 +1,4 @@
-/*  Copyright (C) 2008 - 2011 Jordan Marr
+/*  Copyright (C) 2008 Jordan Marr
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -556,17 +556,6 @@ namespace Marr.Data
             var dialect = QGen.QueryFactory.CreateDialect(this);
             return new QueryBuilder<T>(this, dialect);
         }
-
-		/// <summary>
-		/// Provides IQueryable support.
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <returns></returns>
-		public QGen.Queryable<T> Querable<T>()
-		{
-			var qEnt = new QuerableEntityContext<T>(this.Query<T>());
-			return new QGen.Queryable<T>(qEnt);
-		}
 		
         /// <summary>
         /// Returns the results of a query.
@@ -630,9 +619,24 @@ namespace Marr.Data
 
         #endregion
 
-        #region - Query to Graph -
-        
-        public List<T> QueryToGraph<T>(string sql)
+		#region - IQueryable<T> -
+
+		/// <summary>
+		/// Provides IQueryable support.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <returns></returns>
+		public IQueryable<T> Querable<T>()
+		{
+			var qEnt = new QuerableEntityContext<T>(this.Query<T>());
+			return new QGen.Queryable<T>(qEnt);
+		}
+
+		#endregion
+
+		#region - Query to Graph -
+
+		public List<T> QueryToGraph<T>(string sql)
         {
             return (List<T>)QueryToGraph<T>(sql, new List<T>());
         }

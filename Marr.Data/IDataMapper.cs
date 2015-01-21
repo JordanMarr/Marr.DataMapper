@@ -1,4 +1,4 @@
-﻿/*  Copyright (C) 2008 - 2011 Jordan Marr
+﻿/*  Copyright (C) 2008 Jordan Marr
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -184,13 +184,6 @@ namespace Marr.Data
         /// <returns>Returns a QueryBuilder of T.</returns>
         QueryBuilder<T> Query<T>();
 
-		/// <summary>
-		/// Provides IQueryable support.
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <returns></returns>
-		QGen.Queryable<T> Querable<T>();
-
         /// <summary>
         /// Returns the results of a query.
         /// Uses a List of type T to return the data.
@@ -223,5 +216,16 @@ namespace Marr.Data
         ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList);
 
         #endregion
-    }
+
+		#region - IQueryable<T> -
+		
+		/// <summary>
+		/// Provides IQueryable support.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <returns></returns>
+		System.Linq.IQueryable<T> Querable<T>();
+
+		#endregion
+	}
 }
