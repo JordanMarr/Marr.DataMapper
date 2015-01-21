@@ -8,7 +8,6 @@ using System.Collections;
 
 namespace Marr.Data.Mapping
 {
-    [Obsolete("This class is obsolete.  Please use the 'Mappings' class.")]
     public class MapBuilder
     {
         private bool _publicOnly;
