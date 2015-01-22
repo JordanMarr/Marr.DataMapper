@@ -25,7 +25,9 @@ namespace Marr.Data.QGen
 		public object Execute(Expression expression, bool isEnumerable)
 		{
 			Visit(expression);
-			return _queryBuilder.ToList();
+			return isEnumerable ?
+				(object)_queryBuilder.ToList() :
+				(object)_queryBuilder.GetSingleOrFirstResult();
 		}
 
 		#region - Visitor -
@@ -88,6 +90,18 @@ namespace Marr.Data.QGen
 					this.Visit(expression.Arguments[0]);
 					int takeVal = (int)GetConstantValue(expression.Arguments[1]);
 					_queryBuilder.Take(takeVal);
+					break;
+
+				case "FirstOrDefault":
+				case "SingleOrDefault":
+					this.Visit(expression.Arguments[0]);
+					_queryBuilder.SetSingleOrFirstAllowNull(true);
+					break;
+
+				case "First":
+				case "Single":
+					this.Visit(expression.Arguments[0]);
+					_queryBuilder.SetSingleOrFirstAllowNull(false);
 					break;
 
 				default:

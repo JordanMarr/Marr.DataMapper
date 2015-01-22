@@ -33,6 +33,7 @@ namespace Marr.Data.QGen
         private bool _enablePaging = false;
         private int _skip;
         private int _take;
+		private bool _singleOrFirstNullable;
         private string _queryText;
         private List<MemberInfo> _childrenToLoad;
         private SortBuilder<T> SortBuilder
@@ -284,7 +285,19 @@ namespace Marr.Data.QGen
             _db.SqlMode = previousSqlMode;
 
             return _results;
-        }
+		}
+
+		internal void SetSingleOrFirstAllowNull(bool allowNullResult)
+		{
+			_singleOrFirstNullable = allowNullResult;
+		}
+
+		internal T GetSingleOrFirstResult()
+		{
+			return _singleOrFirstNullable ?
+				ToList().FirstOrDefault() :
+				ToList().First();
+		}
 
         private void ValidateQuery()
         {

@@ -264,5 +264,245 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 				}
 			}
 		}
+
+		[TestMethod]
+		[ExpectedException(typeof(InvalidOperationException), "Should throw exception since no results exist.")]
+		public void IQueryable_Single_WithNoResult_ShouldThrowException()
+		{
+			using (var db = CreateSqlServerDB())
+			{
+				try
+				{
+					db.SqlMode = SqlModes.Text;
+					db.BeginTransaction();
+
+					var existingOrders = db.Query<Order>().Where(o => o.ID > 0).ToList();
+					int count = existingOrders.Count;
+					db.Delete<Order>(o => o.ID > 0);
+
+					Order order1 = new Order { OrderName = "Test1" };
+					db.Insert(order1);
+
+					Order order2 = new Order { OrderName = "Test2" };
+					db.Insert(order2);
+
+					Order order3 = new Order { OrderName = "Test3" };
+					db.Insert(order3);
+
+					var order = db.Querable<Order>()
+						.Where(o => o.OrderName == "does not exist")
+						.Single();
+				}
+				catch
+				{
+					throw;
+				}
+				finally
+				{
+					db.RollBack();
+				}
+			}
+		}
+
+		[TestMethod]
+		[ExpectedException(typeof(InvalidOperationException), "Should throw exception since no results exist.")]
+		public void IQueryable_First_WithNoResult_ShouldThrowException()
+		{
+			using (var db = CreateSqlServerDB())
+			{
+				try
+				{
+					db.SqlMode = SqlModes.Text;
+					db.BeginTransaction();
+
+					var existingOrders = db.Query<Order>().Where(o => o.ID > 0).ToList();
+					int count = existingOrders.Count;
+					db.Delete<Order>(o => o.ID > 0);
+
+					Order order1 = new Order { OrderName = "Test1" };
+					db.Insert(order1);
+
+					Order order2 = new Order { OrderName = "Test2" };
+					db.Insert(order2);
+
+					Order order3 = new Order { OrderName = "Test3" };
+					db.Insert(order3);
+
+					var order = db.Querable<Order>()
+						.Where(o => o.OrderName == "does not exist")
+						.First();
+				}
+				catch
+				{
+					throw;
+				}
+				finally
+				{
+					db.RollBack();
+				}
+			}
+		}
+
+		[TestMethod]
+		public void IQueryable_SingleOrDefault_ShouldReturnNull()
+		{
+			using (var db = CreateSqlServerDB())
+			{
+				try
+				{
+					db.SqlMode = SqlModes.Text;
+					db.BeginTransaction();
+
+					var existingOrders = db.Query<Order>().Where(o => o.ID > 0).ToList();
+					int count = existingOrders.Count;
+					db.Delete<Order>(o => o.ID > 0);
+
+					Order order1 = new Order { OrderName = "Test1" };
+					db.Insert(order1);
+
+					Order order2 = new Order { OrderName = "Test2" };
+					db.Insert(order2);
+
+					Order order3 = new Order { OrderName = "Test3" };
+					db.Insert(order3);
+
+					var order = db.Querable<Order>()
+						.Where(o => o.OrderName == "does not exist")
+						.SingleOrDefault();
+
+					Assert.IsNull(order);
+				}
+				catch
+				{
+					throw;
+				}
+				finally
+				{
+					db.RollBack();
+				}
+			}
+		}
+
+		[TestMethod]
+		public void IQueryable_FirstOrDefault_ShouldReturnNull()
+		{
+			using (var db = CreateSqlServerDB())
+			{
+				try
+				{
+					db.SqlMode = SqlModes.Text;
+					db.BeginTransaction();
+
+					var existingOrders = db.Query<Order>().Where(o => o.ID > 0).ToList();
+					int count = existingOrders.Count;
+					db.Delete<Order>(o => o.ID > 0);
+
+					Order order1 = new Order { OrderName = "Test1" };
+					db.Insert(order1);
+
+					Order order2 = new Order { OrderName = "Test2" };
+					db.Insert(order2);
+
+					Order order3 = new Order { OrderName = "Test3" };
+					db.Insert(order3);
+
+					var order = db.Querable<Order>()
+						.Where(o => o.OrderName == "does not exist")
+						.FirstOrDefault();
+
+					Assert.IsNull(order);
+				}
+				catch
+				{
+					throw;
+				}
+				finally
+				{
+					db.RollBack();
+				}
+			}
+		}
+
+		[TestMethod]
+		public void IQueryable_SingleOrDefault_ShouldReturnOneResult()
+		{
+			using (var db = CreateSqlServerDB())
+			{
+				try
+				{
+					db.SqlMode = SqlModes.Text;
+					db.BeginTransaction();
+
+					var existingOrders = db.Query<Order>().Where(o => o.ID > 0).ToList();
+					int count = existingOrders.Count;
+					db.Delete<Order>(o => o.ID > 0);
+
+					Order order1 = new Order { OrderName = "Test1" };
+					db.Insert(order1);
+
+					Order order2 = new Order { OrderName = "Test2" };
+					db.Insert(order2);
+
+					Order order3 = new Order { OrderName = "Test3" };
+					db.Insert(order3);
+
+					var order = db.Querable<Order>()
+						.Where(o => o.OrderName == "Test2")
+						.SingleOrDefault();
+
+					Assert.IsNotNull(order);
+					Assert.AreEqual("Test2", order.OrderName);
+				}
+				catch
+				{
+					throw;
+				}
+				finally
+				{
+					db.RollBack();
+				}
+			}
+		}
+
+		[TestMethod]
+		public void IQueryable_FirstOrDefault_ShouldReturnOneResult()
+		{
+			using (var db = CreateSqlServerDB())
+			{
+				try
+				{
+					db.SqlMode = SqlModes.Text;
+					db.BeginTransaction();
+
+					var existingOrders = db.Query<Order>().Where(o => o.ID > 0).ToList();
+					int count = existingOrders.Count;
+					db.Delete<Order>(o => o.ID > 0);
+
+					Order order1 = new Order { OrderName = "Test1" };
+					db.Insert(order1);
+
+					Order order2 = new Order { OrderName = "Test2" };
+					db.Insert(order2);
+
+					Order order3 = new Order { OrderName = "Test3" };
+					db.Insert(order3);
+
+					var order = db.Querable<Order>()
+						.Where(o => o.OrderName == "Test2")
+						.FirstOrDefault();
+
+					Assert.IsNotNull(order);
+					Assert.AreEqual("Test2", order.OrderName);
+				}
+				catch
+				{
+					throw;
+				}
+				finally
+				{
+					db.RollBack();
+				}
+			}
+		}
 	}
 }
