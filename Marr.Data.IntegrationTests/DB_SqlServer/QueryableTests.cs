@@ -170,5 +170,99 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 				}
 			}
 		}
+
+		[TestMethod]
+		public void IQueryableShouldHandlePaging()
+		{
+			using (var db = CreateSqlServerDB())
+			{
+				try
+				{
+					db.SqlMode = SqlModes.Text;
+					db.BeginTransaction();
+
+					var existingOrders = db.Query<Order>().Where(o => o.ID > 0).ToList();
+					int count = existingOrders.Count;
+					db.Delete<Order>(o => o.ID > 0);
+
+					Order order1 = new Order { OrderName = "Test1" };
+					db.Insert(order1);
+
+					Order order2 = new Order { OrderName = "Test2" };
+					db.Insert(order2);
+
+					Order order3 = new Order { OrderName = "Test3" };
+					db.Insert(order3);
+
+					var orders = db.Querable<Order>()
+						.Where(o => o.OrderName.StartsWith("Test"))
+						.Skip(1)
+						.Take(1)
+						.OrderBy(o => o.OrderName)
+						.ToArray();
+
+					Assert.AreEqual(1, orders.Length);
+					var o1 = orders[0];
+
+					Assert.AreEqual(o1.OrderName, "Test2");
+				}
+				catch
+				{
+					throw;
+				}
+				finally
+				{
+					db.RollBack();
+				}
+			}
+		}
+
+		[TestMethod]
+		public void IQueryableShouldHandlePagingWithNoWhereAndNonConstantValues()
+		{
+			using (var db = CreateSqlServerDB())
+			{
+				try
+				{
+					db.SqlMode = SqlModes.Text;
+					db.BeginTransaction();
+
+					var existingOrders = db.Query<Order>().Where(o => o.ID > 0).ToList();
+					int count = existingOrders.Count;
+					db.Delete<Order>(o => o.ID > 0);
+
+					Order order1 = new Order { OrderName = "Test1" };
+					db.Insert(order1);
+
+					Order order2 = new Order { OrderName = "Test2" };
+					db.Insert(order2);
+
+					Order order3 = new Order { OrderName = "Test3" };
+					db.Insert(order3);
+
+					var kvp = new KeyValuePair<int, int>(1, 1);
+					Func<int> getOne = () => 1 * 1;
+
+					var orders = db.Querable<Order>()
+						.OrderBy(o => o.OrderName)
+						.Skip(kvp.Value)
+						.Take(getOne())						
+						.ToArray();
+
+					Assert.AreEqual(1, orders.Length);
+					var o1 = orders[0];
+
+					Assert.AreEqual(o1.OrderName, "Test2");
+				}
+				catch
+				{
+					throw;
+				}
+				finally
+				{
+					db.RollBack();
+				}
+			}
+		}
 	}
 }

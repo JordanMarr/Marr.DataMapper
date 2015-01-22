@@ -78,6 +78,18 @@ namespace Marr.Data.QGen
 					}
 					break;
 
+				case "Skip":
+					this.Visit(expression.Arguments[0]);
+					int skipVal = (int)GetConstantValue(expression.Arguments[1]);
+					_queryBuilder.Skip(skipVal);
+					break;
+
+				case "Take":
+					this.Visit(expression.Arguments[0]);
+					int takeVal = (int)GetConstantValue(expression.Arguments[1]);
+					_queryBuilder.Take(takeVal);
+					break;
+
 				default:
 					string msg = string.Format("'{0}' expressions are not yet implemented in the where clause expression tree parser.", expression.Method.Name);
 					throw new NotImplementedException(msg);
@@ -109,6 +121,12 @@ namespace Marr.Data.QGen
 			return e;
 		}
 
+		private object GetConstantValue(Expression expression)
+		{
+			var constExp = expression as ConstantExpression;
+			return constExp.Value;
+		}
+		
 		#endregion
 	}
 
