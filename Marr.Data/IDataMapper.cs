@@ -224,7 +224,7 @@ namespace Marr.Data
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <returns></returns>
-		System.Linq.IQueryable<T> Querable<T>();
+		System.Linq.IQueryable<T> Queryable<T>();
 
 		#endregion
 	}

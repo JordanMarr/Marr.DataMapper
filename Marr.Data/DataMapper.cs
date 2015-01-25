@@ -658,7 +658,7 @@ namespace Marr.Data
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <returns></returns>
-		public IQueryable<T> Querable<T>()
+		public IQueryable<T> Queryable<T>()
 		{
 			var qEnt = new QuerableEntityContext<T>(this.Query<T>());
 			return new QGen.Queryable<T>(qEnt);

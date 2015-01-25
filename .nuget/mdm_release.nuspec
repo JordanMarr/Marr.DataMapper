@@ -3,8 +3,14 @@
   <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <id>MarrDataMapper</id>
     <version>
-      3.31
+      3.32
     </version>
+	  <copyright>
+		  2008
+	  </copyright>
+	  <title>
+		  Marr.DataMapper
+	  </title>
     <authors>Jordan Marr</authors>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>Marr DataMapper is a Linq enabled Micro-ORM that allows you to project views into complex object graphs. Contributors: Rick Schott, vitidev, Keivan Beigi, Mark McDowall</description>

@@ -42,7 +42,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 					Order order3 = new Order { OrderName = "Test3" };
 					db.Insert(order3);
 
-					var orders = db.Querable<Order>()
+					var orders = db.Queryable<Order>()
 						.Where(o => o.OrderName == "Test1" || o.OrderName == "Test2")
 						.OrderBy(o => o.OrderName)
 						.ToArray();
@@ -88,7 +88,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 					Order order3 = new Order { OrderName = "Test3" };
 					db.Insert(order3);
 					
-					var orders = db.Querable<Order>()
+					var orders = db.Queryable<Order>()
 						.Where(o => o.OrderName == "Test1" || o.OrderName == "Test2")
 						.OrderByDescending(o => o.OrderName)
 						.ToArray();
@@ -138,7 +138,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 					Order order4 = new Order { OrderName = "Test" };
 					db.Insert<Order>(order4);
 
-					var orders = db.Querable<Order>()
+					var orders = db.Queryable<Order>()
 						.Where(o => o.OrderName.StartsWith("Group"))
 						.OrderBy(o => o.OrderName)
 						.ThenByDescending(o => o.ID)
@@ -194,7 +194,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 					Order order3 = new Order { OrderName = "Test3" };
 					db.Insert(order3);
 
-					var orders = db.Querable<Order>()
+					var orders = db.Queryable<Order>()
 						.Where(o => o.OrderName.StartsWith("Test"))
 						.Skip(1)
 						.Take(1)
@@ -243,7 +243,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 					var kvp = new KeyValuePair<int, int>(1, 1);
 					Func<int> getOne = () => 1 * 1;
 
-					var orders = db.Querable<Order>()
+					var orders = db.Queryable<Order>()
 						.OrderBy(o => o.OrderName)
 						.Skip(kvp.Value)
 						.Take(getOne())						
@@ -289,7 +289,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 					Order order3 = new Order { OrderName = "Test3" };
 					db.Insert(order3);
 
-					var order = db.Querable<Order>()
+					var order = db.Queryable<Order>()
 						.Where(o => o.OrderName == "does not exist")
 						.Single();
 				}
@@ -328,7 +328,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 					Order order3 = new Order { OrderName = "Test3" };
 					db.Insert(order3);
 
-					var order = db.Querable<Order>()
+					var order = db.Queryable<Order>()
 						.Where(o => o.OrderName == "does not exist")
 						.First();
 				}
@@ -366,7 +366,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 					Order order3 = new Order { OrderName = "Test3" };
 					db.Insert(order3);
 
-					var order = db.Querable<Order>()
+					var order = db.Queryable<Order>()
 						.Where(o => o.OrderName == "does not exist")
 						.SingleOrDefault();
 
@@ -406,7 +406,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 					Order order3 = new Order { OrderName = "Test3" };
 					db.Insert(order3);
 
-					var order = db.Querable<Order>()
+					var order = db.Queryable<Order>()
 						.Where(o => o.OrderName == "does not exist")
 						.FirstOrDefault();
 
@@ -446,7 +446,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 					Order order3 = new Order { OrderName = "Test3" };
 					db.Insert(order3);
 
-					var order = db.Querable<Order>()
+					var order = db.Queryable<Order>()
 						.Where(o => o.OrderName == "Test2")
 						.SingleOrDefault();
 
@@ -487,7 +487,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 					Order order3 = new Order { OrderName = "Test3" };
 					db.Insert(order3);
 
-					var order = db.Querable<Order>()
+					var order = db.Queryable<Order>()
 						.Where(o => o.OrderName == "Test2")
 						.FirstOrDefault();
 
