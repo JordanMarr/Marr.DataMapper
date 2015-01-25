@@ -42,6 +42,7 @@ namespace Marr.Data
         private DbProviderFactory _dbProviderFactory;
         private string _connectionString;
         private DbCommand _command;
+		private QueryBuilder _parentQuery;
 
         /// <summary>
         /// Initializes a DataMapper for the given provider type and connection string.
@@ -58,16 +59,34 @@ namespace Marr.Data
         /// <param name="connection">The database connection string.</param>
         public DataMapper(DbProviderFactory dbProviderFactory, string connectionString)
         {
-            if (dbProviderFactory == null)
-                throw new ArgumentNullException("dbProviderFactory instance cannot be null.");
+			if (dbProviderFactory == null)
+				throw new ArgumentNullException("dbProviderFactory instance cannot be null.");
 
-            if (string.IsNullOrEmpty(connectionString))
-                throw new ArgumentNullException("connectionString cannot be null or empty.");
+			if (string.IsNullOrEmpty(connectionString))
+				throw new ArgumentNullException("connectionString cannot be null or empty.");
 
-            _dbProviderFactory = dbProviderFactory;
+			_dbProviderFactory = dbProviderFactory;
+			_connectionString = connectionString;
+		}
 
-            _connectionString = connectionString;
-        }
+		/// <summary>
+		/// A database provider agnostic initialization.
+		/// </summary>
+		/// <param name="connectionString">The db connection string.</param>
+		/// <param name="dbProviderFactory">The db provider factory.</param>
+		/// <param name="parentQuery">An optional parent query (used for eager and lazy loaded scenarios).</param>
+		internal DataMapper(DbProviderFactory dbProviderFactory, string connectionString, QueryBuilder parentQuery)
+		{
+			if (dbProviderFactory == null)
+				throw new ArgumentNullException("dbProviderFactory instance cannot be null.");
+
+			if (string.IsNullOrEmpty(connectionString))
+				throw new ArgumentNullException("connectionString cannot be null or empty.");
+
+			_dbProviderFactory = dbProviderFactory;
+			_connectionString = connectionString;
+			_parentQuery = parentQuery;
+		}
 
         public string ConnectionString
         {
@@ -554,7 +573,7 @@ namespace Marr.Data
         public QueryBuilder<T> Query<T>()
         {
             var dialect = QGen.QueryFactory.CreateDialect(this);
-            return new QueryBuilder<T>(this, dialect);
+            return new QueryBuilder<T>(this, dialect, _parentQuery);
         }
 		
         /// <summary>
@@ -564,7 +583,7 @@ namespace Marr.Data
         /// <returns>Returns a list of the specified type.</returns>
         public List<T> Query<T>(string sql)
         {
-            return (List<T>)Query<T>(sql, new List<T>());
+			return Query<T>().QueryText(sql).ToList();
         }
 
         /// <summary>
@@ -573,10 +592,12 @@ namespace Marr.Data
         /// <returns>Returns a list of the specified type.</returns>
         public ICollection<T> Query<T>(string sql, ICollection<T> entityList)
         {
-            return Query<T>(sql, entityList, false);
+			var list = Query<T>().QueryText(sql).ToList();
+			list.ForEach(i => entityList.Add(i));
+			return list;
         }
 
-        internal ICollection<T> Query<T>(string sql, ICollection<T> entityList, bool useAltName)
+        internal ICollection<T> Query<T>(string sql, ICollection<T> entityList, bool useAltName, QueryBuilder query)
         {
             if (entityList == null)
                 throw new ArgumentNullException("entityList", "ICollection instance cannot be null.");
@@ -608,6 +629,17 @@ namespace Marr.Data
                         }
                     }
                 }
+
+				if (query.IsGraph)
+				{
+					// Handle eager or lazy loaded
+					foreach (var ent in entityList)
+					{
+						// Pass in the root query so we can check RelationshipsToLoad
+						mappingHelper.LoadEagerLoadedProperties(ent, query);
+						mappingHelper.PrepareLazyLoadedProperties(ent, query);
+					}
+				}
             }
             finally
             {
@@ -643,8 +675,9 @@ namespace Marr.Data
 
         public ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList)
         {
-            EntityGraph graph = new EntityGraph(typeof(T), (IList)entityList);
-            return QueryToGraph<T>(sql, graph, new List<MemberInfo>());
+			var list =  this.Query<T>().Graph().QueryText(sql).ToList();
+			list.ForEach(i => entityList.Add(i));
+			return list;
         }
 
         /// <summary>
@@ -655,17 +688,15 @@ namespace Marr.Data
         /// <param name="entityList"></param>
         /// <param name="entityGraph">Coordinates loading all objects in the graph..</param>
         /// <returns></returns>
-        internal ICollection<T> QueryToGraph<T>(string sql, EntityGraph graph, List<MemberInfo> childrenToLoad)
+        internal ICollection<T> QueryToGraph<T>(QueryBuilder query)
         {
-            if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("sql", "sql");
-
             var mappingHelper = new MappingHelper(this);
             Type parentType = typeof(T);
-            Command.CommandText = sql;
+            Command.CommandText = query.CommandText;
 
             try
             {
+				var parentEntitiesWithLazyOrEagerChildren = new List<object>();
                 OpenConnection();
                 using (DbDataReader reader = Command.ExecuteReader())
                 {
@@ -673,28 +704,47 @@ namespace Marr.Data
                     {
                         // The entire EntityGraph is traversed for each record, 
                         // and multiple entities are created from each view record.
-                        foreach (EntityGraph lvl in graph)
+                        foreach (EntityGraph lvl in query.EntGraph)
                         {
                             if (lvl.IsParentReference)
                             {
                                 // A child specified a circular reference to its previously loaded parent
                                 lvl.AddParentReference();
                             }
-                            else if (childrenToLoad.Count > 0 && !lvl.IsRoot && !childrenToLoad.ContainsMember(lvl.Member))
-                            {
-                                // A list of relationships-to-load was specified and this relationship was not included
-                                continue;
-                            }
-                            else if (lvl.IsNewGroup(reader))
-                            {
-                                // Create a new entity with the data reader
-                                var newEntity = mappingHelper.CreateAndLoadEntity(lvl.EntityType, lvl.Columns, reader, true);
+							else if (query.RelationshipsToLoad.Count > 0 && !lvl.IsRoot && !query.RelationshipsToLoad.ContainsMember(lvl.Member))
+							{
+								// A list of relationships-to-load was specified and this relationship was not included
+								continue;
+							}
+							else if (lvl.IsChild && lvl.Relationship != null && (lvl.Relationship.IsEagerLoaded || lvl.Relationship.IsLazyLoaded))
+							{
+								// These will be loaded separately
+								continue;
+							}
+							else if (lvl.IsNewGroup(reader))
+							{
+								// Create a new entity with the data reader
+								var newEntity = mappingHelper.CreateAndLoadEntity(lvl.EntityType, lvl.Columns, reader, true);
 
-                                // Add entity to the appropriate place in the object graph
-                                lvl.AddEntity(newEntity);
-                            }
+								// Add entity to the appropriate place in the object graph
+								lvl.AddEntity(newEntity);
+
+								// Does this entity have any eager or lazy loaded children? If so, collect them...
+								if (lvl.Children.Any(c => c.Relationship.IsEagerLoaded || c.Relationship.IsLazyLoaded))
+								{
+									parentEntitiesWithLazyOrEagerChildren.Add(newEntity);
+								}
+							}
                         }
                     }
+
+					// Handle eager or lazy loaded
+					foreach (var ent in parentEntitiesWithLazyOrEagerChildren)
+					{
+						// Pass in the root query so we can check RelationshipsToLoad
+						mappingHelper.LoadEagerLoadedProperties(ent, query);
+						mappingHelper.PrepareLazyLoadedProperties(ent, query);
+					}
                 }
             }
             finally
@@ -702,7 +752,7 @@ namespace Marr.Data
                 CloseConnection();
             }
 
-            return (ICollection<T>)graph.RootList;
+            return (ICollection<T>)query.EntGraph.RootList;
         }
 
         #endregion

@@ -110,6 +110,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 		public void WhenLoadingASingleOrder_ShouldEagerLoadChildren()
 		{
 			var order = _db.Query<Entities.FluentMappedOrder>()
+						.Graph()
 						.Where(o => o.OrderName == "Order 1")
 						.FirstOrDefault();
 
@@ -126,12 +127,12 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 		public void WhenLoadingMultipleOrders_ShouldEagerLoadChildren()
 		{
 			var orders = _db.Query<Entities.FluentMappedOrder>()
+						.Graph()
 						.ToArray();
 
 			Assert.AreEqual(2, orders.Length);
 			foreach (var order in orders)
 			{
-
 				Assert.AreEqual(2, order.OrderItems.Count);
 				foreach (var oi in order.OrderItems)
 				{
@@ -139,6 +140,51 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 					Assert.AreEqual(5.5m, oi.ItemReceipt.AmountPaid);
 				}
 			}
+		}
+
+		/* * * * * * *
+		 * The following test ensure that the eager load mechanism honors the Graph() method.
+		 */
+
+		[TestMethod]
+		public void WhenGraphIsNotCalled_OnlyRootEntityShouldBeLoaded()
+		{
+			var orders = _db.Query<Entities.FluentMappedOrder>()
+						.ToArray();
+
+			Assert.IsTrue(orders.Any());
+			var order = orders.First();
+			Assert.IsNull(order.OrderItems, "The order items should not have been eager loaded because 'Graph()' wasn't called.");
+		}
+
+		[TestMethod]
+		public void WhenGraphIsCalledWithOrderItemParameter_ReceiptsShouldNotBeLoaded()
+		{
+			var orders = _db.Query<Entities.FluentMappedOrder>()
+						.Graph(o => o.OrderItems)
+						.ToArray();
+
+			Assert.IsTrue(orders.Any());
+			var order = orders.First();
+			Assert.IsNotNull(order.OrderItems, "The order items should have been eager loaded because 'Graph()' was called.");
+
+			var orderItem = order.OrderItems.First();
+			Assert.IsNull(orderItem.ItemReceipt, "The receipt should not have been eager loaded because 'Graph('OrderItem')' was called.");
+		}
+
+		[TestMethod]
+		public void WhenGraphIsCalledWithNoParameters_EntireGraphShouldBeLoaded()
+		{
+			var orders = _db.Query<Entities.FluentMappedOrder>()
+						.Graph()
+						.ToArray();
+
+			Assert.IsTrue(orders.Any());
+			var order = orders.First();
+			Assert.IsNotNull(order.OrderItems, "The order items should have been eager loaded because 'Graph()' was called.");
+
+			var orderItem = order.OrderItems.First();
+			Assert.IsNotNull(orderItem.ItemReceipt, "The receipt should have been eager loaded because 'Graph()' was called.");
 		}
 	}
 }

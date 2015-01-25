@@ -28,7 +28,6 @@ namespace Marr.Data
     /// <summary>
     /// Holds metadata about an object graph that is being queried and eagerly loaded.
     /// Contains all metadata needed to instantiate the object and fill it with data from a DataReader.
-    /// Does not iterate through lazy loaded child relationships.
     /// </summary>
     internal class EntityGraph : IEnumerable<EntityGraph>
     {
@@ -62,7 +61,7 @@ namespace Marr.Data
         /// <param name="entityType"></param>
         /// <param name="parent"></param>
         /// <param name="relationship"></param>
-        private EntityGraph(Type entityType, EntityGraph parent, Relationship relationship)
+		private EntityGraph(Type entityType, EntityGraph parent, Relationship relationship)
         {
             _repos = MapRepository.Instance;
 
@@ -85,13 +84,10 @@ namespace Marr.Data
                 return;
             }
 
-            // Create a new EntityGraph for each child relationship that is not lazy loaded
+            // Create a new EntityGraph for each child relationship
             foreach (Relationship childRelationship in this.Relationships)
             {
-                if (!childRelationship.IsLazyLoaded)
-                {
-                    _children.Add(new EntityGraph(childRelationship.RelationshipInfo.EntityType, this, childRelationship));
-                }
+				_children.Add(new EntityGraph(childRelationship.RelationshipInfo.EntityType, this, childRelationship));
             }
         }
 
@@ -153,6 +149,14 @@ namespace Marr.Data
         {
             get { return _relationships; }
         }
+		
+		/// <summary>
+		/// Gets this entities relationship to its parent.
+		/// </summary>
+		public Relationship Relationship
+		{
+			get { return _relationship; }
+		}
 
         /// <summary>
         /// A list of EntityGraph objects that hold metadata about the child entities that will be loaded.
@@ -333,8 +337,8 @@ namespace Marr.Data
             // 1) Any parent entity (entity with children) must have at least one PK specified or an exception will be thrown
             // 2) All 1-M relationship entities must have at least one PK specified
             // * Only 1-1 entities with no children are allowed to have 0 PKs specified.
-            if ((groupingKeyColumns.PrimaryKeys.Count == 0 && _children.Count > 0) ||
-                (groupingKeyColumns.PrimaryKeys.Count == 0 && !IsRoot && _relationship.RelationshipInfo.RelationType == RelationshipTypes.Many))
+			if ((groupingKeyColumns.PrimaryKeys.Count == 0 && _children.Count > 0) ||
+				(groupingKeyColumns.PrimaryKeys.Count == 0 && !IsRoot && _relationship.RelationshipInfo.RelationType == RelationshipTypes.Many))
                 throw new MissingPrimaryKeyException(string.Format("There are no primary key mappings defined for the following entity: '{0}'.", this.EntityType.Name));
 
             // Add parent's keys

@@ -11,12 +11,49 @@ using System.Collections;
 
 namespace Marr.Data.QGen
 {
+	public abstract class QueryBuilder : ExpressionVisitor
+	{
+		public QueryBuilder(QueryBuilder parentQuery = null)
+		{
+			ParentQuery = parentQuery;
+			RelationshipsToLoad = new List<Relationship>();
+		}
+
+		internal QueryBuilder ParentQuery { get; set; }
+		internal List<Relationship> RelationshipsToLoad { get; set; }
+		internal bool IsGraph { get; set; }
+		internal int SkipCount { get; set; }
+		internal int TakeCount { get; set; }
+		internal bool IsJoin { get; set; }
+		internal bool IsManualQuery { get; set; }
+		internal bool EnablePaging { get; set; }
+		internal bool IsFromView { get; set; }
+		internal bool IsFromTable { get; set; }
+		internal string CommandText;
+
+		private EntityGraph _entityGraph;
+		internal EntityGraph EntGraph
+		{
+			get
+			{
+				if (_entityGraph == null)
+				{
+					_entityGraph = LoadEntityGraph();
+				}
+
+				return _entityGraph;
+			}
+		}
+
+		internal abstract EntityGraph LoadEntityGraph();
+	}
+
     /// <summary>
     /// This class is responsible for building a select query.
     /// It uses chaining methods to provide a fluent interface for creating select queries.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class QueryBuilder<T> : ExpressionVisitor, IEnumerable<T>, IQueryBuilder
+	public class QueryBuilder<T> : QueryBuilder, IEnumerable<T>, IQueryBuilder
     {
         #region - Private Members -
 
@@ -25,17 +62,7 @@ namespace Marr.Data.QGen
         private TableCollection _tables;
         private WhereBuilder<T> _whereBuilder;
         private SortBuilder<T> _sortBuilder;
-        private bool _isGraph = false;
-        private bool _isFromView = false;
-        private bool _isFromTable = false;
-        private bool _isJoin = false;
-        private bool _isManualQuery = false;
-        private bool _enablePaging = false;
-        private int _skip;
-        private int _take;
-		private bool _singleOrFirstNullable;
-        private string _queryText;
-        private List<MemberInfo> _childrenToLoad;
+		private bool _singleOrFirstNullable;        
         private SortBuilder<T> SortBuilder
         {
             get
@@ -43,7 +70,7 @@ namespace Marr.Data.QGen
                 // Lazy load
                 if (_sortBuilder == null)
                 {
-                    bool useAltNames = _isFromView || _isGraph || _isJoin;
+                    bool useAltNames = IsFromView || IsGraph || IsJoin;
                     _sortBuilder = new SortBuilder<T>(this, _db, _whereBuilder, _dialect, _tables, useAltNames);
                 }
 
@@ -51,36 +78,24 @@ namespace Marr.Data.QGen
             }
         }
         private List<T> _results = new List<T>();
-        private EntityGraph _entityGraph;
-        private EntityGraph EntGraph
-        {
-            get
-            {
-                if (_entityGraph == null)
-                {
-                    _entityGraph = new EntityGraph(typeof(T), _results);
-                }
-
-                return _entityGraph;
-            }
-        }
-
+        
         #endregion
 
         #region - Constructor -
 
         public QueryBuilder()
+			: base(null)
         {
             // Used only for unit testing with mock frameworks
         }
 
-        public QueryBuilder(DataMapper db, Dialects.Dialect dialect)
+        public QueryBuilder(DataMapper db, Dialects.Dialect dialect, QueryBuilder parentQuery = null)
+			: base(parentQuery)
         {
             _db = db;
             _dialect = dialect;
             _tables = new TableCollection();
             _tables.Add(new Table(typeof(T)));
-            _childrenToLoad = new List<MemberInfo>();
         }
 
         #endregion
@@ -105,7 +120,7 @@ namespace Marr.Data.QGen
             if (string.IsNullOrEmpty(viewName))
                 throw new ArgumentNullException("view");
 
-            _isFromView = true;
+            IsFromView = true;
 
             // Replace the base table with a view with tables
             if (_tables[0] is View)
@@ -130,7 +145,7 @@ namespace Marr.Data.QGen
             if (string.IsNullOrEmpty(table))
                 throw new ArgumentNullException("view");
 
-            _isFromTable = true;
+            IsFromTable = true;
 
             // Override the base table name
             _tables[0].Name = table;
@@ -142,8 +157,8 @@ namespace Marr.Data.QGen
         /// </summary>
         public virtual QueryBuilder<T> QueryText(string queryText)
         {
-            _isManualQuery = true;
-            _queryText = queryText;
+            IsManualQuery = true;
+            CommandText = queryText;
             return this;
         }
 
@@ -154,50 +169,69 @@ namespace Marr.Data.QGen
         /// <param name="childrenToLoad">A list of related child entites to load (passed in as properties / lambda expressions).</param>
         public virtual QueryBuilder<T> Graph(params Expression<Func<T, object>>[] childrenToLoad)
         {
-            TableCollection tablesInView = new TableCollection();
-            if (childrenToLoad.Length > 0)
-            {
-                // Add base table
-                tablesInView.Add(_tables[0]);
+			IsGraph = true;
 
-                foreach (var exp in childrenToLoad)
-                {
-                    MemberInfo child = (exp.Body as MemberExpression).Member;
+			var membersToLoad = childrenToLoad.Select(exp => (exp.Body as MemberExpression).Member);
 
-                    var node = EntGraph.Where(g => g.Member != null && g.Member.EqualsMember(child)).FirstOrDefault();
-                    if (node != null)
-                    {
-                        tablesInView.Add(new Table(node.EntityType, JoinType.None));
-                    }
+			// Populate _relationshipsToLoad
+			foreach (var member in membersToLoad)
+			{
+				// Translate into members into mapped relationships
+				var rel = EntGraph
+					.Where(g => g.Member != null && g.Member.EqualsMember(member))
+					.Select(g => g.Relationship)
+					.FirstOrDefault();
 
-                    if (!_childrenToLoad.ContainsMember(child))
-                    {
-                        _childrenToLoad.Add(child);
-                    }
-                }
-            }
-            else
-            {
-                // Add all tables in the graph
-                foreach (var node in EntGraph)
-                {
-                    tablesInView.Add(new Table(node.EntityType, JoinType.None));
-                }
-            }
+				if (rel != null)
+				{
+					RelationshipsToLoad.Add(rel);
+				}
+			}
 
-            // Replace the base table with a view with tables
-            View view = new View(_tables[0].Name, tablesInView.ToArray());
-            _tables.ReplaceBaseTable(view);
+			// Populate _tables that need to added to the generated query
+			// (ignore eager/lazy loaded entities)
+			var tablesInView = new TableCollection();
+			if (RelationshipsToLoad.Count > 0)
+			{
+				// Load specific layers (starting with root table/entity)
+				tablesInView.Add(_tables[0]);
 
-            _isGraph = true;
-            return this;
+				foreach (var r in RelationshipsToLoad)
+				{
+					var node = EntGraph
+						.Where(g => g.Member != null &&
+								g.Member.EqualsMember(r.Member) &&
+								!r.IsEagerLoaded &&
+								!r.IsLazyLoaded)
+								.FirstOrDefault();
+
+					if (node != null)
+					{
+						tablesInView.Add(new Table(node.EntityType, JoinType.None));
+					}
+				}
+			}
+			else
+			{
+				// Load all relationships
+				foreach (var node in EntGraph.Where(g => g.IsRoot || !g.Relationship.IsLazyLoaded && !g.Relationship.IsEagerLoaded))
+				{
+					tablesInView.Add(new Table(node.EntityType, JoinType.None));
+				}
+			}
+
+			// Replace the base table with a view with tables
+			View view = new View(_tables[0].Name, tablesInView.ToArray());
+			_tables.ReplaceBaseTable(view);
+
+			return this;
         }
         
         public virtual QueryBuilder<T> Page(int pageNumber, int pageSize)
         {
-            _enablePaging = true;
-            _skip = (pageNumber - 1) * pageSize;
-            _take = pageSize;
+            EnablePaging = true;
+            SkipCount = (pageNumber - 1) * pageSize;
+            TakeCount = pageSize;
             return this;
         }
         
@@ -222,11 +256,11 @@ namespace Marr.Data.QGen
         /// <param name="readerAction">An action that takes a DbDataReader.</param>
         public virtual void DataReader(Action<DbDataReader> readerAction)
         {
-            if (string.IsNullOrEmpty(_queryText))
+            if (string.IsNullOrEmpty(CommandText))
                 throw new ArgumentNullException("The query text cannot be blank.");
 
             var mappingHelper = new MappingHelper(_db);
-            _db.Command.CommandText = _queryText;
+            _db.Command.CommandText = CommandText;
 
             try
             {
@@ -249,7 +283,7 @@ namespace Marr.Data.QGen
             // Generate a row count query
             string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
 
-            bool useAltNames = _isFromView || _isGraph || _isJoin;
+            bool useAltNames = IsFromView || IsGraph || IsJoin;
             IQuery query = QueryFactory.CreateRowCountSelectQuery(_tables, _db, where, SortBuilder, useAltNames);
             string queryText = query.Generate();
 
@@ -272,13 +306,16 @@ namespace Marr.Data.QGen
 
             BuildQueryOrAppendClauses();
 
-            if (_isGraph || _isJoin)
+			var rootQuery = ParentQuery ?? this;
+
+            if (IsGraph || IsJoin)
             {
-                _results = (List<T>)_db.QueryToGraph<T>(_queryText, EntGraph, _childrenToLoad);
+				// Project a query join results into an object graph
+				_results = (List<T>)_db.QueryToGraph<T>(rootQuery);
             }
             else
             {
-                _results = (List<T>)_db.Query<T>(_queryText, _results, _isFromView);
+				_results = (List<T>)_db.Query<T>(CommandText, _results, IsFromView, rootQuery);
             }
 
             // Return to previous sql mode
@@ -301,34 +338,34 @@ namespace Marr.Data.QGen
 
         private void ValidateQuery()
         {
-            if (_isManualQuery && _isFromView)
+            if (IsManualQuery && IsFromView)
                 throw new InvalidOperationException("Cannot use FromView in conjunction with QueryText");
 
-            if (_isManualQuery && _isFromTable)
+            if (IsManualQuery && IsFromTable)
                 throw new InvalidOperationException("Cannot use FromTable in conjunction with QueryText");
 
-            if (_isManualQuery && _isJoin)
+            if (IsManualQuery && IsJoin)
                 throw new InvalidOperationException("Cannot use Join in conjuntion with QueryText");
 
-            if (_isManualQuery && _enablePaging)
+            if (IsManualQuery && EnablePaging)
                 throw new InvalidOperationException("Cannot use Page, Skip or Take in conjunction with QueryText");
 
-            if (_isJoin && _isFromView)
+            if (IsJoin && IsFromView)
                 throw new InvalidOperationException("Cannot use FromView in conjunction with Join");
 
-            if (_isJoin && _isFromTable)
+            if (IsJoin && IsFromTable)
                 throw new InvalidOperationException("Cannot use FromView in conjunction with Join");
 
-            if (_isJoin && _isGraph)
+            if (IsJoin && IsGraph)
                 throw new InvalidOperationException("Cannot use Graph in conjunction with Join");
 
-            if (_isFromView && _isFromTable)
+            if (IsFromView && IsFromTable)
                 throw new InvalidOperationException("Cannot use FromView in conjunction with FromTable");
         }
 
         private void BuildQueryOrAppendClauses()
         {
-            if (_queryText == null)
+            if (CommandText == null)
             {
                 // Build entire query
                 _db.SqlMode = SqlModes.Text;
@@ -340,13 +377,13 @@ namespace Marr.Data.QGen
                 if (_whereBuilder != null)
                 {
                     // Append a where clause to an existing query
-                    _queryText = string.Concat(_queryText, " ", _whereBuilder.ToString());
+                    CommandText = string.Concat(CommandText, " ", _whereBuilder.ToString());
                 }
 
                 if (_sortBuilder != null)
                 {
                     // Append an order clause to an existing query
-                    _queryText = string.Concat(_queryText, " ", _sortBuilder.ToString());
+                    CommandText = string.Concat(CommandText, " ", _sortBuilder.ToString());
                 }
             }
         }
@@ -356,31 +393,36 @@ namespace Marr.Data.QGen
             // Generate a query
             string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
 
-            bool useAltNames = _isFromView || _isGraph || _isJoin;
+            bool useAltNames = IsFromView || IsGraph || IsJoin;
 
             IQuery query = null;
-            if (_enablePaging)
+            if (EnablePaging)
             {
-                query = QueryFactory.CreatePagingSelectQuery(_tables, _db, where, SortBuilder, useAltNames, _skip, _take);
+                query = QueryFactory.CreatePagingSelectQuery(_tables, _db, where, SortBuilder, useAltNames, SkipCount, TakeCount);
             }
             else
             {
                 query = QueryFactory.CreateSelectQuery(_tables, _db, where, SortBuilder, useAltNames);
             }
 
-            _queryText = query.Generate();
+            CommandText = query.Generate();
 
-            return _queryText;
+            return CommandText;
         }
 
         #endregion
 
         #region - Helper Methods -
 
+		internal override EntityGraph LoadEntityGraph()
+		{
+			return new EntityGraph(typeof(T), _results);
+		}
+		
         private ColumnMapCollection GetColumns(IEnumerable<string> entitiesToLoad)
         {
             // If QueryToGraph<T> and no child load entities are specified, load all children
-            bool useAltNames = _isFromView || _isGraph || _isJoin;
+            bool useAltNames = IsFromView || IsGraph || IsJoin;
             bool loadAllChildren = useAltNames && entitiesToLoad == null;
 
             // If Query<T>
@@ -416,7 +458,7 @@ namespace Marr.Data.QGen
 
         public virtual SortBuilder<T> Where<TObj>(Expression<Func<TObj, bool>> filterExpression)
         {
-            bool useAltNames = _isFromView || _isGraph;
+            bool useAltNames = IsFromView || IsGraph;
             bool addTablePrefixToColumns = true;
             _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, useAltNames, addTablePrefixToColumns);
             return SortBuilder;
@@ -424,7 +466,7 @@ namespace Marr.Data.QGen
 
         public virtual SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
         {
-            bool useAltNames = _isFromView || _isGraph;
+            bool useAltNames = IsFromView || IsGraph;
             bool addTablePrefixToColumns = true;
             _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, useAltNames, addTablePrefixToColumns);
             return SortBuilder;
@@ -440,7 +482,7 @@ namespace Marr.Data.QGen
                 whereClause = whereClause.Insert(0, " WHERE ");
             }
 
-            bool useAltNames = _isFromView || _isGraph || _isJoin;
+            bool useAltNames = IsFromView || IsGraph || IsJoin;
             _whereBuilder = new WhereBuilder<T>(whereClause, useAltNames);
             return SortBuilder;
         }
@@ -504,15 +546,15 @@ namespace Marr.Data.QGen
 
         public virtual QueryBuilder<T> Take(int count)
         {
-            _enablePaging = true;
-            _take = count;
+            EnablePaging = true;
+            TakeCount = count;
             return this;
         }
 
         public virtual QueryBuilder<T> Skip(int count)
         {
-            _enablePaging = true;
-            _skip = count;
+            EnablePaging = true;
+            SkipCount = count;
             return this;
         }
 
@@ -560,24 +602,30 @@ namespace Marr.Data.QGen
 
         public virtual QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, Expression<Func<TLeft, IEnumerable<TRight>>> rightEntity, Expression<Func<TLeft, TRight, bool>> filterExpression)
         {
-            _isJoin = true;
+            IsJoin = true;
             MemberInfo rightMember = (rightEntity.Body as MemberExpression).Member;
             return this.Join(joinType, rightMember, filterExpression);
         }
 
         public virtual QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, Expression<Func<TLeft, TRight>> rightEntity, Expression<Func<TLeft, TRight, bool>> filterExpression)
         {
-            _isJoin = true;
+            IsJoin = true;
             MemberInfo rightMember = (rightEntity.Body as MemberExpression).Member;
             return this.Join(joinType, rightMember, filterExpression);
         }
 
         public virtual QueryBuilder<T> Join<TLeft, TRight>(JoinType joinType, MemberInfo rightMember, Expression<Func<TLeft, TRight, bool>> filterExpression)
         {
-            _isJoin = true;
+            IsJoin = true;
+						
+			var rightNode = EntGraph
+				.Where(g => g.Member != null && g.Member.EqualsMember(rightMember))
+				.Select(g => g.Relationship)
+				.FirstOrDefault();
 
-            if (!_childrenToLoad.ContainsMember(rightMember))
-                _childrenToLoad.Add(rightMember);
+			if (rightNode != null && !RelationshipsToLoad.ContainsMember(rightNode.Member))
+				RelationshipsToLoad.Add(rightNode);
+
 
             Table table = new Table(typeof(TRight), joinType);
             _tables.Add(table);

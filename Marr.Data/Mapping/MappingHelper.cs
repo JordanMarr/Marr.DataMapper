@@ -78,13 +78,16 @@ namespace Marr.Data.Mapping
                 }
             }
 
-			LoadEagerLoadedProperties(ent);
-            PrepareLazyLoadedProperties(ent);
-
             return ent;
         }
 
-		private void LoadEagerLoadedProperties(object ent)
+		/// <summary>
+		/// Eager loads any eager loaded properties.
+		/// Honors the user specified "Graph()" relationships to load.
+		/// </summary>
+		/// <param name="ent">The parent entity.</param>
+		/// <param name="rootQuery">The root query that specifies which children to load.</param>
+		public void LoadEagerLoadedProperties(object ent, QGen.QueryBuilder rootQuery)
 		{
 			// Load eager loaded properties
 			Type entType = ent.GetType();
@@ -93,7 +96,16 @@ namespace Marr.Data.Mapping
 				var relationships = _repos.Relationships[entType];
 				foreach (var rel in relationships.Where(r => r.IsEagerLoaded))
 				{
-					using (var db = new DataMapper(_db.ProviderFactory, _db.ConnectionString))
+					// Ensure that user specified relationships to load includes this one
+					// If relationshipsToLoad count is 0, then load all.
+					// If relationshipsToLoad > 0, then only load the ones explicitly included.
+					if (rootQuery.RelationshipsToLoad.Count() > 0 &&
+						!rootQuery.RelationshipsToLoad.Any(r => r.RelationshipInfo.EntityType == rel.RelationshipInfo.EntityType))
+					{
+						continue;
+					}
+
+					using (var db = new DataMapper(_db.ProviderFactory, _db.ConnectionString, rootQuery))
 					{
 						// NOTE: If parent _db is in a transaction, new db will be outside of that transaction.
 						object eagerLoadedValue = rel.EagerLoaded.Load(db, ent);
@@ -103,7 +115,13 @@ namespace Marr.Data.Mapping
 			}
 		}
 
-        private void PrepareLazyLoadedProperties(object ent)
+		/// <summary>
+		/// Prepares any lazy loaded properties to be lazy loaded by substituting the lazy load proxy.
+		/// Honors the user specified "Graph()" relationships to load.
+		/// </summary>
+		/// <param name="ent"></param>
+		/// <param name="rootQuery"></param>
+		public void PrepareLazyLoadedProperties(object ent, QGen.QueryBuilder rootQuery)
         {
             // Handle lazy loaded properties
             Type entType = ent.GetType();
@@ -111,7 +129,7 @@ namespace Marr.Data.Mapping
             {
                 Func<IDataMapper> dbCreate = () =>
                 {
-                    var db = new DataMapper(_db.ProviderFactory, _db.ConnectionString);
+					var db = new DataMapper(_db.ProviderFactory, _db.ConnectionString, rootQuery);
                     db.SqlMode = SqlModes.Text;
                     return db;
                 };

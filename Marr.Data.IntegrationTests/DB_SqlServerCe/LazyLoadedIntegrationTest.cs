@@ -18,15 +18,19 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
             mappings
                 .Entity<Building>()
                     .Columns.AutoMapSimpleTypeProperties()
+						.For(b => b.Name).SetPrimaryKey()
                     .Relationships.AutoMapICollectionOrComplexProperties()
                         .Ignore(b => b.Offices)
                         .Ignore(b => b.OfficesDynamic)
                         .For("_offices")
-                            .LazyLoad((db, building) => db.Query<Office>().Where(o => o.BuildingName == building.Name).ToList())
+                            .LazyLoad((db, building) => 
+								db.Query<Office>().Where(o => o.BuildingName == building.Name).ToList())
                         .For("_officesDynamic")
-                            .LazyLoad((db, building) => db.Query<Office>().Where(o => o.BuildingName == building.Name).ToList())
+                            .LazyLoad((db, building) => 
+								db.Query<Office>().Where(o => o.BuildingName == building.Name).ToList())
                 .Entity<Office>()
                     .Columns.AutoMapSimpleTypeProperties();
+						//.For(o => o.Number).SetPrimaryKey();
         }
 
         [TestMethod]
@@ -35,7 +39,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
             var db = base.CreateSqlServerCeDB();
             db.SqlMode = SqlModes.Text;
 
-            Building building = db.Query<Building>().Where(b => b.Name == "Building1").FirstOrDefault();
+            Building building = db.Query<Building>().Graph().Where(b => b.Name == "Building1").FirstOrDefault();
 
             int officeCount = building.Offices.Count;
             Assert.AreEqual(3, officeCount);
@@ -50,7 +54,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
         }
 
         [TestMethod]
-        public void TestLazyLoad_Combing_Graphed_Aka_Eager_With_LazyLoad()
+        public void TestLazyLoad_Combing_Graphed_With_LazyLoad()
         {
             var db = base.CreateSqlServerCeDB();
             db.SqlMode = SqlModes.Text;
@@ -75,7 +79,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
             var db = base.CreateSqlServerCeDB();
             db.SqlMode = SqlModes.Text;
 
-            Building building = db.Query<Building>().Where(b => b.Name == "Building1").FirstOrDefault();
+            Building building = db.Query<Building>().Graph().Where(b => b.Name == "Building1").FirstOrDefault();
 
             int officeCount = building.OfficesDynamic.Count;
             Assert.AreEqual(3, officeCount);
@@ -95,7 +99,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
             var db = base.CreateSqlServerCeDB();
             db.SqlMode = SqlModes.Text;
 
-            var buildings = db.Query<Building>().OrderBy(b => b.Name).ToList();
+            var buildings = db.Query<Building>().Graph().OrderBy(b => b.Name).ToList();
 
             Assert.AreEqual("Building1", buildings[0].Name);
             Assert.AreEqual("Building2", buildings[1].Name);

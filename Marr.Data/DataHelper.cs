@@ -142,6 +142,12 @@ namespace Marr.Data
             return false;
         }
 
+		public static bool ContainsMember(this List<Relationship> list, MemberInfo member)
+		{
+			var members = list.Select(r => r.Member).ToList();
+			return members.ContainsMember(member);
+		}
+
         public static bool EqualsMember(this MemberInfo member, MemberInfo otherMember)
         {
             return member.Name == otherMember.Name && member.DeclaringType == otherMember.DeclaringType;

@@ -710,8 +710,8 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 
                         OrderItem orderItem1 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc1", Price = 5.5m };
                         OrderItem orderItem2 = new OrderItem { OrderID = order.ID, ItemDescription = "Desc2", Price = 6.6m };
-                        db.Insert<OrderItem>().Entity(orderItem1).GetIdentity().Execute();
-                        db.Insert<OrderItem>().Entity(orderItem2).GetIdentity().Execute();
+						db.Insert<OrderItem>(orderItem1);
+						db.Insert<OrderItem>(orderItem2);
 
                         Receipt receipt1 = new Receipt { OrderItemID = orderItem1.ID, AmountPaid = orderItem1.Price };
                         Receipt receipt2 = new Receipt { OrderItemID = orderItem2.ID, AmountPaid = orderItem2.Price };
