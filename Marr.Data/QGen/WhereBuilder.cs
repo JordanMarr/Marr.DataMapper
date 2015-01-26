@@ -144,50 +144,39 @@ namespace Marr.Data.QGen
             return expression;
         }
 
-		private object GetRightValue(Expression rightExpression)
+		private object GetRightValue(Expression expression)
 		{
 			object rightValue = null;
-
-			var right = rightExpression as ConstantExpression;
-
-			if (right == null) // Value is not directly passed in as a constant
+			
+			var simpleConstExp = expression as ConstantExpression;
+			if (simpleConstExp == null) // Value is not directly passed in as a constant
 			{
-				MemberExpression rightMemberExp = (rightExpression as MemberExpression);
-				MemberExpression parentMemberExpression = rightMemberExp.Expression as MemberExpression;
+				MemberExpression parentMemberExpression = expression as MemberExpression;
 				ConstantExpression constExp = null;
 
-				if (parentMemberExpression == null) // Value is passed in as a variable
+				// Value may be nested in multiple levels of objects/properties, so traverse the MemberExpressions 
+				// until a ConstantExpression property value is found, and then unwind the stack to get the value.
+				var memberNames = new Stack<string>();
+
+				while (parentMemberExpression != null)
 				{
-					var parent = (rightMemberExp.Expression as ConstantExpression).Value;
-					rightValue = _repos.ReflectionStrategy.GetFieldValue(parent, rightMemberExp.Member.Name);
+					memberNames.Push(parentMemberExpression.Member.Name);
+
+					constExp = parentMemberExpression.Expression as ConstantExpression;
+					parentMemberExpression = parentMemberExpression.Expression as MemberExpression;
 				}
-				else // Value is on a property
+
+				object entity = constExp.Value;
+				while (memberNames.Count > 0)
 				{
-					// Value may be nested in multiple levels of objects/properties, so traverse the MemberExpressions 
-					// until a ConstantExpression property value is found, and then unwind the stack to get the value.
-					var memberNames = new Stack<string>();
-					memberNames.Push(rightMemberExp.Member.Name);
-
-					while (parentMemberExpression != null)
-					{
-						memberNames.Push(parentMemberExpression.Member.Name);
-
-						constExp = parentMemberExpression.Expression as ConstantExpression;
-						parentMemberExpression = parentMemberExpression.Expression as MemberExpression;
-					}
-
-					object entity = constExp.Value;
-					while (memberNames.Count > 0)
-					{
-						string entityName = memberNames.Pop();
-						entity = _repos.ReflectionStrategy.GetFieldValue(entity, entityName);
-					}
-					rightValue = entity;
+					string entityName = memberNames.Pop();
+					entity = _repos.ReflectionStrategy.GetFieldValue(entity, entityName);
 				}
+				rightValue = entity;
 			}
 			else // Value is passed in directly as a constant
 			{
-				rightValue = right.Value;
+				rightValue = simpleConstExp.Value;
 			}
 
 			return rightValue;
