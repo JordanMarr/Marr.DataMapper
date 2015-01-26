@@ -1,28 +1,22 @@
 <?xml version="1.0"?>
 <package xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-    <id>MarrDataMapper</id>
-    <version>
-      3.32
-    </version>
-	  <copyright>
-		  2008
-	  </copyright>
-	  <title>
-		  Marr.DataMapper
-	  </title>
-    <authors>Jordan Marr</authors>
-    <requireLicenseAcceptance>true</requireLicenseAcceptance>
-    <description>Marr DataMapper is a Linq enabled Micro-ORM that allows you to project views into complex object graphs. Contributors: Rick Schott, vitidev, Keivan Beigi, Mark McDowall</description>
-     <language>en-US</language>
-    <projectUrl>http://marrdatamapper.codeplex.com/</projectUrl>
-    <licenseUrl>http://marrdatamapper.codeplex.com/license</licenseUrl>
-    <tags>micro ORM data mapper fluent linq sql relational database DAL entity framework</tags>
-  </metadata>
+	<metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+		<id>MarrDataMapper</id>
+		<title>Marr.DataMapper</title>
+		<version>3.33</version>
+		<copyright>2008</copyright>		
+		<authors>Jordan Marr</authors>
+		<requireLicenseAcceptance>true</requireLicenseAcceptance>
+		<description>Marr DataMapper is a Linq enabled Micro-ORM that allows you to project views into complex object graphs. Contributors: Rick Schott, vitidev, Keivan Beigi, Mark McDowall</description>
+		<language>en-US</language>
+		<projectUrl>http://marrdatamapper.codeplex.com/</projectUrl>
+		<licenseUrl>http://marrdatamapper.codeplex.com/license</licenseUrl>
+		<tags>micro ORM data mapper fluent linq sql relational database DAL entity framework</tags>
+	</metadata>
 
-  <files>
-     <file src="..\Marr.Data\bin\Release\*.dll" target="lib" />    
-  </files>
+	<files>
+		<file src="..\Marr.Data\bin\Release\*.dll" target="lib" />
+	</files>
 
 </package>
 
