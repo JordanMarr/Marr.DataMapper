@@ -60,7 +60,7 @@ namespace Marr.Data.QGen
                     return new SqliteRowCountQueryDecorator(innerQuery);
 
                 default:
-                    throw new NotImplementedException("Row count has not yet been implemented for this provider.");
+                    throw new NotSupportedException("Row count is not currently supported for this provider.");
             }
         }
 
@@ -81,7 +81,7 @@ namespace Marr.Data.QGen
                     return new SqlitePagingQueryDecorator(innerQuery, skip, take);
 
                 default:
-                    throw new NotImplementedException("Paging has not yet been implemented for this provider.");
+					throw new NotSupportedException("Paging is not currently supported for this provider.");
             }
         }
 

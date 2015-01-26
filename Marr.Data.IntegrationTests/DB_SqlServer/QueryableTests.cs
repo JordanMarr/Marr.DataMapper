@@ -545,10 +545,56 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 				}
 			}
 		}
+
+		[TestMethod]
+		[ExpectedException(typeof(NotSupportedException))]
+		public void IQueryable_ShouldThrowUnsupportedExceptionIfTheyIncludeAFunctionInTheWhereClause()
+		{
+			using (var db = CreateSqlServerDB())
+			{
+				try
+				{
+					db.SqlMode = SqlModes.Text;
+					db.BeginTransaction();
+
+					var existingOrders = db.Query<Order>().Where(o => o.ID > 0).ToList();
+					int count = existingOrders.Count;
+					db.Delete<Order>(o => o.ID > 0);
+
+					Order order1 = new Order { OrderName = "Test1" };
+					db.Insert(order1);
+
+					// Bury the order within another object to ensure that the expression visitor can parse out the OrderName
+					var nestedPropertyObj = new NestedPropertyObject
+					{
+						Order = new Order { OrderName = "Test1" }
+					};
+
+					var order = db.Queryable<Order>()
+						.Where(o => o.OrderName == nestedPropertyObj.GetOrder().OrderName)
+						.FirstOrDefault();
+
+					Assert.IsNotNull(order);
+					Assert.AreEqual("Test1", order.OrderName);
+				}
+				catch
+				{
+					throw;
+				}
+				finally
+				{
+					db.RollBack();
+				}
+			}
+		}
 	}
 
 	internal class NestedPropertyObject
 	{
 		public Order Order { get; set; }
+		public Order GetOrder()
+		{
+			return this.Order;
+		}
 	}
 }

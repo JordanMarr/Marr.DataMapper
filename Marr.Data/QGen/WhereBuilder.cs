@@ -98,8 +98,8 @@ namespace Marr.Data.QGen
                     break;
 
                 default:
-                    string msg = string.Format("'{0}' expressions are not yet implemented in the where clause expression tree parser.", method);
-                    throw new NotImplementedException(msg);
+                    string msg = string.Format("'{0}' expressions are not currently supported in the Where clause expression tree parser.", method);
+                    throw new NotSupportedException(msg);
             }
 
             return expression;
@@ -151,19 +151,27 @@ namespace Marr.Data.QGen
 			var simpleConstExp = expression as ConstantExpression;
 			if (simpleConstExp == null) // Value is not directly passed in as a constant
 			{
-				MemberExpression parentMemberExpression = expression as MemberExpression;
+				MemberExpression memberExp = expression as MemberExpression;
 				ConstantExpression constExp = null;
 
 				// Value may be nested in multiple levels of objects/properties, so traverse the MemberExpressions 
 				// until a ConstantExpression property value is found, and then unwind the stack to get the value.
 				var memberNames = new Stack<string>();
 
-				while (parentMemberExpression != null)
+				while (memberExp != null)
 				{
-					memberNames.Push(parentMemberExpression.Member.Name);
+					memberNames.Push(memberExp.Member.Name);
 
-					constExp = parentMemberExpression.Expression as ConstantExpression;
-					parentMemberExpression = parentMemberExpression.Expression as MemberExpression;
+					// Function calls are not supported - user needs to simplify their Where expression.
+					var methodExp = memberExp.Expression as MethodCallExpression;
+					if (methodExp != null)
+					{
+						var errMsg = string.Format("Function calls are not supported by the Where clause expression parser.  Please evaluate your function call, '{0}', manually and then use the resulting paremeter value in your Where expression.",  methodExp.Method.Name);
+						throw new NotSupportedException(errMsg);
+					}
+
+					constExp = memberExp.Expression as ConstantExpression;
+					memberExp = memberExp.Expression as MemberExpression;
 				}
 
 				object entity = constExp.Value;

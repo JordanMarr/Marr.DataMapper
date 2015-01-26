@@ -105,8 +105,8 @@ namespace Marr.Data.QGen
 					break;
 
 				default:
-					string msg = string.Format("'{0}' expressions are not yet implemented in the where clause expression tree parser.", expression.Method.Name);
-					throw new NotImplementedException(msg);
+					string msg = string.Format("'{0}' expressions are not currently supported in the where clause expression tree parser.", expression.Method.Name);
+					throw new NotSupportedException(msg);
 			}
 
 			return expression;
