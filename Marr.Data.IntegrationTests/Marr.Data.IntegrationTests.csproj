@@ -84,6 +84,7 @@
     <Compile Include="DB_SqlServerCe\Entities\Order.cs" />
     <Compile Include="DB_Access\Entities\Product.cs" />
     <Compile Include="DB_SqlServerCe\ParentReferenceTests.cs" />
+    <Compile Include="DB_SqlServer\EagerLoadJoinTests.cs" />
     <Compile Include="DB_SqlServer\EagerLoadTests.cs" />
     <Compile Include="DB_SqlServer\Entities\FluentMappedOrder.cs" />
     <Compile Include="DB_SqlServer\Entities\Order.cs" />

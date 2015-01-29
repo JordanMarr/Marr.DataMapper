@@ -81,6 +81,7 @@ namespace Marr.Data.Mapping
 
         public Type MemberType { get; private set; }
 
+		public ILazyLoaded LazyLoaded { get; set; }
         public bool IsLazyLoaded
         {
             get
@@ -89,8 +90,7 @@ namespace Marr.Data.Mapping
             }
         }
 
-        public ILazyLoaded LazyLoaded { get; set; }
-
+		public IEagerLoaded EagerLoaded { get; set; }
 		public bool IsEagerLoaded
 		{
 			get
@@ -99,7 +99,14 @@ namespace Marr.Data.Mapping
 			}
 		}
 
-		public IEagerLoaded EagerLoaded { get; set; }
+		public IEagerLoadedJoin EagerLoadedJoin { get; set; }
+		public bool IsEagerLoadedJoin
+		{
+			get
+			{
+				return EagerLoadedJoin != null;
+			}
+		}
 
         public GetterDelegate Getter { get; set; }
         public SetterDelegate Setter { get; set; }

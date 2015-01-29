@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using Marr.Data.Mapping.Strategies;
@@ -95,6 +96,30 @@ namespace Marr.Data.Mapping
 					Query = query,
 					Condition = condition
 				};
+			return this;
+		}
+
+		public RelationshipBuilder<TEntity> JoinOne<TRight>(Expression<Func<TEntity, TRight>> rightEntityOne, Expression<Func<TEntity, TRight, bool>> joinOn, QGen.JoinType joinType = QGen.JoinType.Inner)
+		{
+			AssertCurrentPropertyIsSet();
+			Relationships[_currentPropertyName].EagerLoadedJoin = new EagerLoadedJoin<TEntity, TRight>
+			{
+				JoinType = joinType,
+				RightEntityOne = rightEntityOne,
+				JoinOn = joinOn
+			};
+			return this;
+		}
+
+		public RelationshipBuilder<TEntity> JoinMany<TRight>(Expression<Func<TEntity, IEnumerable<TRight>>> rightEntityMany, Expression<Func<TEntity, TRight, bool>> joinOn, QGen.JoinType joinType = QGen.JoinType.Inner)
+		{
+			AssertCurrentPropertyIsSet();
+			Relationships[_currentPropertyName].EagerLoadedJoin = new EagerLoadedJoin<TEntity, TRight>
+			{
+				JoinType = joinType,
+				RightEntityMany = rightEntityMany,
+				JoinOn = joinOn
+			};
 			return this;
 		}
 

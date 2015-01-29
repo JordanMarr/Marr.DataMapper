@@ -11,6 +11,9 @@ using System.Collections;
 
 namespace Marr.Data.QGen
 {
+	/// <summary>
+	/// Contains internal contextual properties about the query in a non-generic base class.
+	/// </summary>
 	public abstract class QueryBuilder : ExpressionVisitor
 	{
 		public QueryBuilder(QueryBuilder parentQuery = null)
@@ -49,8 +52,7 @@ namespace Marr.Data.QGen
 	}
 
     /// <summary>
-    /// This class is responsible for building a select query.
-    /// It uses chaining methods to provide a fluent interface for creating select queries.
+    /// This class is responsible for building a query.
     /// </summary>
     /// <typeparam name="T"></typeparam>
 	public class QueryBuilder<T> : QueryBuilder, IEnumerable<T>, IQueryBuilder
@@ -207,7 +209,10 @@ namespace Marr.Data.QGen
 
 					if (node != null)
 					{
-						tablesInView.Add(new Table(node.EntityType, JoinType.None));
+						if (r.IsEagerLoadedJoin)
+							r.EagerLoadedJoin.Join(this);
+						else	
+							tablesInView.Add(new Table(node.EntityType, JoinType.None));
 					}
 				}
 			}
@@ -216,13 +221,19 @@ namespace Marr.Data.QGen
 				// Load all relationships
 				foreach (var node in EntGraph.Where(g => g.IsRoot || !g.Relationship.IsLazyLoaded && !g.Relationship.IsEagerLoaded))
 				{
-					tablesInView.Add(new Table(node.EntityType, JoinType.None));
+					if (node.Relationship != null && node.Relationship.IsEagerLoadedJoin)
+						node.Relationship.EagerLoadedJoin.Join(this);
+					else
+						tablesInView.Add(new Table(node.EntityType, JoinType.None));
 				}
 			}
 
-			// Replace the base table with a view with tables
-			View view = new View(_tables[0].Name, tablesInView.ToArray());
-			_tables.ReplaceBaseTable(view);
+			if (!IsJoin)
+			{
+				// Replace the base table with a view with tables
+				View view = new View(_tables[0].Name, tablesInView.ToArray());
+				_tables.ReplaceBaseTable(view);
+			}
 
 			return this;
         }
@@ -355,10 +366,7 @@ namespace Marr.Data.QGen
 
             if (IsJoin && IsFromTable)
                 throw new InvalidOperationException("Cannot use FromView in conjunction with Join");
-
-            if (IsJoin && IsGraph)
-                throw new InvalidOperationException("Cannot use Graph in conjunction with Join");
-
+			
             if (IsFromView && IsFromTable)
                 throw new InvalidOperationException("Cannot use FromView in conjunction with FromTable");
         }
@@ -418,7 +426,7 @@ namespace Marr.Data.QGen
 		{
 			return new EntityGraph(typeof(T), _results);
 		}
-		
+				
         private ColumnMapCollection GetColumns(IEnumerable<string> entitiesToLoad)
         {
             // If QueryToGraph<T> and no child load entities are specified, load all children
@@ -458,16 +466,16 @@ namespace Marr.Data.QGen
 
         public virtual SortBuilder<T> Where<TObj>(Expression<Func<TObj, bool>> filterExpression)
         {
-            bool useAltNames = IsFromView || IsGraph;
-            bool addTablePrefixToColumns = true;
+            bool useAltNames = (IsFromView || IsGraph) && !IsJoin;
+			bool addTablePrefixToColumns = true;
             _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, useAltNames, addTablePrefixToColumns);
             return SortBuilder;
         }
 
         public virtual SortBuilder<T> Where(Expression<Func<T, bool>> filterExpression)
         {
-            bool useAltNames = IsFromView || IsGraph;
-            bool addTablePrefixToColumns = true;
+			bool useAltNames = (IsFromView || IsGraph) && !IsJoin;
+			bool addTablePrefixToColumns = true;
             _whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, useAltNames, addTablePrefixToColumns);
             return SortBuilder;
         }
@@ -482,7 +490,7 @@ namespace Marr.Data.QGen
                 whereClause = whereClause.Insert(0, " WHERE ");
             }
 
-            bool useAltNames = IsFromView || IsGraph || IsJoin;
+			bool useAltNames = (IsFromView || IsGraph) && !IsJoin;
             _whereBuilder = new WhereBuilder<T>(whereClause, useAltNames);
             return SortBuilder;
         }
