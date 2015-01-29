@@ -114,6 +114,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 			var order = _db.Query<FluentMappedOrder>()
 						.Graph()
 						.Where(o => o.OrderName == "Order 1")
+						.OrderBy(o => o.OrderName)
 						.FirstOrDefault();
 
 			Assert.AreEqual(2, order.OrderItems.Count);
@@ -130,6 +131,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 		{
 			var orders = _db.Query<FluentMappedOrder>()
 						.Graph()
+						.OrderBy(o => o.OrderName)
 						.ToArray();
 
 			Assert.AreEqual(2, orders.Length);
@@ -152,6 +154,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 		public void WhenGraphIsNotCalled_OnlyRootEntityShouldBeLoaded()
 		{
 			var orders = _db.Query<FluentMappedOrder>()
+						.OrderBy(o => o.OrderName)
 						.ToArray();
 
 			Assert.IsTrue(orders.Any());
@@ -164,6 +167,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 		{
 			var orders = _db.Query<FluentMappedOrder>()
 						.Graph(o => o.OrderItems)
+						.OrderBy(o => o.OrderName)
 						.ToArray();
 
 			Assert.IsTrue(orders.Any());
@@ -179,6 +183,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 		{
 			var orders = _db.Query<FluentMappedOrder>()
 						.Graph()
+						.OrderBy(o => o.OrderName)
 						.ToArray();
 
 			Assert.IsTrue(orders.Any());

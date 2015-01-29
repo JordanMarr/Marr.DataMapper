@@ -58,7 +58,7 @@ namespace Marr.Data.Mapping
 
 
         /// <summary>
-        /// Sets a property to be lazy loaded, with a given query.
+		/// Sets the current property to be lazy loaded with the given query.
         /// </summary>
         /// <typeparam name="TChild"></typeparam>
         /// <param name="query"></param>
@@ -74,7 +74,7 @@ namespace Marr.Data.Mapping
 
 
         /// <summary>
-        /// Sets a property to be lazy loaded, with a given query.
+        /// Sets the current property to be lazy loaded with the given query.
         /// </summary>
         /// <typeparam name="TChild"></typeparam>
         /// <param name="query"></param>
@@ -87,6 +87,13 @@ namespace Marr.Data.Mapping
             return this;
         }
 
+		/// <summary>
+		/// Sets the current property to be eager loaded by the given query.
+		/// </summary>
+		/// <typeparam name="TChild"></typeparam>
+		/// <param name="query"></param>
+		/// <param name="condition"></param>
+		/// <returns></returns>
 		public RelationshipBuilder<TEntity> EagerLoad<TChild>(Func<IDataMapper, TEntity, TChild> query, Func<TEntity, bool> condition = null)
 		{
 			AssertCurrentPropertyIsSet();
@@ -99,7 +106,27 @@ namespace Marr.Data.Mapping
 			return this;
 		}
 
-		public RelationshipBuilder<TEntity> JoinOne<TRight>(Expression<Func<TEntity, TRight>> rightEntityOne, Expression<Func<TEntity, TRight, bool>> joinOn, QGen.JoinType joinType = QGen.JoinType.Inner)
+		/// <summary>
+		/// Sets the current one-to-one relationship property to be eager loaded using the given join relationship.
+		/// </summary>
+		/// <typeparam name="TRight">The type of entity that will be the right join.</typeparam>
+		/// <param name="rightEntityOne">
+		/// A lambda expression that specifies which child property to join.
+		/// Ex: order => order.OrderItems
+		/// </param>
+		/// <param name="joinOn">
+		/// A lambda expression that specifies the join condition.
+		/// Ex: (order, orderItem) => order.ID == orderItem.OrderID
+		/// </param>
+		/// <param name="joinType">
+		/// The type of SQL join: Inner, Left or Right.
+		/// Default: Left
+		/// </param>
+		/// <returns></returns>
+		public RelationshipBuilder<TEntity> JoinOne<TRight>(
+			Expression<Func<TEntity, TRight>> rightEntityOne, 
+			Expression<Func<TEntity, TRight, bool>> joinOn, 
+			QGen.JoinType joinType = QGen.JoinType.Left)
 		{
 			AssertCurrentPropertyIsSet();
 			Relationships[_currentPropertyName].EagerLoadedJoin = new EagerLoadedJoin<TEntity, TRight>
@@ -111,7 +138,18 @@ namespace Marr.Data.Mapping
 			return this;
 		}
 
-		public RelationshipBuilder<TEntity> JoinMany<TRight>(Expression<Func<TEntity, IEnumerable<TRight>>> rightEntityMany, Expression<Func<TEntity, TRight, bool>> joinOn, QGen.JoinType joinType = QGen.JoinType.Inner)
+		/// <summary>
+		/// Sets the current one-to-many relationship property to be eager loaded using the given join relationship.
+		/// </summary>
+		/// <typeparam name="TRight"></typeparam>
+		/// <param name="rightEntityMany"></param>
+		/// <param name="joinOn"></param>
+		/// <param name="joinType"></param>
+		/// <returns></returns>
+		public RelationshipBuilder<TEntity> JoinMany<TRight>(
+			Expression<Func<TEntity, IEnumerable<TRight>>> rightEntityMany, 
+			Expression<Func<TEntity, TRight, bool>> joinOn, 
+			QGen.JoinType joinType = QGen.JoinType.Left)
 		{
 			AssertCurrentPropertyIsSet();
 			Relationships[_currentPropertyName].EagerLoadedJoin = new EagerLoadedJoin<TEntity, TRight>
@@ -123,6 +161,10 @@ namespace Marr.Data.Mapping
 			return this;
 		}
 
+		/// <summary>
+		/// Marks the current relationship property as a one-to-one relationship.
+		/// </summary>
+		/// <returns></returns>
         public RelationshipBuilder<TEntity> SetOneToOne()
         {
             AssertCurrentPropertyIsSet();
@@ -130,12 +172,21 @@ namespace Marr.Data.Mapping
             return this;
         }
 
+		/// <summary>
+		/// Marks the current relationship property as a one-to-one relationship.
+		/// </summary>
+		/// <param name="propertyName"></param>
+		/// <returns></returns>
         public RelationshipBuilder<TEntity> SetOneToOne(string propertyName)
         {
             Relationships[propertyName].RelationshipInfo.RelationType = RelationshipTypes.One;
             return this;
         }
 
+		/// <summary>
+		/// Marks the current relationship property as a one-to-many relationship.
+		/// </summary>
+		/// <returns></returns>
         public RelationshipBuilder<TEntity> SetOneToMany()
         {
             AssertCurrentPropertyIsSet();
@@ -143,12 +194,23 @@ namespace Marr.Data.Mapping
             return this;
         }
 
+		/// <summary>
+		/// Marks the current relationship property as a one-to-many relationship.
+		/// </summary>
+		/// <param name="propertyName"></param>
+		/// <returns></returns>
         public RelationshipBuilder<TEntity> SetOneToMany(string propertyName)
         {
             Relationships[propertyName].RelationshipInfo.RelationType = RelationshipTypes.Many;
             return this;
         }
 
+		/// <summary>
+		/// Ignores the current relationship property. 
+		/// (This is used in conjunction with one of the auto-mapping fluent methods).
+		/// </summary>
+		/// <param name="property"></param>
+		/// <returns></returns>
         public RelationshipBuilder<TEntity> Ignore(Expression<Func<TEntity, object>> property)
         {
             string propertyName = property.GetMemberName();
