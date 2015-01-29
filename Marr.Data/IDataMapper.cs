@@ -203,6 +203,25 @@ namespace Marr.Data
 
         #endregion
 
+		#region - IQueryable<T> -
+
+		/// <summary>
+		/// Provides IQueryable support.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <returns></returns>
+		System.Linq.IQueryable<T> Queryable<T>();
+
+		/// <summary>
+		/// Provides IQueryable support.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="query">A base query that can be passed in to provide configuration options.</param>
+		/// <returns></returns>
+		System.Linq.IQueryable<T> Queryable<T>(QueryBuilder<T> query);
+
+		#endregion
+
         #region - Query to Graph -
 
         /// <summary>
@@ -216,16 +235,5 @@ namespace Marr.Data
         ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList);
 
         #endregion
-
-		#region - IQueryable<T> -
-		
-		/// <summary>
-		/// Provides IQueryable support.
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <returns></returns>
-		System.Linq.IQueryable<T> Queryable<T>();
-
-		#endregion
 	}
 }

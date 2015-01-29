@@ -42,7 +42,6 @@ namespace Marr.Data
         private DbProviderFactory _dbProviderFactory;
         private string _connectionString;
         private DbCommand _command;
-		private QueryBuilder _parentQuery;
 
         /// <summary>
         /// Initializes a DataMapper for the given provider type and connection string.
@@ -67,25 +66,6 @@ namespace Marr.Data
 
 			_dbProviderFactory = dbProviderFactory;
 			_connectionString = connectionString;
-		}
-
-		/// <summary>
-		/// A database provider agnostic initialization.
-		/// </summary>
-		/// <param name="connectionString">The db connection string.</param>
-		/// <param name="dbProviderFactory">The db provider factory.</param>
-		/// <param name="parentQuery">An optional parent query (used for eager and lazy loaded scenarios).</param>
-		internal DataMapper(DbProviderFactory dbProviderFactory, string connectionString, QueryBuilder parentQuery)
-		{
-			if (dbProviderFactory == null)
-				throw new ArgumentNullException("dbProviderFactory instance cannot be null.");
-
-			if (string.IsNullOrEmpty(connectionString))
-				throw new ArgumentNullException("connectionString cannot be null or empty.");
-
-			_dbProviderFactory = dbProviderFactory;
-			_connectionString = connectionString;
-			_parentQuery = parentQuery;
 		}
 
         public string ConnectionString
@@ -570,10 +550,10 @@ namespace Marr.Data
         /// </summary>
         /// <typeparam name="T">The type of object that will be queried.</typeparam>
         /// <returns>Returns a QueryBuilder of T.</returns>
-        public QueryBuilder<T> Query<T>()
+        public virtual QueryBuilder<T> Query<T>()
         {
             var dialect = QGen.QueryFactory.CreateDialect(this);
-            return new QueryBuilder<T>(this, dialect, _parentQuery);
+            return new QueryBuilder<T>(this, dialect);
         }
 		
         /// <summary>
@@ -660,7 +640,21 @@ namespace Marr.Data
 		/// <returns></returns>
 		public IQueryable<T> Queryable<T>()
 		{
-			var qEnt = new QuerableEntityContext<T>(this.Query<T>());
+			return Queryable<T>(Query<T>());
+		}
+
+		/// <summary>
+		/// Provides IQueryable support.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="query">A base query that can be passed in to provide configuration options.</param>
+		/// <returns></returns>
+		public IQueryable<T> Queryable<T>(QueryBuilder<T> query)
+		{
+			if (query == null)
+				throw new ArgumentNullException("query");
+
+			var qEnt = new QuerableEntityContext<T>(query);
 			return new QGen.Queryable<T>(qEnt);
 		}
 

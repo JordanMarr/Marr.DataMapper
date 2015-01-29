@@ -105,7 +105,7 @@ namespace Marr.Data.Mapping
 						continue;
 					}
 
-					using (var db = new DataMapper(_db.ProviderFactory, _db.ConnectionString, rootQuery))
+					using (var db = new RelationshipDataMapper(_db.ProviderFactory, _db.ConnectionString, rootQuery))
 					{
 						// NOTE: If parent _db is in a transaction, new db will be outside of that transaction.
 						object eagerLoadedValue = rel.EagerLoaded.Load(db, ent);
@@ -129,7 +129,7 @@ namespace Marr.Data.Mapping
             {
                 Func<IDataMapper> dbCreate = () =>
                 {
-					var db = new DataMapper(_db.ProviderFactory, _db.ConnectionString, rootQuery);
+					var db = new RelationshipDataMapper(_db.ProviderFactory, _db.ConnectionString, rootQuery);
                     db.SqlMode = SqlModes.Text;
                     return db;
                 };

@@ -587,6 +587,87 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 				}
 			}
 		}
+
+		[TestMethod]
+		public void IQueryable_ShouldOnlyReturnRootLevelByDefault()
+		{
+			using (var db = CreateSqlServerDB())
+			{
+				try
+				{
+					db.SqlMode = SqlModes.Text;
+					db.BeginTransaction();
+
+					var existingOrders = db.Query<Order>().Where(o => o.ID > 0).ToList();
+					int count = existingOrders.Count;
+					db.Delete<Order>(o => o.ID > 0);
+
+					Order order1 = new Order { OrderName = "Test1" };
+					db.Insert(order1);
+
+					OrderItem orderItem1 = new OrderItem { ItemDescription = "Desc", OrderID = order1.ID, Price = 5.5m };
+					db.Insert(orderItem1);
+
+					IQueryable<Order> ctx = db.Queryable<Order>();
+					var order = ctx
+						.Where(o => o.OrderName == "Test1")
+						.FirstOrDefault();
+
+					Assert.IsNotNull(order);
+					Assert.IsNull(order.OrderItems, "No order items should have been queried because no Graph settings were specified via a base query.");
+				}
+				catch
+				{
+					throw;
+				}
+				finally
+				{
+					db.RollBack();
+				}
+			}
+		}
+
+		[TestMethod]
+		public void IQueryable_ShouldReturnTwoLevelsIfBaseQueryIsProvided()
+		{
+			using (var db = CreateSqlServerDB())
+			{
+				try
+				{
+					db.SqlMode = SqlModes.Text;
+					db.BeginTransaction();
+
+					var existingOrders = db.Query<Order>().Where(o => o.ID > 0).ToList();
+					int count = existingOrders.Count;
+					db.Delete<Order>(o => o.ID > 0);
+
+					Order order1 = new Order { OrderName = "Test1" };
+					db.Insert(order1);
+
+					OrderItem orderItem1 = new OrderItem { ItemDescription = "Desc", OrderID = order1.ID, Price = 5.5m };
+					db.Insert(orderItem1);
+
+					var baseQuery = db.Query<Order>();
+					baseQuery.Join<Order, OrderItem>(QGen.JoinType.Inner, o => o.OrderItems, (o, oi) => o.ID == oi.OrderID);
+
+					IQueryable<Order> ctx = db.Queryable<Order>(baseQuery);
+					var order = ctx
+						.Where(o => o.OrderName == "Test1")
+						.FirstOrDefault();
+
+					Assert.IsNotNull(order);
+					Assert.AreEqual(1, order.OrderItems.Count);
+				}
+				catch
+				{
+					throw;
+				}
+				finally
+				{
+					db.RollBack();
+				}
+			}
+		}
 	}
 
 	internal class NestedPropertyObject
