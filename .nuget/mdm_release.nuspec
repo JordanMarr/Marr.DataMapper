@@ -3,7 +3,7 @@
 	<metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
 		<id>MarrDataMapper</id>
 		<title>Marr.DataMapper</title>
-		<version>3.33</version>
+		<version>3.34</version>
 		<copyright>2008</copyright>		
 		<authors>Jordan Marr</authors>
 		<requireLicenseAcceptance>true</requireLicenseAcceptance>
@@ -11,7 +11,7 @@
 		<language>en-US</language>
 		<projectUrl>http://marrdatamapper.codeplex.com/</projectUrl>
 		<licenseUrl>http://marrdatamapper.codeplex.com/license</licenseUrl>
-		<tags>micro ORM data mapper fluent linq sql relational database DAL entity framework</tags>
+		<tags>micro ORM data mapper fluent Linq IQueryable sql relational database DAL entity framework nhibernate</tags>
 	</metadata>
 
 	<files>
