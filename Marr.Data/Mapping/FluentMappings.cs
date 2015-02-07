@@ -175,24 +175,13 @@ namespace Marr.Data.Mapping
 			}
 
 			/// <summary>
-			/// Provides a fluent table mapping interface.
+			/// Sets the table name to the class name of the entity that is being mapped.
 			/// </summary>
 			/// <typeparam name="T"></typeparam>
 			/// <returns></returns>
 			public TableBuilder<TEntity> AutoMapTable()
 			{
-				return new TableBuilder<TEntity>(_fluentEntity);
-			}
-
-			/// <summary>
-			/// Provides a fluent table mapping interface.
-			/// </summary>
-			/// <typeparam name="T"></typeparam>
-			/// <returns></returns>
-			[Obsolete("AutoMapTable<T>() is deprecated. Please use AutoMapTable() instead.")]
-			public TableBuilder<TEntity> AutoMapTable<T>()
-			{
-				return new TableBuilder<TEntity>(_fluentEntity);
+				return new TableBuilder<TEntity>(_fluentEntity, _entityType);
 			}
 
 			/// <summary>
@@ -202,7 +191,20 @@ namespace Marr.Data.Mapping
 			/// <param name="tableName"></param>
 			public TableBuilder<TEntity> MapTable(string tableName)
 			{
-				return new TableBuilder<TEntity>(_fluentEntity).SetTableName(tableName);
+				return new TableBuilder<TEntity>(_fluentEntity, _entityType).SetTableName(tableName);
+			}
+
+			/// <summary>
+			/// Sets the table name for a given type based on the entity class type.
+			/// </summary>
+			/// <param name="createTableNameFromEntityType">
+			/// A function that returns a table name based on the entity type that is being mapped.
+			/// </param>
+			/// <returns></returns>
+			public TableBuilder<TEntity> MapTable(Func<Type, string> createTableNameFromEntityType)
+			{
+				string tableName = createTableNameFromEntityType(_entityType);
+				return new TableBuilder<TEntity>(_fluentEntity, _entityType).SetTableName(tableName);
 			}
 		}
 
@@ -258,20 +260,7 @@ namespace Marr.Data.Mapping
 					m.MemberType == MemberTypes.Property &&
 					!DataHelper.IsSimpleType((m as PropertyInfo).PropertyType));
 			}
-
-			/// <summary>
-			/// Creates relationship mappings for the given type.
-			/// Maps all properties that are not "simple types".
-			/// </summary>
-			/// <returns></returns>
-			[Obsolete("AutoMapComplexTypeProperties<T>() is deprecated. Please use AutoMapComplexTypeProperties() instead.")]
-			public RelationshipBuilder<TEntity> AutoMapComplexTypeProperties<T>()
-			{
-				return AutoMapPropertiesWhere(m =>
-					m.MemberType == MemberTypes.Property &&
-					!DataHelper.IsSimpleType((m as PropertyInfo).PropertyType));
-			}
-
+			
 			/// <summary>
 			/// Creates relationship mappings for the given type if they match the predicate.
 			/// </summary>
@@ -292,19 +281,6 @@ namespace Marr.Data.Mapping
 			/// </summary>
 			/// <returns></returns>
 			public RelationshipBuilder<TEntity> MapProperties()
-			{
-				RelationshipCollection relationships = new RelationshipCollection();
-				MapRepository.Instance.Relationships[_entityType] = relationships;
-				return new RelationshipBuilder<TEntity>(_fluentEntity, relationships);
-			}
-
-			/// <summary>
-			/// Creates a RelationshipBuilder that starts out with no pre-populated relationships.
-			/// All relationships must be added manually using the builder.
-			/// </summary>
-			/// <returns></returns>
-			[Obsolete("MapProperties<T>() is deprecated. Please use MapProperties() instead.")]
-			public RelationshipBuilder<TEntity> MapProperties<T>()
 			{
 				RelationshipCollection relationships = new RelationshipCollection();
 				MapRepository.Instance.Relationships[_entityType] = relationships;

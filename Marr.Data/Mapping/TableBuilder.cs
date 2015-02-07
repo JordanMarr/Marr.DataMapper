@@ -13,10 +13,6 @@ namespace Marr.Data.Mapping
         private FluentMappings.MappingsFluentEntity<TEntity> _fluentEntity;
 		private Type _entityType;
 
-        public TableBuilder(FluentMappings.MappingsFluentEntity<TEntity> fluentEntity)
-			: this(fluentEntity, typeof(TEntity))
-        { }
-
 		public TableBuilder(FluentMappings.MappingsFluentEntity<TEntity> fluentEntity, Type entityType)
 		{
 			_fluentEntity = fluentEntity;

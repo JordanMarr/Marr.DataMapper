@@ -11,6 +11,16 @@ namespace Marr.Data.UnitTests
 	[TestClass]
 	public class FluentMappingTests
 	{
+		[TestInitialize]
+		public void TestInit()
+		{
+			// Make sure mappings are cleared
+			var repos = Marr.Data.MapRepository.Instance;
+			repos.Columns.Clear();
+			repos.Tables.Clear();
+			repos.Relationships.Clear();
+		}
+
 		[TestMethod]
 		public void ForEachEntity_ShouldApplyMappingsToAllSubclassesInAssembly()
 		{
@@ -54,6 +64,24 @@ namespace Marr.Data.UnitTests
 			// Check tables
 			Assert.AreEqual("Building", buildingTable);
 			Assert.AreEqual("Room", roomTable);
+		}
+
+		[TestMethod]
+		public void ShouldBeAbleToPluralizeTableNames()
+		{
+			var fluentMappings = new FluentMappings();
+			fluentMappings
+				.ForEachEntity<IEntityBase>(entity => entity
+					.Table.MapTable(t => t.Name + "s")
+				);
+
+			var repos = Marr.Data.MapRepository.Instance;
+			var buildingTable = repos.GetTableName(typeof(Building));
+			var roomTable = repos.GetTableName(typeof(Room));
+
+			// Check tables
+			Assert.AreEqual("Buildings", buildingTable);
+			Assert.AreEqual("Rooms", roomTable);
 		}
 
 		#region - Test Entity Classes -

@@ -189,7 +189,7 @@ namespace Marr.Data.Mapping
         /// <returns></returns>
         public TableBuilder<T> BuildTable<T>()
         {
-            return new TableBuilder<T>(null);
+            return new TableBuilder<T>(null, typeof(T));
         }
 
         /// <summary>
@@ -199,7 +199,7 @@ namespace Marr.Data.Mapping
         /// <param name="tableName"></param>
         public TableBuilder<T> BuildTable<T>(string tableName)
         {
-            return new TableBuilder<T>(null).SetTableName(tableName);
+			return new TableBuilder<T>(null, typeof(T)).SetTableName(tableName);
         }
 
         #endregion
