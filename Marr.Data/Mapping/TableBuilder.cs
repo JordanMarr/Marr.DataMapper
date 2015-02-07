@@ -11,17 +11,23 @@ namespace Marr.Data.Mapping
     public class TableBuilder<TEntity>
     {
         private FluentMappings.MappingsFluentEntity<TEntity> _fluentEntity;
+		private Type _entityType;
 
         public TableBuilder(FluentMappings.MappingsFluentEntity<TEntity> fluentEntity)
-        {
-            _fluentEntity = fluentEntity;
-        }
+			: this(fluentEntity, typeof(TEntity))
+        { }
+
+		public TableBuilder(FluentMappings.MappingsFluentEntity<TEntity> fluentEntity, Type entityType)
+		{
+			_fluentEntity = fluentEntity;
+			_entityType = entityType;
+		}
 
         #region - Fluent Methods -
 
         public TableBuilder<TEntity> SetTableName(string tableName)
         {
-            MapRepository.Instance.Tables[typeof(TEntity)] = tableName;
+			MapRepository.Instance.Tables[_entityType] = tableName;
             return this;
         }
 

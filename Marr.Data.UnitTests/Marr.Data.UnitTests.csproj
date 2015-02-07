@@ -60,6 +60,7 @@
     <Compile Include="Entities\Person.cs" />
     <Compile Include="Entities\UnmappedPerson.cs" />
     <Compile Include="ExecuteReaderTest.cs" />
+    <Compile Include="FluentMappingTests.cs" />
     <Compile Include="LazyLoadedTest.cs" />
     <Compile Include="MapBuilderTest.cs" />
     <Compile Include="EntityMergerTest.cs" />

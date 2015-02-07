@@ -118,7 +118,14 @@
     <Content Include="App_Data\DB_Access.mdb">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="App_Data\DB_SqlServer.mdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="App_Data\DB_SqlServerCe.sdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="App_Data\DB_SqlServer_log.ldf">
+      <DependentUpon>DB_SqlServer.mdf</DependentUpon>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="DB_SqlServer\DB Scripts.sql" />
