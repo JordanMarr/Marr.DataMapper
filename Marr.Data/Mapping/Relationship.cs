@@ -108,6 +108,20 @@ namespace Marr.Data.Mapping
 			}
 		}
 
+		/// <summary>
+		/// An undefined relationship is a relationship that has not been marked as 
+		/// LazyLoaded, EagerLoaded or EagerLoadedJoin.  
+		/// Undefined relationships will try to map joined columns (using alt names)
+		/// into an object graph.
+		/// </summary>
+		public bool IsUndefined
+		{
+			get
+			{
+				return !IsLazyLoaded && !IsEagerLoaded && !IsEagerLoadedJoin;
+			}
+		}
+
         public GetterDelegate Getter { get; set; }
         public SetterDelegate Setter { get; set; }
     }

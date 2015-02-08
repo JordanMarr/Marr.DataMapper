@@ -134,6 +134,18 @@ namespace Marr.Data
             }
         }
 
+		public bool HasDirectChildrenToMergeInQuery(IEnumerable<Relationship> relationshipsToLoad)
+		{
+			// Has no children
+			if (!Children.Any())
+				return false;
+
+			// Or has any children with undefined or join relationships
+			return Children
+				.Where(c => relationshipsToLoad.Any(rtl => rtl.Member.EqualsMember(c.Relationship.Member)))
+				.Any(c => c.Relationship.IsUndefined || c.Relationship.IsEagerLoadedJoin);
+		}
+
         /// <summary>
         /// Gets the columns mapped to this entity.
         /// </summary>
@@ -214,7 +226,7 @@ namespace Marr.Data
         /// </summary>
         /// <param name="reader"></param>
         /// <returns></returns>
-        public bool IsNewGroup(DbDataReader reader)
+        public bool IsNewGroup(DbDataReader reader, bool useAltName)
         {
             bool isNewGroup = false;
 
@@ -222,7 +234,7 @@ namespace Marr.Data
             GroupingKeyCollection groupingKeyColumns = this.GroupingKeyColumns;
 
             // Concatenate column values
-            KeyGroupInfo keyGroupInfo = groupingKeyColumns.CreateGroupingKey(reader);
+            KeyGroupInfo keyGroupInfo = groupingKeyColumns.CreateGroupingKey(reader, useAltName);
 
             if (!keyGroupInfo.HasNullKey && !_entityReferences.ContainsKey(keyGroupInfo.GroupingKey))
             {

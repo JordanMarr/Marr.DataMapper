@@ -10,10 +10,10 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 {
 	/// <summary>
 	/// Tests the following mapping:
-	/// Order with Joined OrderItems with Joined Receipt.
+	/// Order with eager loaded OrderItems with Joined Receipt.
 	/// </summary>
 	[TestClass]
-	public class EagerLoadJoinTests : TestBase
+	public class MixedRelationshipTests : TestBase
 	{
 		IDataMapper _db;
 
@@ -54,7 +54,9 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 						.PrefixAltNames("o")
 						.For(e => e.ID).SetPrimaryKey().SetAutoIncrement().SetReturnValue()
 					.Relationships.MapProperties()
-						.For(e => e.OrderItems).JoinMany<FluentMappedOrderItem>(o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
+						.For(e => e.OrderItems)
+							.EagerLoad((db, o) => db.Query<FluentMappedOrderItem>().Where(oi => oi.OrderID == o.ID).ToList())
+				//.JoinMany<FluentMappedOrderItem>(o => o.OrderItems, (o, oi) => o.ID == oi.OrderID)
 
 				.Entity<FluentMappedOrderItem>()
 					.Table.MapTable("OrderItem")
@@ -62,7 +64,8 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 						.PrefixAltNames("oi")
 						.For(oi => oi.ID).SetPrimaryKey().SetAutoIncrement().SetReturnValue()
 					.Relationships.MapProperties()
-						.For(oi => oi.ItemReceipt).JoinOne<FluentMappedReceipt>(oi => oi.ItemReceipt, (oi, r) => oi.ID == r.OrderItemID)
+						.For(oi => oi.ItemReceipt)
+							.JoinOne<FluentMappedReceipt>(oi => oi.ItemReceipt, (oi, r) => oi.ID == r.OrderItemID)
 
 				.Entity<FluentMappedReceipt>()
 					.Table.MapTable("Receipt")
@@ -115,11 +118,13 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 		[TestMethod]
 		public void WhenLoadingASingleOrder_ShouldEagerLoadChildren()
 		{
-			var order = _db.Query<FluentMappedOrder>()
-						.Graph()
-						.Where(o => o.OrderName == "Order 1")
-						.OrderBy(o => o.OrderName)
-						.FirstOrDefault();
+			var query = _db.Query<FluentMappedOrder>().Graph();
+			var queryable = _db.Queryable<FluentMappedOrder>(query);
+
+			var order = queryable
+				.Where(o => o.OrderName == "Order 1")
+				.OrderBy(o => o.OrderName)
+				.FirstOrDefault();
 
 			Assert.AreEqual(2, order.OrderItems.Count);
 

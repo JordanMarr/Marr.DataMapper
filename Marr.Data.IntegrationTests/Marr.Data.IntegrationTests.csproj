@@ -89,6 +89,7 @@
     <Compile Include="DB_SqlServer\Entities\FluentMappedOrder.cs" />
     <Compile Include="DB_SqlServer\Entities\Order.cs" />
     <Compile Include="DB_SqlServer\IdentityTest.cs" />
+    <Compile Include="DB_SqlServer\MixedRelationshipTests.cs" />
     <Compile Include="DB_SqlServer\QueryableTests.cs" />
     <Compile Include="DB_SqlServer\SqlServerTests.cs" />
     <Compile Include="DB_SqlServerCe\LazyLoadedIntegrationTest.cs" />

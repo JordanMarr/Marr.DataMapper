@@ -31,33 +31,33 @@ using System.Diagnostics;
 
 namespace Marr.Data
 {
-    /// <summary>
-    /// This class is the main access point for making database related calls.
-    /// </summary>
-    public class DataMapper : IDataMapper
-    {
+	/// <summary>
+	/// This class is the main access point for making database related calls.
+	/// </summary>
+	public class DataMapper : IDataMapper
+	{
 
-        #region - Contructor, Members -
+		#region - Contructor, Members -
 
-        private DbProviderFactory _dbProviderFactory;
-        private string _connectionString;
-        private DbCommand _command;
+		private DbProviderFactory _dbProviderFactory;
+		private string _connectionString;
+		private DbCommand _command;
 
-        /// <summary>
-        /// Initializes a DataMapper for the given provider type and connection string.
-        /// </summary>
-        /// <param name="providerName">Ex: </param>
-        /// <param name="connectionString">The database connection string.</param>
-        public DataMapper(string providerName, string connectionString)
-            : this(DbProviderFactories.GetFactory(providerName), connectionString)
-        { }
+		/// <summary>
+		/// Initializes a DataMapper for the given provider type and connection string.
+		/// </summary>
+		/// <param name="providerName">Ex: </param>
+		/// <param name="connectionString">The database connection string.</param>
+		public DataMapper(string providerName, string connectionString)
+			: this(DbProviderFactories.GetFactory(providerName), connectionString)
+		{ }
 
-        /// <summary>
-        /// A database provider agnostic initialization.
-        /// </summary>
-        /// <param name="connection">The database connection string.</param>
-        public DataMapper(DbProviderFactory dbProviderFactory, string connectionString)
-        {
+		/// <summary>
+		/// A database provider agnostic initialization.
+		/// </summary>
+		/// <param name="connection">The database connection string.</param>
+		public DataMapper(DbProviderFactory dbProviderFactory, string connectionString)
+		{
 			if (dbProviderFactory == null)
 				throw new ArgumentNullException("dbProviderFactory instance cannot be null.");
 
@@ -68,568 +68,571 @@ namespace Marr.Data
 			_connectionString = connectionString;
 		}
 
-        public string ConnectionString
-        {
-            get
-            {
-                return _connectionString;
-            }
-        }
-
-        public DbProviderFactory ProviderFactory
-        {
-            get
-            {
-                return _dbProviderFactory;
-            }
-        }
-        
-        /// <summary>
-        /// Creates a new command utilizing the connection string.
-        /// </summary>
-        private DbCommand CreateNewCommand()
-        {
-            DbConnection conn = _dbProviderFactory.CreateConnection();
-            conn.ConnectionString = _connectionString;
-            DbCommand cmd = conn.CreateCommand();
-            SetSqlMode(cmd);
-            return cmd;
-        }
-
-        /// <summary>
-        /// Creates a new command utilizing the connection string with a given SQL command.
-        /// </summary>
-        private DbCommand CreateNewCommand(string sql)
-        {
-            DbCommand cmd = CreateNewCommand();
-            cmd.CommandText = sql;
-            return cmd;
-        }
-
-        /// <summary>
-        /// Gets or creates a DbCommand object.
-        /// </summary>
-        public DbCommand Command
-        {
-            get
-            {
-                // Lazy load
-                if (_command == null)
-                    _command = CreateNewCommand();
-                else
-                    SetSqlMode(_command); // Set SqlMode every time.
-
-                return _command;
-            }
-        }
-
-        #endregion
-
-        #region - Parameters -
-
-        public DbParameterCollection Parameters
-        {
-            get
-            {
-                return Command.Parameters;
-            }
-        }
-
-        public ParameterChainMethods AddParameter(string name, object value)
-        {
-            return new ParameterChainMethods(Command, name, value);
-        }
-
-        public IDbDataParameter AddParameter(IDbDataParameter parameter)
-        {
-            // Convert null values to DBNull.Value
-            if (parameter.Value == null)
-                parameter.Value = DBNull.Value;
-
-            this.Parameters.Add(parameter);
-            return parameter;
-        }
-
-        #endregion
-
-        #region - SP / SQL Mode -
-
-        private SqlModes _sqlMode = SqlModes.StoredProcedure; // Defaults to SP.
-        /// <summary>
-        /// Gets or sets a value that determines whether the DataMapper will 
-        /// use a stored procedure or a sql text command to access 
-        /// the database.  The default is stored procedure.
-        /// </summary>
-        public SqlModes SqlMode
-        {
-            get
-            {
-                return _sqlMode;
-            }
-            set
-            {
-                _sqlMode = value;
-            }
-        }
-
-        /// <summary>
-        /// Sets the DbCommand objects CommandType to the current SqlMode.
-        /// </summary>
-        /// <param name="command">The DbCommand object we are modifying.</param>
-        /// <returns>Returns the same DbCommand that was passed in.</returns>
-        private DbCommand SetSqlMode(DbCommand command)
-        {
-            if (SqlMode == SqlModes.StoredProcedure)
-                command.CommandType = CommandType.StoredProcedure;
-            else
-                command.CommandType = CommandType.Text;
-
-            return command;
-        }
-
-        #endregion
-
-        #region - ExecuteScalar, ExecuteNonQuery, ExecuteReader -
-
-        /// <summary>
-        /// Executes a stored procedure that returns a scalar value.
-        /// </summary>
-        /// <param name="sql">The SQL command to execute.</param>
-        /// <returns>A scalar value</returns>
-        public object ExecuteScalar(string sql)
-        {
-            if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
-            else
-                Command.CommandText = sql;
-
-            try
-            {
-                OpenConnection();
-                return Command.ExecuteScalar();
-            }
-            finally
-            {
-                CloseConnection();
-            }
-        }
-
-        /// <summary>
-        /// Executes a non query that returns an integer.
-        /// </summary>
-        /// <param name="sql">The SQL command to execute.</param>
-        /// <returns>An integer value</returns>
-        public int ExecuteNonQuery(string sql)
-        {
-            if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
-            else
-                Command.CommandText = sql;
-
-            try
-            {
-                OpenConnection();
-                return Command.ExecuteNonQuery();
-            }
-            finally
-            {
-                CloseConnection();
-            }
-        }
-
-        /// <summary>
-        /// Executes a DataReader that can be controlled using a Func delegate.
-        /// (Note that reader.Read() will be called automatically).
-        /// </summary>
-        /// <typeparam name="TResult">The type that will be return in the result set.</typeparam>
-        /// <param name="sql">The sql statement that will be executed.</param>
-        /// <param name="func">The function that will build the the TResult set.</param>
-        /// <returns>An IEnumerable of TResult.</returns>
-        public IEnumerable<TResult> ExecuteReader<TResult>(string sql, Func<DbDataReader, TResult> func)
-        {
-            if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
-            else
-                Command.CommandText = sql;
-
-            try
-            {
-                OpenConnection();
-
-                List<TResult> list = new List<TResult>();
-                DbDataReader reader = null;
-                try
-                {
-                    reader = Command.ExecuteReader();
-
-                    while (reader.Read())
-                    {
-                        list.Add(func(reader));
-                    }
-
-                    return list;
-                }
-                finally
-                {
-                    if (reader != null) reader.Close();
-                }
-            }
-            finally
-            {
-                CloseConnection();
-            }
-        }
-
-        /// <summary>
-        /// Executes a DataReader that can be controlled using an Action delegate.
-        /// </summary>
-        /// <param name="sql">The sql statement that will be executed.</param>
-        /// <param name="action">The delegate that will work with the result set.</param>
-        public void ExecuteReader(string sql, Action<DbDataReader> action)
-        {
-            if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
-            else
-                Command.CommandText = sql;
-
-            try
-            {
-                OpenConnection();
-
-                DbDataReader reader = null;
-                try
-                {
-                    reader = Command.ExecuteReader();
-
-                    while (reader.Read())
-                    {
-                        action(reader);
-                    }
-                }
-                finally
-                {
-                    if (reader != null) reader.Close();
-                }
-            }
-            finally
-            {
-                CloseConnection();
-            }
-        }
-
-        #endregion
-
-        #region - DataSets -
-
-        public DataSet GetDataSet(string sql)
-        {
-            return GetDataSet(sql, new DataSet(), null);
-        }
-
-        public DataSet GetDataSet(string sql, DataSet ds, string tableName)
-        {
-            if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
-
-            try
-            {
-                using (DbDataAdapter adapter = _dbProviderFactory.CreateDataAdapter())
-                {
-                    Command.CommandText = sql;
-                    adapter.SelectCommand = Command;
-
-                    if (ds == null)
-                        ds = new DataSet();
-
-                    OpenConnection();
-
-                    if (string.IsNullOrEmpty(tableName))
-                        adapter.Fill(ds);
-                    else
-                        adapter.Fill(ds, tableName);
-
-                    return ds;
-                }
-            }
-            finally
-            {
-                CloseConnection();  // Clears parameters
-            }
-        }
-
-        public DataTable GetDataTable(string sql)
-        {
-            return GetDataTable(sql, null, null);
-        }
-
-        public DataTable GetDataTable(string sql, DataTable dt, string tableName)
-        {
-            if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
-
-            try
-            {
-                using (DbDataAdapter adapter = _dbProviderFactory.CreateDataAdapter())
-                {
-                    Command.CommandText = sql;
-                    adapter.SelectCommand = Command;
-
-                    if (dt == null)
-                        dt = new DataTable();
-
-                    adapter.Fill(dt);
-
-                    if (!string.IsNullOrEmpty(tableName))
-                        dt.TableName = tableName;
-
-                    return dt;
-                }
-            }
-            finally
-            {
-                CloseConnection();  // Clears parameters
-            }
-        }
-
-        public int UpdateDataSet(DataSet ds, string sql)
-        {
-            if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
-
-            if (ds == null)
-                throw new ArgumentNullException("ds", "DataSet cannot be null.");
-
-            DbDataAdapter adapter = null;
-
-            try
-            {
-                adapter = _dbProviderFactory.CreateDataAdapter();
-
-                adapter.UpdateCommand = Command;
-                adapter.UpdateCommand.CommandText = sql;
-
-                return adapter.Update(ds);
-            }
-            finally
-            {
-                if (adapter.UpdateCommand != null)
-                    adapter.UpdateCommand.Dispose();
-
-                adapter.Dispose();
-            }
-        }
-
-        public int InsertDataTable(DataTable table, string insertSP)
-        {
-            return this.InsertDataTable(table, insertSP, UpdateRowSource.None);
-        }
-
-        public int InsertDataTable(DataTable dt, string sql, UpdateRowSource updateRowSource)
-        {
-            if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
-
-            if (dt == null)
-                throw new ArgumentNullException("dt", "DataTable cannot be null.");
-
-            DbDataAdapter adapter = null;
-
-            try
-            {
-                adapter = _dbProviderFactory.CreateDataAdapter();
-
-                adapter.InsertCommand = Command;
-                adapter.InsertCommand.CommandText = sql;
-
-                adapter.InsertCommand.UpdatedRowSource = updateRowSource;
-
-                return adapter.Update(dt);
-            }
-            finally
-            {
-                if (adapter.InsertCommand != null)
-                    adapter.InsertCommand.Dispose();
-
-                adapter.Dispose();
-            }
-        }
-
-        public int DeleteDataTable(DataTable dt, string sql)
-        {
-            if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
-
-            if (dt == null)
-                throw new ArgumentNullException("dt", "DataSet cannot be null.");
-
-            DbDataAdapter adapter = null;
-
-            try
-            {
-                adapter = _dbProviderFactory.CreateDataAdapter();
-
-                adapter.DeleteCommand = Command;
-                adapter.DeleteCommand.CommandText = sql;
-
-                return adapter.Update(dt);
-            }
-            finally
-            {
-                if (adapter.DeleteCommand != null)
-                    adapter.DeleteCommand.Dispose();
-
-                adapter.Dispose();
-            }
-        }
-
-        #endregion
-
-        #region - Find -
-
-        public T Find<T>(string sql)
-        {
-            return this.Find<T>(sql, default(T));
-        }
-
-        /// <summary>
-        /// Returns an entity of type T.
-        /// </summary>
-        /// <typeparam name="T">The type of entity that is to be instantiated and loaded with values.</typeparam>
-        /// <param name="sql">The SQL command to execute.</param>
-        /// <returns>An instantiated and loaded entity of type T.</returns>
-        public T Find<T>(string sql, T ent)
-        {
-            if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("sql", "A stored procedure name has not been specified for 'Find'.");
-
-            Type entityType = typeof(T);
-            Command.CommandText = sql;
-
-            MapRepository repository = MapRepository.Instance;
-            ColumnMapCollection mappings = repository.GetColumns(entityType);
-
-            bool isSimpleType = DataHelper.IsSimpleType(typeof(T));
-
-            try
-            {
-                OpenConnection();
-                var mappingHelper = new MappingHelper(this);
-
-                using (DbDataReader reader = Command.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-                        if (isSimpleType)
-                        {
-                            return mappingHelper.LoadSimpleValueFromFirstColumn<T>(reader);
-                        }
-                        else
-                        {
-                            if (ent == null)
-                                ent = (T)mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false);
-                            else
-                                mappingHelper.LoadExistingEntity(mappings, reader, ent, false);
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                CloseConnection();
-            }
-
-            return ent;
-        }
-
-        #endregion
-
-        #region - Query -
-
-        /// <summary>
-        /// Creates a QueryBuilder that allows you to build a query.
-        /// </summary>
-        /// <typeparam name="T">The type of object that will be queried.</typeparam>
-        /// <returns>Returns a QueryBuilder of T.</returns>
-        public virtual QueryBuilder<T> Query<T>()
-        {
-            var dialect = QGen.QueryFactory.CreateDialect(this);
-            return new QueryBuilder<T>(this, dialect);
-        }
+		public string ConnectionString
+		{
+			get
+			{
+				return _connectionString;
+			}
+		}
+
+		public DbProviderFactory ProviderFactory
+		{
+			get
+			{
+				return _dbProviderFactory;
+			}
+		}
 		
-        /// <summary>
-        /// Returns the results of a query.
-        /// Uses a List of type T to return the data.
-        /// </summary>
-        /// <returns>Returns a list of the specified type.</returns>
-        public List<T> Query<T>(string sql)
-        {
-			return Query<T>().QueryText(sql).ToList();
-        }
+		/// <summary>
+		/// Creates a new command utilizing the connection string.
+		/// </summary>
+		private DbCommand CreateNewCommand()
+		{
+			DbConnection conn = _dbProviderFactory.CreateConnection();
+			conn.ConnectionString = _connectionString;
+			DbCommand cmd = conn.CreateCommand();
+			SetSqlMode(cmd);
+			return cmd;
+		}
 
-        /// <summary>
-        /// Returns the results of a SP query.
-        /// </summary>
-        /// <returns>Returns a list of the specified type.</returns>
-        public ICollection<T> Query<T>(string sql, ICollection<T> entityList)
-        {
+		/// <summary>
+		/// Creates a new command utilizing the connection string with a given SQL command.
+		/// </summary>
+		private DbCommand CreateNewCommand(string sql)
+		{
+			DbCommand cmd = CreateNewCommand();
+			cmd.CommandText = sql;
+			return cmd;
+		}
+
+		/// <summary>
+		/// Gets or creates a DbCommand object.
+		/// </summary>
+		public DbCommand Command
+		{
+			get
+			{
+				// Lazy load
+				if (_command == null)
+					_command = CreateNewCommand();
+				else
+					SetSqlMode(_command); // Set SqlMode every time.
+
+				return _command;
+			}
+		}
+
+		#endregion
+
+		#region - Parameters -
+
+		public DbParameterCollection Parameters
+		{
+			get
+			{
+				return Command.Parameters;
+			}
+		}
+
+		public ParameterChainMethods AddParameter(string name, object value)
+		{
+			return new ParameterChainMethods(Command, name, value);
+		}
+
+		public IDbDataParameter AddParameter(IDbDataParameter parameter)
+		{
+			// Convert null values to DBNull.Value
+			if (parameter.Value == null)
+				parameter.Value = DBNull.Value;
+
+			this.Parameters.Add(parameter);
+			return parameter;
+		}
+
+		#endregion
+
+		#region - SP / SQL Mode -
+
+		private SqlModes _sqlMode = SqlModes.StoredProcedure; // Defaults to SP.
+		/// <summary>
+		/// Gets or sets a value that determines whether the DataMapper will 
+		/// use a stored procedure or a sql text command to access 
+		/// the database.  The default is stored procedure.
+		/// </summary>
+		public SqlModes SqlMode
+		{
+			get
+			{
+				return _sqlMode;
+			}
+			set
+			{
+				_sqlMode = value;
+			}
+		}
+
+		/// <summary>
+		/// Sets the DbCommand objects CommandType to the current SqlMode.
+		/// </summary>
+		/// <param name="command">The DbCommand object we are modifying.</param>
+		/// <returns>Returns the same DbCommand that was passed in.</returns>
+		private DbCommand SetSqlMode(DbCommand command)
+		{
+			if (SqlMode == SqlModes.StoredProcedure)
+				command.CommandType = CommandType.StoredProcedure;
+			else
+				command.CommandType = CommandType.Text;
+
+			return command;
+		}
+
+		#endregion
+
+		#region - ExecuteScalar, ExecuteNonQuery, ExecuteReader -
+
+		/// <summary>
+		/// Executes a stored procedure that returns a scalar value.
+		/// </summary>
+		/// <param name="sql">The SQL command to execute.</param>
+		/// <returns>A scalar value</returns>
+		public object ExecuteScalar(string sql)
+		{
+			if (string.IsNullOrEmpty(sql))
+				throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
+			else
+				Command.CommandText = sql;
+
+			try
+			{
+				OpenConnection();
+				return Command.ExecuteScalar();
+			}
+			finally
+			{
+				CloseConnection();
+			}
+		}
+
+		/// <summary>
+		/// Executes a non query that returns an integer.
+		/// </summary>
+		/// <param name="sql">The SQL command to execute.</param>
+		/// <returns>An integer value</returns>
+		public int ExecuteNonQuery(string sql)
+		{
+			if (string.IsNullOrEmpty(sql))
+				throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
+			else
+				Command.CommandText = sql;
+
+			try
+			{
+				OpenConnection();
+				return Command.ExecuteNonQuery();
+			}
+			finally
+			{
+				CloseConnection();
+			}
+		}
+
+		/// <summary>
+		/// Executes a DataReader that can be controlled using a Func delegate.
+		/// (Note that reader.Read() will be called automatically).
+		/// </summary>
+		/// <typeparam name="TResult">The type that will be return in the result set.</typeparam>
+		/// <param name="sql">The sql statement that will be executed.</param>
+		/// <param name="func">The function that will build the the TResult set.</param>
+		/// <returns>An IEnumerable of TResult.</returns>
+		public IEnumerable<TResult> ExecuteReader<TResult>(string sql, Func<DbDataReader, TResult> func)
+		{
+			if (string.IsNullOrEmpty(sql))
+				throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
+			else
+				Command.CommandText = sql;
+
+			try
+			{
+				OpenConnection();
+
+				List<TResult> list = new List<TResult>();
+				DbDataReader reader = null;
+				try
+				{
+					reader = Command.ExecuteReader();
+
+					while (reader.Read())
+					{
+						list.Add(func(reader));
+					}
+
+					return list;
+				}
+				finally
+				{
+					if (reader != null) reader.Close();
+				}
+			}
+			finally
+			{
+				CloseConnection();
+			}
+		}
+
+		/// <summary>
+		/// Executes a DataReader that can be controlled using an Action delegate.
+		/// </summary>
+		/// <param name="sql">The sql statement that will be executed.</param>
+		/// <param name="action">The delegate that will work with the result set.</param>
+		public void ExecuteReader(string sql, Action<DbDataReader> action)
+		{
+			if (string.IsNullOrEmpty(sql))
+				throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
+			else
+				Command.CommandText = sql;
+
+			try
+			{
+				OpenConnection();
+
+				DbDataReader reader = null;
+				try
+				{
+					reader = Command.ExecuteReader();
+
+					while (reader.Read())
+					{
+						action(reader);
+					}
+				}
+				finally
+				{
+					if (reader != null) reader.Close();
+				}
+			}
+			finally
+			{
+				CloseConnection();
+			}
+		}
+
+		#endregion
+
+		#region - DataSets -
+
+		public DataSet GetDataSet(string sql)
+		{
+			return GetDataSet(sql, new DataSet(), null);
+		}
+
+		public DataSet GetDataSet(string sql, DataSet ds, string tableName)
+		{
+			if (string.IsNullOrEmpty(sql))
+				throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
+
+			try
+			{
+				using (DbDataAdapter adapter = _dbProviderFactory.CreateDataAdapter())
+				{
+					Command.CommandText = sql;
+					adapter.SelectCommand = Command;
+
+					if (ds == null)
+						ds = new DataSet();
+
+					OpenConnection();
+
+					if (string.IsNullOrEmpty(tableName))
+						adapter.Fill(ds);
+					else
+						adapter.Fill(ds, tableName);
+
+					return ds;
+				}
+			}
+			finally
+			{
+				CloseConnection();  // Clears parameters
+			}
+		}
+
+		public DataTable GetDataTable(string sql)
+		{
+			return GetDataTable(sql, null, null);
+		}
+
+		public DataTable GetDataTable(string sql, DataTable dt, string tableName)
+		{
+			if (string.IsNullOrEmpty(sql))
+				throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
+
+			try
+			{
+				using (DbDataAdapter adapter = _dbProviderFactory.CreateDataAdapter())
+				{
+					Command.CommandText = sql;
+					adapter.SelectCommand = Command;
+
+					if (dt == null)
+						dt = new DataTable();
+
+					adapter.Fill(dt);
+
+					if (!string.IsNullOrEmpty(tableName))
+						dt.TableName = tableName;
+
+					return dt;
+				}
+			}
+			finally
+			{
+				CloseConnection();  // Clears parameters
+			}
+		}
+
+		public int UpdateDataSet(DataSet ds, string sql)
+		{
+			if (string.IsNullOrEmpty(sql))
+				throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
+
+			if (ds == null)
+				throw new ArgumentNullException("ds", "DataSet cannot be null.");
+
+			DbDataAdapter adapter = null;
+
+			try
+			{
+				adapter = _dbProviderFactory.CreateDataAdapter();
+
+				adapter.UpdateCommand = Command;
+				adapter.UpdateCommand.CommandText = sql;
+
+				return adapter.Update(ds);
+			}
+			finally
+			{
+				if (adapter.UpdateCommand != null)
+					adapter.UpdateCommand.Dispose();
+
+				adapter.Dispose();
+			}
+		}
+
+		public int InsertDataTable(DataTable table, string insertSP)
+		{
+			return this.InsertDataTable(table, insertSP, UpdateRowSource.None);
+		}
+
+		public int InsertDataTable(DataTable dt, string sql, UpdateRowSource updateRowSource)
+		{
+			if (string.IsNullOrEmpty(sql))
+				throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
+
+			if (dt == null)
+				throw new ArgumentNullException("dt", "DataTable cannot be null.");
+
+			DbDataAdapter adapter = null;
+
+			try
+			{
+				adapter = _dbProviderFactory.CreateDataAdapter();
+
+				adapter.InsertCommand = Command;
+				adapter.InsertCommand.CommandText = sql;
+
+				adapter.InsertCommand.UpdatedRowSource = updateRowSource;
+
+				return adapter.Update(dt);
+			}
+			finally
+			{
+				if (adapter.InsertCommand != null)
+					adapter.InsertCommand.Dispose();
+
+				adapter.Dispose();
+			}
+		}
+
+		public int DeleteDataTable(DataTable dt, string sql)
+		{
+			if (string.IsNullOrEmpty(sql))
+				throw new ArgumentNullException("sql", "A SQL query or stored procedure name is required");
+
+			if (dt == null)
+				throw new ArgumentNullException("dt", "DataSet cannot be null.");
+
+			DbDataAdapter adapter = null;
+
+			try
+			{
+				adapter = _dbProviderFactory.CreateDataAdapter();
+
+				adapter.DeleteCommand = Command;
+				adapter.DeleteCommand.CommandText = sql;
+
+				return adapter.Update(dt);
+			}
+			finally
+			{
+				if (adapter.DeleteCommand != null)
+					adapter.DeleteCommand.Dispose();
+
+				adapter.Dispose();
+			}
+		}
+
+		#endregion
+
+		#region - Find -
+
+		public T Find<T>(string sql)
+		{
+			return this.Find<T>(sql, default(T));
+		}
+
+		/// <summary>
+		/// Returns an entity of type T.
+		/// </summary>
+		/// <typeparam name="T">The type of entity that is to be instantiated and loaded with values.</typeparam>
+		/// <param name="sql">The SQL command to execute.</param>
+		/// <returns>An instantiated and loaded entity of type T.</returns>
+		public T Find<T>(string sql, T ent)
+		{
+			if (string.IsNullOrEmpty(sql))
+				throw new ArgumentNullException("sql", "A stored procedure name has not been specified for 'Find'.");
+
+			Type entityType = typeof(T);
+			Command.CommandText = sql;
+
+			MapRepository repository = MapRepository.Instance;
+			ColumnMapCollection mappings = repository.GetColumns(entityType);
+
+			bool isSimpleType = DataHelper.IsSimpleType(typeof(T));
+
+			try
+			{
+				OpenConnection();
+				var mappingHelper = new MappingHelper(this);
+
+				using (DbDataReader reader = Command.ExecuteReader())
+				{
+					if (reader.Read())
+					{
+						if (isSimpleType)
+						{
+							return mappingHelper.LoadSimpleValueFromFirstColumn<T>(reader);
+						}
+						else
+						{
+							if (ent == null)
+								ent = (T)mappingHelper.CreateAndLoadEntity<T>(mappings, reader, false);
+							else
+								mappingHelper.LoadExistingEntity(mappings, reader, ent, false);
+						}
+					}
+				}
+			}
+			finally
+			{
+				CloseConnection();
+			}
+
+			return ent;
+		}
+
+		#endregion
+
+		#region - Query -
+
+		/// <summary>
+		/// Creates a QueryBuilder that allows you to build a query.
+		/// </summary>
+		/// <typeparam name="T">The type of object that will be queried.</typeparam>
+		/// <returns>Returns a QueryBuilder of T.</returns>
+		public virtual QueryBuilder<T> Query<T>()
+		{
+			var dialect = QGen.QueryFactory.CreateDialect(this);
+			return new QueryBuilder<T>(this, dialect);
+		}
+		
+		/// <summary>
+		/// Returns the results of a query.
+		/// Uses a List of type T to return the data.
+		/// </summary>
+		/// <returns>Returns a list of the specified type.</returns>
+		public List<T> Query<T>(string sql)
+		{
+			return Query<T>().QueryText(sql).ToList();
+		}
+
+		/// <summary>
+		/// Returns the results of a SP query.
+		/// </summary>
+		/// <returns>Returns a list of the specified type.</returns>
+		public ICollection<T> Query<T>(string sql, ICollection<T> entityList)
+		{
 			var list = Query<T>().QueryText(sql).ToList();
 			list.ForEach(i => entityList.Add(i));
 			return list;
-        }
+		}
 
-        internal ICollection<T> Query<T>(string sql, ICollection<T> entityList, bool useAltName, QueryBuilder query)
-        {
-            if (entityList == null)
-                throw new ArgumentNullException("entityList", "ICollection instance cannot be null.");
+		internal ICollection<T> Query<T>(string sql, ICollection<T> entityList, QueryBuilder query)
+		{
+			if (entityList == null)
+				throw new ArgumentNullException("entityList", "ICollection instance cannot be null.");
 
-            if (string.IsNullOrEmpty(sql))
-                throw new ArgumentNullException("sql", "A query or stored procedure has not been specified for 'Query'.");
+			if (string.IsNullOrEmpty(sql))
+				throw new ArgumentNullException("sql", "A query or stored procedure has not been specified for 'Query'.");
 
-            var mappingHelper = new MappingHelper(this);
-            Type entityType = typeof(T);
-            Command.CommandText = sql;
-            ColumnMapCollection mappings = MapRepository.Instance.GetColumns(entityType);
+			bool useAltName = query.UseAltNames();
+			QueryBuilder parentQuery = query.ParentQuery ?? query;
 
-            bool isSimpleType = DataHelper.IsSimpleType(typeof(T));
+			var mappingHelper = new MappingHelper(this);
+			Type entityType = typeof(T);
+			Command.CommandText = sql;
+			ColumnMapCollection mappings = MapRepository.Instance.GetColumns(entityType);
 
-            try
-            {
-                OpenConnection();
-                using (DbDataReader reader = Command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        if (isSimpleType)
-                        {
-                            entityList.Add(mappingHelper.LoadSimpleValueFromFirstColumn<T>(reader));
-                        }
-                        else
-                        {
-                            entityList.Add((T)mappingHelper.CreateAndLoadEntity<T>(mappings, reader, useAltName));
-                        }
-                    }
-                }
+			bool isSimpleType = DataHelper.IsSimpleType(typeof(T));
 
-				if (query.IsGraph)
+			try
+			{
+				OpenConnection();
+				using (DbDataReader reader = Command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						if (isSimpleType)
+						{
+							entityList.Add(mappingHelper.LoadSimpleValueFromFirstColumn<T>(reader));
+						}
+						else
+						{
+							entityList.Add((T)mappingHelper.CreateAndLoadEntity<T>(mappings, reader, useAltName));
+						}
+					}
+				}
+
+				if (parentQuery.IsGraph)
 				{
 					// Handle eager or lazy loaded
 					foreach (var ent in entityList)
 					{
 						// Pass in the root query so we can check RelationshipsToLoad
-						mappingHelper.LoadEagerLoadedProperties(ent, query);
-						mappingHelper.PrepareLazyLoadedProperties(ent, query);
+						mappingHelper.LoadEagerLoadedProperties(ent, parentQuery);
+						mappingHelper.PrepareLazyLoadedProperties(ent, parentQuery);
 					}
 				}
-            }
-            finally
-            {
-                CloseConnection();
-            }
+			}
+			finally
+			{
+				CloseConnection();
+			}
 
-            return entityList;
-        }
+			return entityList;
+		}
 
-        #endregion
+		#endregion
 
 		#region - IQueryable<T> -
 
@@ -663,49 +666,51 @@ namespace Marr.Data
 		#region - Query to Graph -
 
 		public List<T> QueryToGraph<T>(string sql)
-        {
-            return (List<T>)QueryToGraph<T>(sql, new List<T>());
-        }
+		{
+			return (List<T>)QueryToGraph<T>(sql, new List<T>());
+		}
 
-        public ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList)
-        {
+		public ICollection<T> QueryToGraph<T>(string sql, ICollection<T> entityList)
+		{
 			var list =  this.Query<T>().Graph().QueryText(sql).ToList();
 			list.ForEach(i => entityList.Add(i));
 			return list;
-        }
+		}
 
-        /// <summary>
-        /// Queries a view that joins multiple tables and returns an object graph.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="sql"></param>
-        /// <param name="entityList"></param>
-        /// <param name="entityGraph">Coordinates loading all objects in the graph..</param>
-        /// <returns></returns>
-        internal ICollection<T> QueryToGraph<T>(QueryBuilder query)
-        {
-            var mappingHelper = new MappingHelper(this);
-            Type parentType = typeof(T);
-            Command.CommandText = query.CommandText;
+		/// <summary>
+		/// Queries a view that joins multiple tables and returns an object graph.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="sql"></param>
+		/// <param name="entityList"></param>
+		/// <param name="entityGraph">Coordinates loading all objects in the graph..</param>
+		/// <returns></returns>
+		internal ICollection<T> QueryToGraph<T>(QueryBuilder query)
+		{
+			QueryBuilder parentQuery = query.ParentQuery ?? query;
+			bool useAltName = query.UseAltNames();
+			var mappingHelper = new MappingHelper(this);
+			Type parentType = typeof(T);
+			Command.CommandText = query.CommandText;
 
-            try
-            {
+			try
+			{
 				var parentEntitiesWithLazyOrEagerChildren = new List<object>();
-                OpenConnection();
-                using (DbDataReader reader = Command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        // The entire EntityGraph is traversed for each record, 
-                        // and multiple entities are created from each view record.
-                        foreach (EntityGraph lvl in query.EntGraph)
-                        {
-                            if (lvl.IsParentReference)
-                            {
-                                // A child specified a circular reference to its previously loaded parent
-                                lvl.AddParentReference();
-                            }
-							else if (query.RelationshipsToLoad.Count > 0 && !lvl.IsRoot && !query.RelationshipsToLoad.ContainsMember(lvl.Member))
+				OpenConnection();
+				using (DbDataReader reader = Command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						// The entire EntityGraph is traversed for each record, 
+						// and multiple entities are created from each view record.
+						foreach (EntityGraph lvl in query.EntGraph)
+						{
+							if (lvl.IsParentReference)
+							{
+								// A child specified a circular reference to its previously loaded parent
+								lvl.AddParentReference();
+							}
+							else if (parentQuery.RelationshipsToLoad.Count > 0 && !lvl.IsRoot && !parentQuery.RelationshipsToLoad.ContainsMember(lvl.Member))
 							{
 								// A list of relationships-to-load was specified and this relationship was not included
 								continue;
@@ -715,10 +720,10 @@ namespace Marr.Data
 								// These will be loaded separately
 								continue;
 							}
-							else if (lvl.IsNewGroup(reader))
+							else if (lvl.IsNewGroup(reader, useAltName))
 							{
 								// Create a new entity with the data reader
-								var newEntity = mappingHelper.CreateAndLoadEntity(lvl.EntityType, lvl.Columns, reader, true);
+								var newEntity = mappingHelper.CreateAndLoadEntity(lvl.EntityType, lvl.Columns, reader, useAltName);
 
 								// Add entity to the appropriate place in the object graph
 								lvl.AddEntity(newEntity);
@@ -729,331 +734,331 @@ namespace Marr.Data
 									parentEntitiesWithLazyOrEagerChildren.Add(newEntity);
 								}
 							}
-                        }
-                    }
+						}
+					}
 
 					// Handle eager or lazy loaded
 					foreach (var ent in parentEntitiesWithLazyOrEagerChildren)
 					{
 						// Pass in the root query so we can check RelationshipsToLoad
-						mappingHelper.LoadEagerLoadedProperties(ent, query);
-						mappingHelper.PrepareLazyLoadedProperties(ent, query);
+						mappingHelper.LoadEagerLoadedProperties(ent, parentQuery);
+						mappingHelper.PrepareLazyLoadedProperties(ent, parentQuery);
 					}
-                }
-            }
-            finally
-            {
-                CloseConnection();
-            }
+				}
+			}
+			finally
+			{
+				CloseConnection();
+			}
 
-            return (ICollection<T>)query.EntGraph.RootList;
-        }
+			return (ICollection<T>)query.EntGraph.RootList;
+		}
 
-        #endregion
+		#endregion
 
-        #region - Update -
+		#region - Update -
 
-        public UpdateQueryBuilder<T> Update<T>()
-        {
-            return new UpdateQueryBuilder<T>(this);            
-        }
+		public UpdateQueryBuilder<T> Update<T>()
+		{
+			return new UpdateQueryBuilder<T>(this);            
+		}
 
-        public int Update<T>(T entity, Expression<Func<T, bool>> filter)
-        {
-            return Update<T>()
-                .Entity(entity)
-                .Where(filter)
-                .Execute();
-        }
+		public int Update<T>(T entity, Expression<Func<T, bool>> filter)
+		{
+			return Update<T>()
+				.Entity(entity)
+				.Where(filter)
+				.Execute();
+		}
 
-        public int Update<T>(string tableName, T entity, Expression<Func<T, bool>> filter)
-        {
-            return Update<T>()
-                .TableName(tableName)
-                .Entity(entity)
-                .Where(filter)
-                .Execute();
-        }
+		public int Update<T>(string tableName, T entity, Expression<Func<T, bool>> filter)
+		{
+			return Update<T>()
+				.TableName(tableName)
+				.Entity(entity)
+				.Where(filter)
+				.Execute();
+		}
 
-        public int Update<T>(T entity, string sql)
-        {
-            return Update<T>()
-                .Entity(entity)
-                .QueryText(sql)
-                .Execute();
-        }
+		public int Update<T>(T entity, string sql)
+		{
+			return Update<T>()
+				.Entity(entity)
+				.QueryText(sql)
+				.Execute();
+		}
 
-        #endregion
+		#endregion
 
-        #region - Insert -
+		#region - Insert -
 
-        /// <summary>
-        /// Creates an InsertQueryBuilder that allows you to build an insert statement.
-        /// This method gives you the flexibility to manually configure all options of your insert statement.
-        /// Note: You must manually call the Execute() chaining method to run the query.
-        /// </summary>
-        public InsertQueryBuilder<T> Insert<T>()
-        {
-            return new InsertQueryBuilder<T>(this);
-        }
+		/// <summary>
+		/// Creates an InsertQueryBuilder that allows you to build an insert statement.
+		/// This method gives you the flexibility to manually configure all options of your insert statement.
+		/// Note: You must manually call the Execute() chaining method to run the query.
+		/// </summary>
+		public InsertQueryBuilder<T> Insert<T>()
+		{
+			return new InsertQueryBuilder<T>(this);
+		}
 
-        /// <summary>
-        /// Generates and executes an insert query for the given entity.
-        /// This overload will automatically run an identity query if you have mapped an auto-incrementing column,
-        /// and if an identity query has been implemented for your current database dialect.
-        /// </summary>
-        public object Insert<T>(T entity)
-        {
-            var columns = MapRepository.Instance.GetColumns(typeof(T));
-            var dialect = QueryFactory.CreateDialect(this);
-            var builder = Insert<T>().Entity(entity);
+		/// <summary>
+		/// Generates and executes an insert query for the given entity.
+		/// This overload will automatically run an identity query if you have mapped an auto-incrementing column,
+		/// and if an identity query has been implemented for your current database dialect.
+		/// </summary>
+		public object Insert<T>(T entity)
+		{
+			var columns = MapRepository.Instance.GetColumns(typeof(T));
+			var dialect = QueryFactory.CreateDialect(this);
+			var builder = Insert<T>().Entity(entity);
 
-            // If an auto-increment column exists and this dialect has an identity query...
-            if (columns.Exists(c => c.ColumnInfo.IsAutoIncrement) && dialect.HasIdentityQuery)
-            {
-                builder.GetIdentity();
-            }
+			// If an auto-increment column exists and this dialect has an identity query...
+			if (columns.Exists(c => c.ColumnInfo.IsAutoIncrement) && dialect.HasIdentityQuery)
+			{
+				builder.GetIdentity();
+			}
 
-            return builder.Execute();
-        }
+			return builder.Execute();
+		}
 
-        /// <summary>
-        /// Generates and executes an insert query for the given entity.
-        /// This overload will automatically run an identity query if you have mapped an auto-incrementing column,
-        /// and if an identity query has been implemented for your current database dialect.
-        /// </summary>
-        public object Insert<T>(string tableName, T entity)
-        {
-            var columns = MapRepository.Instance.GetColumns(typeof(T));
-            var dialect = QueryFactory.CreateDialect(this);
-            var builder = Insert<T>().Entity(entity).TableName(tableName);
+		/// <summary>
+		/// Generates and executes an insert query for the given entity.
+		/// This overload will automatically run an identity query if you have mapped an auto-incrementing column,
+		/// and if an identity query has been implemented for your current database dialect.
+		/// </summary>
+		public object Insert<T>(string tableName, T entity)
+		{
+			var columns = MapRepository.Instance.GetColumns(typeof(T));
+			var dialect = QueryFactory.CreateDialect(this);
+			var builder = Insert<T>().Entity(entity).TableName(tableName);
 
-            // If an auto-increment column exists and this dialect has an identity query...
-            if (columns.Exists(c => c.ColumnInfo.IsAutoIncrement) && dialect.HasIdentityQuery)
-            {
-                builder.GetIdentity();
-            }
+			// If an auto-increment column exists and this dialect has an identity query...
+			if (columns.Exists(c => c.ColumnInfo.IsAutoIncrement) && dialect.HasIdentityQuery)
+			{
+				builder.GetIdentity();
+			}
 
-            return builder.Execute();
-        }
+			return builder.Execute();
+		}
 
-        /// <summary>
-        /// Executes an insert query for the given entity using the given sql insert statement.
-        /// This overload will automatically run an identity query if you have mapped an auto-incrementing column,
-        /// and if an identity query has been implemented for your current database dialect.
-        /// </summary>
-        public object Insert<T>(T entity, string sql)
-        {
-            var columns = MapRepository.Instance.GetColumns(typeof(T));
-            var dialect = QueryFactory.CreateDialect(this);
-            var builder = Insert<T>().Entity(entity).QueryText(sql);
+		/// <summary>
+		/// Executes an insert query for the given entity using the given sql insert statement.
+		/// This overload will automatically run an identity query if you have mapped an auto-incrementing column,
+		/// and if an identity query has been implemented for your current database dialect.
+		/// </summary>
+		public object Insert<T>(T entity, string sql)
+		{
+			var columns = MapRepository.Instance.GetColumns(typeof(T));
+			var dialect = QueryFactory.CreateDialect(this);
+			var builder = Insert<T>().Entity(entity).QueryText(sql);
 
-            // If an auto-increment column exists and this dialect has an identity query...
-            if (columns.Exists(c => c.ColumnInfo.IsAutoIncrement) && dialect.HasIdentityQuery)
-            {
-                builder.GetIdentity();
-            }
+			// If an auto-increment column exists and this dialect has an identity query...
+			if (columns.Exists(c => c.ColumnInfo.IsAutoIncrement) && dialect.HasIdentityQuery)
+			{
+				builder.GetIdentity();
+			}
 
-            return builder.Execute();
-        }
+			return builder.Execute();
+		}
 
-        #endregion
+		#endregion
 
-        #region - Delete -
+		#region - Delete -
 
-        public int Delete<T>(Expression<Func<T, bool>> filter)
-        {
-            return Delete<T>(null, filter);
-        }
+		public int Delete<T>(Expression<Func<T, bool>> filter)
+		{
+			return Delete<T>(null, filter);
+		}
 
-        public int Delete<T>(string tableName, Expression<Func<T, bool>> filter)
-        {
-            // Remember sql mode
-            var previousSqlMode = this.SqlMode;
-            SqlMode = SqlModes.Text;
+		public int Delete<T>(string tableName, Expression<Func<T, bool>> filter)
+		{
+			// Remember sql mode
+			var previousSqlMode = this.SqlMode;
+			SqlMode = SqlModes.Text;
 
-            var mappingHelper = new MappingHelper(this);
-            if (tableName == null)
-            {
-                tableName = MapRepository.Instance.GetTableName(typeof(T));
-            }
-            var dialect = QGen.QueryFactory.CreateDialect(this);
-            TableCollection tables = new TableCollection();
-            tables.Add(new Table(typeof(T)));
-            var where = new WhereBuilder<T>(Command, dialect, filter, tables, false, false);
-            IQuery query = QueryFactory.CreateDeleteQuery(dialect, tables[0], where.ToString());
-            Command.CommandText = query.Generate();
+			var mappingHelper = new MappingHelper(this);
+			if (tableName == null)
+			{
+				tableName = MapRepository.Instance.GetTableName(typeof(T));
+			}
+			var dialect = QGen.QueryFactory.CreateDialect(this);
+			TableCollection tables = new TableCollection();
+			tables.Add(new Table(typeof(T)));
+			var where = new WhereBuilder<T>(Command, dialect, filter, tables, false, false);
+			IQuery query = QueryFactory.CreateDeleteQuery(dialect, tables[0], where.ToString());
+			Command.CommandText = query.Generate();
 
-            int rowsAffected = 0;
+			int rowsAffected = 0;
 
-            try
-            {
-                OpenConnection();
-                rowsAffected = Command.ExecuteNonQuery();
-            }
-            finally
-            {
-                CloseConnection();
-            }
+			try
+			{
+				OpenConnection();
+				rowsAffected = Command.ExecuteNonQuery();
+			}
+			finally
+			{
+				CloseConnection();
+			}
 
-            // Return to previous sql mode
-            SqlMode = previousSqlMode;
+			// Return to previous sql mode
+			SqlMode = previousSqlMode;
 
-            return rowsAffected;
-        }
+			return rowsAffected;
+		}
 
-        #endregion
-        
-        #region - Events -
+		#endregion
+		
+		#region - Events -
 
-        public event EventHandler OpeningConnection;
+		public event EventHandler OpeningConnection;
 
-        public event EventHandler ClosingConnection;
+		public event EventHandler ClosingConnection;
 
-        #endregion
+		#endregion
 
-        #region - Connections / Transactions -
+		#region - Connections / Transactions -
 
-        protected virtual void OnOpeningConnection()
-        {
-            if (OpeningConnection != null)
-                OpeningConnection(this, EventArgs.Empty);
-        }
+		protected virtual void OnOpeningConnection()
+		{
+			if (OpeningConnection != null)
+				OpeningConnection(this, EventArgs.Empty);
+		}
 
-        protected virtual void OnClosingConnection()
-        {
-            WriteToTraceLog();
+		protected virtual void OnClosingConnection()
+		{
+			WriteToTraceLog();
 
-            if (ClosingConnection != null)
-                ClosingConnection(this, EventArgs.Empty);
-        }
+			if (ClosingConnection != null)
+				ClosingConnection(this, EventArgs.Empty);
+		}
 
-        protected internal void OpenConnection()
-        {
-            OnOpeningConnection();
+		protected internal void OpenConnection()
+		{
+			OnOpeningConnection();
 
-            if (Command.Connection.State != ConnectionState.Open)
-                Command.Connection.Open();
-        }
+			if (Command.Connection.State != ConnectionState.Open)
+				Command.Connection.Open();
+		}
 
-        protected internal void CloseConnection()
-        {
-            OnClosingConnection();
+		protected internal void CloseConnection()
+		{
+			OnClosingConnection();
 
-            Command.Parameters.Clear();
-            Command.CommandText = string.Empty;
+			Command.Parameters.Clear();
+			Command.CommandText = string.Empty;
 
-            if (Command.Transaction == null)
-                Command.Connection.Close(); // Only close if no transaction is present
+			if (Command.Transaction == null)
+				Command.Connection.Close(); // Only close if no transaction is present
 
-            UnbindEvents();
-        }
+			UnbindEvents();
+		}
 
-        private void WriteToTraceLog()
-        {
-            if (MapRepository.Instance.EnableTraceLogging)
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine();
-                sb.AppendLine("==== Begin Query Trace ====");
-                sb.AppendLine();
-                sb.AppendLine("QUERY TYPE:");
-                sb.AppendLine(Command.CommandType.ToString());
-                sb.AppendLine();
-                sb.AppendLine("QUERY TEXT:");
-                sb.AppendLine(Command.CommandText);
-                sb.AppendLine();
-                sb.AppendLine("PARAMETERS:");
-                foreach (IDbDataParameter p in Parameters)
-                {
-                    object val = (p.Value != null && p.Value is string) ? string.Format("\"{0}\"", p.Value) : p.Value;
-                    sb.AppendFormat("{0} = [{1}]", p.ParameterName, val ?? "NULL").AppendLine();
-                }
-                sb.AppendLine();
-                sb.AppendLine("==== End Query Trace ====");
-                sb.AppendLine();
+		private void WriteToTraceLog()
+		{
+			if (MapRepository.Instance.EnableTraceLogging)
+			{
+				StringBuilder sb = new StringBuilder();
+				sb.AppendLine();
+				sb.AppendLine("==== Begin Query Trace ====");
+				sb.AppendLine();
+				sb.AppendLine("QUERY TYPE:");
+				sb.AppendLine(Command.CommandType.ToString());
+				sb.AppendLine();
+				sb.AppendLine("QUERY TEXT:");
+				sb.AppendLine(Command.CommandText);
+				sb.AppendLine();
+				sb.AppendLine("PARAMETERS:");
+				foreach (IDbDataParameter p in Parameters)
+				{
+					object val = (p.Value != null && p.Value is string) ? string.Format("\"{0}\"", p.Value) : p.Value;
+					sb.AppendFormat("{0} = [{1}]", p.ParameterName, val ?? "NULL").AppendLine();
+				}
+				sb.AppendLine();
+				sb.AppendLine("==== End Query Trace ====");
+				sb.AppendLine();
 
-                Trace.Write(sb.ToString());
-            }
-        }
+				Trace.Write(sb.ToString());
+			}
+		}
 
-        private void UnbindEvents()
-        {
-            if (OpeningConnection != null)
-                OpeningConnection = null;
+		private void UnbindEvents()
+		{
+			if (OpeningConnection != null)
+				OpeningConnection = null;
 
-            if (ClosingConnection != null)
-                ClosingConnection = null;
-        }
+			if (ClosingConnection != null)
+				ClosingConnection = null;
+		}
 
-        public void BeginTransaction()
-        {
-            OpenConnection();
-            DbTransaction trans = Command.Connection.BeginTransaction();
-            Command.Transaction = trans;
-        }
+		public void BeginTransaction()
+		{
+			OpenConnection();
+			DbTransaction trans = Command.Connection.BeginTransaction();
+			Command.Transaction = trans;
+		}
 
-        public void RollBack()
-        {
-            try
-            {
-                if (Command.Transaction != null)
-                    Command.Transaction.Rollback();
-            }
-            finally
-            {
-                Command.Connection.Close();
-            }
-        }
+		public void RollBack()
+		{
+			try
+			{
+				if (Command.Transaction != null)
+					Command.Transaction.Rollback();
+			}
+			finally
+			{
+				Command.Connection.Close();
+			}
+		}
 
-        public void Commit()
-        {
-            try
-            {
-                if (Command.Transaction != null)
-                    Command.Transaction.Commit();
-            }
-            finally
-            {
-                Command.Connection.Close();
-            }
-        }
+		public void Commit()
+		{
+			try
+			{
+				if (Command.Transaction != null)
+					Command.Transaction.Commit();
+			}
+			finally
+			{
+				Command.Connection.Close();
+			}
+		}
 
-        #endregion
+		#endregion
 
-        #region - IDisposable Members -
+		#region - IDisposable Members -
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this); // In case a derived class implements a finalizer
-        }
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this); // In case a derived class implements a finalizer
+		}
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (Command.Transaction != null)
-                {
-                    Command.Transaction.Dispose();
-                    Command.Transaction = null;
-                }
+		protected virtual void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				if (Command.Transaction != null)
+				{
+					Command.Transaction.Dispose();
+					Command.Transaction = null;
+				}
 
-                if (Command.Connection != null)
-                {
-                    Command.Connection.Dispose();
-                    Command.Connection = null;
-                }
+				if (Command.Connection != null)
+				{
+					Command.Connection.Dispose();
+					Command.Connection = null;
+				}
 
-                if (Command != null)
-                {
-                    Command.Dispose();
-                    _command = null;
-                }
-            }
-        }
+				if (Command != null)
+				{
+					Command.Dispose();
+					_command = null;
+				}
+			}
+		}
 
-        #endregion
+		#endregion
 
-    }
+	}
 }
