@@ -130,7 +130,7 @@
     <Compile Include="QGen\View.cs" />
     <Compile Include="QGen\WhereBuilder.cs" />
     <Compile Include="Reflection\IReflectionStrategy.cs" />
-    <Compile Include="Reflection\SimpleReflectionStrategy.cs" />
+    <Compile Include="Reflection\CachedDelegateReflectionStrategy.cs" />
     <Compile Include="Reflection\ReflectionHelper.cs" />
     <Compile Include="SqlModesEnum.cs" />
   </ItemGroup>

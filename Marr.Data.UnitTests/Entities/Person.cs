@@ -13,7 +13,7 @@ namespace Marr.Data.UnitTests.Entities
         public int Age { get; set; }
         public DateTime BirthDate { get; set; }
         public bool IsHappy { get; set; }
-        public List<Pet> Pets { get; set; }
+        public ICollection<Pet> Pets { get; set; }
     }
 
     public class Pet

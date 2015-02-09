@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace Marr.Data.Reflection
 {
-    public class SimpleReflectionStrategy : IReflectionStrategy
+    public class CachedDelegateReflectionStrategy : IReflectionStrategy
     {
 
         private static readonly Dictionary<string, MemberInfo> MemberCache = new Dictionary<string, MemberInfo>();
@@ -43,13 +43,20 @@ namespace Marr.Data.Reflection
             throw new DataMappingException(string.Format("The DataMapper could not get the value for {0}.{1}.", entity.GetType().Name, fieldName));
         }
 
-        /// <summary>
-        /// Instantiates a type using the FastReflector library for increased speed.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
         public object CreateInstance(Type type)
         {
+			// If type is an interface and is IEnumerable, then create a List<T>
+			if (type.IsInterface && typeof(System.Collections.IEnumerable).IsAssignableFrom(type))
+			{
+				if (!type.IsGenericType)
+					throw new NotSupportedException("Non-generic IEnumerable relationship types are not supported. Please use a generic instead.");
+
+				Type genericList = typeof(List<>);
+				Type[] typeArgs = type.GetGenericArguments();
+				Type listT = genericList.MakeGenericType(typeArgs);
+				return Activator.CreateInstance(listT);
+			}
+
             return Activator.CreateInstance(type);
         }
 
@@ -82,38 +89,38 @@ namespace Marr.Data.Reflection
             switch (memberInfo.MemberType)
             {
                 case MemberTypes.Property:
-                    {
-                        var prop = (PropertyInfo)memberInfo;
+                {
+                    var prop = (PropertyInfo)memberInfo;
 
-                        if (!prop.CanWrite)
-                            return null;
+                    if (!prop.CanWrite)
+                        return null;
 
 #if NO_EXPRESSIONS
-                        return (o, convertedValue) =>
-                        {
-                            propertySetMethod.Invoke(o, new[] { convertedValue });
-                            return;
-                        };
+                    return (o, convertedValue) =>
+                    {
+                        propertySetMethod.Invoke(o, new[] { convertedValue });
+                        return;
+                    };
 #else
-                        var instance = Expression.Parameter(typeof(object), "i");
-                        var argument = Expression.Parameter(typeof(object), "a");
+                    var instance = Expression.Parameter(typeof(object), "i");
+                    var argument = Expression.Parameter(typeof(object), "a");
 
-                        var instanceParam = Expression.Convert(instance, prop.DeclaringType);
-                        var valueParam = Expression.Convert(argument, prop.PropertyType);
+                    var instanceParam = Expression.Convert(instance, prop.DeclaringType);
+                    var valueParam = Expression.Convert(argument, prop.PropertyType);
 
-                        var setterCall = Expression.Call(instanceParam, prop.GetSetMethod(true), valueParam);
+                    var setterCall = Expression.Call(instanceParam, prop.GetSetMethod(true), valueParam);
 
-                        return Expression.Lambda<SetterDelegate>(setterCall, instance, argument).Compile();
+                    return Expression.Lambda<SetterDelegate>(setterCall, instance, argument).Compile();
 #endif
-                    }
+                }
                 case MemberTypes.Field:
-                    {
-                        return ((instance, value) => ((FieldInfo)memberInfo).SetValue(instance, value));
-                    }
+                {
+                    return ((instance, value) => ((FieldInfo)memberInfo).SetValue(instance, value));
+                }
                 default:
-                    {
-                        throw new ArgumentException("Member needs to property of field.");
-                    }
+                {
+                    throw new ArgumentException("Member needs to be a property or field: " + memberInfo.Name);
+                }
             }
         }
 
@@ -123,41 +130,41 @@ namespace Marr.Data.Reflection
             switch (memberInfo.MemberType)
             {
                 case MemberTypes.Property:
-                    {
+                {
 
-                        var prop = (PropertyInfo)memberInfo;
+                    var prop = (PropertyInfo)memberInfo;
 
-                        if (!prop.CanRead)
-                            return null;
+                    if (!prop.CanRead)
+                        return null;
 
-                        var getMethodInfo = (prop).GetGetMethod(true);
+                    var getMethodInfo = (prop).GetGetMethod(true);
 
 #if NO_EXPRESSIONS
 			return o => propertyInfo.GetGetMethod().Invoke(o, new object[] { });
 #else
 
-                        var oInstanceParam = Expression.Parameter(typeof(object), "oInstanceParam");
-                        var instanceParam = Expression.Convert(oInstanceParam, memberInfo.DeclaringType);
+                    var oInstanceParam = Expression.Parameter(typeof(object), "oInstanceParam");
+                    var instanceParam = Expression.Convert(oInstanceParam, memberInfo.DeclaringType);
 
-                        var exprCallPropertyGetFn = Expression.Call(instanceParam, getMethodInfo);
-                        var oExprCallPropertyGetFn = Expression.Convert(exprCallPropertyGetFn, typeof(object));
+                    var exprCallPropertyGetFn = Expression.Call(instanceParam, getMethodInfo);
+                    var oExprCallPropertyGetFn = Expression.Convert(exprCallPropertyGetFn, typeof(object));
 
-                        var propertyGetFn = Expression.Lambda<GetterDelegate>
-                            (
-                                oExprCallPropertyGetFn,
-                                oInstanceParam
-                            ).Compile();
+                    var propertyGetFn = Expression.Lambda<GetterDelegate>
+                    (
+                        oExprCallPropertyGetFn,
+                        oInstanceParam
+                    ).Compile();
 
-                        return propertyGetFn;
-                    }
+                    return propertyGetFn;
+                }
                 case MemberTypes.Field:
-                    {
-                        return (instance => ((FieldInfo)memberInfo).GetValue(instance));
-                    }
+                {
+                    return (instance => ((FieldInfo)memberInfo).GetValue(instance));
+                }
                 default:
-                    {
-                        throw new ArgumentException("Member needs to property of field.");
-                    }
+                {
+					throw new ArgumentException("Member needs to be a property or field: " + memberInfo.Name);
+                }
             }
 #endif
         }

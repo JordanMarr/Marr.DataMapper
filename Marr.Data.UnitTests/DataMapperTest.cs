@@ -293,8 +293,8 @@ namespace Marr.Data.UnitTests
             Assert.AreEqual(true, jordan.IsHappy);
             Assert.AreEqual(new DateTime(1977, 1, 22), jordan.BirthDate);
             Assert.IsTrue(jordan.Pets.Count == 2);
-            Assert.AreEqual("Chuy", jordan.Pets[0].Name);
-            Assert.AreEqual("Bela", jordan.Pets[1].Name);
+            Assert.AreEqual("Chuy", jordan.Pets.ElementAt(0).Name);
+            Assert.AreEqual("Bela", jordan.Pets.ElementAt(1).Name);
 
             Person amyme = people[1];
             Assert.AreEqual(2, amyme.ID);
@@ -303,8 +303,8 @@ namespace Marr.Data.UnitTests
             Assert.AreEqual(false, amyme.IsHappy);
             Assert.AreEqual(new DateTime(1979, 10, 19), amyme.BirthDate);
             Assert.IsTrue(amyme.Pets.Count == 2);
-            Assert.AreEqual("Bird", amyme.Pets[0].Name);
-            Assert.AreEqual("Alligator", amyme.Pets[1].Name);
+			Assert.AreEqual("Bird", amyme.Pets.ElementAt(0).Name);
+			Assert.AreEqual("Alligator", amyme.Pets.ElementAt(1).Name);
         }
 
         [TestMethod]

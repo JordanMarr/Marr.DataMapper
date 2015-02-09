@@ -37,7 +37,7 @@ namespace Marr.Data.TestHelper
         /// <param name="entities">A set of parent and child entities that will create a single stubbed row.</param>
         public void AddEntityWithChildren(params object[] entities)
         {
-            var reflector = new Marr.Data.Reflection.SimpleReflectionStrategy();
+            var reflector = new Marr.Data.Reflection.CachedDelegateReflectionStrategy();
 
             List<object> stubbedValues = new List<object>();
 

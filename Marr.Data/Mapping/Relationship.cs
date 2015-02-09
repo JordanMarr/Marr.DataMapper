@@ -35,7 +35,7 @@ namespace Marr.Data.Mapping
             // Try to determine the RelationshipType
             if (relationshipInfo.RelationType == RelationshipTypes.AutoDetect)
             {
-                if (typeof(System.Collections.ICollection).IsAssignableFrom(MemberType))
+                if (typeof(System.Collections.IEnumerable).IsAssignableFrom(MemberType))
                 {
                     relationshipInfo.RelationType = RelationshipTypes.Many;
                 }

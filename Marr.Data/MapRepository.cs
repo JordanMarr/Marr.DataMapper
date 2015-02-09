@@ -53,7 +53,7 @@ namespace Marr.Data
             TypeConverters = new Dictionary<Type, IConverter>();
 
             // Register a default IReflectionStrategy
-            ReflectionStrategy = new SimpleReflectionStrategy();
+            ReflectionStrategy = new CachedDelegateReflectionStrategy();
 
             // Register a default type converter for Enums
             TypeConverters.Add(typeof(Enum), new Converters.EnumStringConverter());
