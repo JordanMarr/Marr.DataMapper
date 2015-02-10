@@ -632,7 +632,17 @@ namespace Marr.Data.QGen
 			Table table = new Table(typeof(TRight), joinType);
 			_tables.Add(table);
 
-			var builder = new JoinBuilder<TLeft, TRight>(_db.Command, _dialect, filterExpression, _tables);
+			JoinBuilder<TLeft, TRight> builder = null;
+			try
+			{
+				builder = new JoinBuilder<TLeft, TRight>(_db.Command, _dialect, filterExpression, _tables);
+			}
+			catch (Exception ex)
+			{
+				throw new RelationshipLoadException(
+					string.Format("Join failed for {0} -> {1}.", typeof(TLeft).Name, rightMember.Name),
+					ex);
+			}
 
 			table.JoinClause = builder.ToString();
 			return this;

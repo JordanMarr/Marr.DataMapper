@@ -71,6 +71,7 @@
     <Compile Include="QGen\SqliteRowCountQueryDecorator.cs" />
     <Compile Include="QGen\SqlitePagingQueryDecorator.cs" />
     <Compile Include="RelationshipDataMapper.cs" />
+    <Compile Include="RelationshipLoadException.cs" />
     <Compile Include="UnitOfWork.cs" />
     <Compile Include="UnitOfWorkSharedContext.cs" />
     <Compile Include="Mapping\ColumnMapBuilder.cs" />

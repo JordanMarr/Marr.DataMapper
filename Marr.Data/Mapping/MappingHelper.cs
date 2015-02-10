@@ -108,8 +108,17 @@ namespace Marr.Data.Mapping
 					using (var db = new RelationshipDataMapper(_db.ProviderFactory, _db.ConnectionString, rootQuery))
 					{
 						// NOTE: If parent _db is in a transaction, new db will be outside of that transaction.
-						object eagerLoadedValue = rel.EagerLoaded.Load(db, ent);
-						rel.Setter(ent, eagerLoadedValue);
+						try
+						{
+							object eagerLoadedValue = rel.EagerLoaded.Load(db, ent);
+							rel.Setter(ent, eagerLoadedValue);
+						}
+						catch (Exception ex)
+						{
+							throw new RelationshipLoadException(
+								string.Format("Eager load failed for {0} -> {1}.", entType.Name, rel.Member.Name),
+								ex);
+						}
 					}
 				}
 			}
@@ -138,7 +147,7 @@ namespace Marr.Data.Mapping
                 foreach (var rel in relationships.Where(r => r.IsLazyLoaded))
                 {
                     var lazyLoadedProxy = (ILazyLoaded)rel.LazyLoaded.Clone();
-                    lazyLoadedProxy.Prepare(dbCreate, ent);
+                    lazyLoadedProxy.Prepare(dbCreate, ent, rel.Member.Name);
                     rel.Setter(ent, lazyLoadedProxy);
                 }
             }

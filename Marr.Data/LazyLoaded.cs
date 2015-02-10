@@ -5,7 +5,7 @@ namespace Marr.Data
     public interface ILazyLoaded : ICloneable
     {
         bool IsLoaded { get; }
-        void Prepare(Func<IDataMapper> dataMapperFactory, object parent);
+		void Prepare(Func<IDataMapper> dataMapperFactory, object parent, string memberName);
         void LazyLoad();
     }
 
@@ -38,7 +38,7 @@ namespace Marr.Data
 
         public bool IsLoaded { get; protected set; }
 
-        public virtual void Prepare(Func<IDataMapper> dataMapperFactory, object parent)
+		public virtual void Prepare(Func<IDataMapper> dataMapperFactory, object parent, string memberName)
         { }
 
         public virtual void LazyLoad()
@@ -67,8 +67,9 @@ namespace Marr.Data
     /// <typeparam name="TChild">The child entity that is being lazy loaded.</typeparam>
     internal class LazyLoaded<TParent, TChild> : LazyLoaded<TChild>
     {
+		private Func<IDataMapper> _dbMapperFactory;
         private TParent _parent;
-        private Func<IDataMapper> _dbMapperFactory;
+		private string _memberName;
 
         private readonly Func<IDataMapper, TParent, TChild> _query;
         private readonly Func<TParent, bool> _condition;
@@ -91,10 +92,12 @@ namespace Marr.Data
         /// </summary>
         /// <param name="dataMapperFactory">Knows how to instantiate a new IDataMapper.</param>
         /// <param name="parent">The parent entity.</param>
-        public override void Prepare(Func<IDataMapper> dataMapperFactory, object parent)
+		/// <param name="member">The name of the member that is being lazy loaded.</param>
+		public override void Prepare(Func<IDataMapper> dataMapperFactory, object parent, string memberName)
         {
             _dbMapperFactory = dataMapperFactory;
             _parent = (TParent)parent;
+			_memberName = memberName;
         }
 
         public override void LazyLoad()
@@ -109,7 +112,16 @@ namespace Marr.Data
                 {
                     using (IDataMapper db = _dbMapperFactory())
                     {
-                        _value = _query(db, _parent);
+						try
+						{
+							_value = _query(db, _parent);
+						}
+						catch (Exception ex)
+						{
+							throw new RelationshipLoadException(
+								string.Format("Lazy load failed for {0} -> {1}.", typeof(TParent).Name, _memberName),
+								ex);
+						}
                     }
                 }
 

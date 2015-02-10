@@ -8,14 +8,13 @@ using Marr.Data.UnitTests;
 using Marr.Data.TestHelper;
 using Rhino.Mocks;
 using Marr.Data.Mapping;
+using System.Reflection;
 
 namespace Marr.Data.UnitTests
 {
     [TestClass]
     public class LazyLoadedTest : TestBase
     {
-        
-
         [TestMethod]
         public void LazyLoaded_Implicit_Conversion_When_IsLoad_Should_Return_Value()
         {
@@ -39,7 +38,7 @@ namespace Marr.Data.UnitTests
 
             Building building = new Building();
             var lazyProxy = new LazyLoaded<Building, List<Office>>((d,b) => d.Query<Office>().ToList());
-            lazyProxy.Prepare(() => db, building);
+            lazyProxy.Prepare(() => db, building, "Offices");
             building._offices = lazyProxy;
 
             // Act
@@ -54,6 +53,26 @@ namespace Marr.Data.UnitTests
             // Assert
             db.AssertWasCalled(d => d.Query<Office>(), o => o.Repeat.Once()); // Should hit DB once
         }
+
+		[TestMethod]
+		[ExpectedException(typeof(RelationshipLoadException))]
+		public void LazyLoadedException_ShouldThrowDataMappingException()
+		{
+			// Arrange
+			IDataMapper db = MockRepository.GenerateStub<IDataMapper>();
+			Office office1 = new Office { Number = 1 };
+			Office office2 = new Office { Number = 2 };
+			List<Office> offices = new List<Office> { office1, office2 };
+			db.Stub(d => d.Query<Office>().ToList()).Throw(new NullReferenceException("lazy load error!"));
+
+			Building building = new Building();
+			var lazyProxy = new LazyLoaded<Building, List<Office>>((d, b) => d.Query<Office>().ToList());
+			lazyProxy.Prepare(() => db, building, "Offices");
+			building._offices = lazyProxy;
+
+			// Act
+			int count = building.Offices.Count;
+		}
     }
 
     #region - Lazy Load Test Entities -

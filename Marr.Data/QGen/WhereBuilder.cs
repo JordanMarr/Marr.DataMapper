@@ -98,7 +98,7 @@ namespace Marr.Data.QGen
                     break;
 
                 default:
-                    string msg = string.Format("'{0}' expressions are not currently supported in the Where clause expression tree parser.", method);
+					string msg = string.Format("'{0}' expressions are not currently supported in the {1} clause expression tree parser.", method, PrefixText);
                     throw new NotSupportedException(msg);
             }
 
@@ -199,9 +199,10 @@ namespace Marr.Data.QGen
 
                 if (table == null)
                 {
-                    string msg = string.Format("The property '{0} -> {1}' you are trying to reference in the 'WHERE' statement belongs to an entity that has not been joined in your query.  To reference this property, you must join the '{0}' entity using the Join method.",
+                    string msg = string.Format("The property '{0} -> {1}' you are trying to reference in the '{2}' statement belongs to an entity that has not been included in your query.  To reference this property, you must join the '{0}' entity using the Join or Graph method.",
                         declaringType,
-                        member.Name);
+                        member.Name,
+						PrefixText);
 
                     throw new DataMappingException(msg);
                 }
