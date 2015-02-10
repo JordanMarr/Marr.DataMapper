@@ -117,6 +117,7 @@ namespace Marr.Data.Mapping
 			public ColumnMapBuilder<TEntity> AutoMapAllProperties()
 			{
 				return AutoMapPropertiesWhere(m => m.MemberType == MemberTypes.Property &&
+					(m as PropertyInfo).CanWrite &&
 					!typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType));
 			}
 
@@ -130,6 +131,7 @@ namespace Marr.Data.Mapping
 			public ColumnMapBuilder<TEntity> AutoMapSimpleTypeProperties()
 			{
 				return AutoMapPropertiesWhere(m => m.MemberType == MemberTypes.Property &&
+					(m as PropertyInfo).CanWrite &&
 					DataHelper.IsSimpleType((m as PropertyInfo).PropertyType) &&
 					!typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType));
 			}
@@ -230,6 +232,7 @@ namespace Marr.Data.Mapping
 			{
 				return AutoMapPropertiesWhere(m =>
 					m.MemberType == MemberTypes.Property &&
+					(m as PropertyInfo).CanWrite &&
 					(
 						typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType) || !DataHelper.IsSimpleType((m as PropertyInfo).PropertyType)
 					)
@@ -246,6 +249,7 @@ namespace Marr.Data.Mapping
 			{
 				return AutoMapPropertiesWhere(m =>
 					m.MemberType == MemberTypes.Property &&
+					(m as PropertyInfo).CanWrite &&
 					typeof(ICollection).IsAssignableFrom((m as PropertyInfo).PropertyType));
 			}
 
@@ -258,6 +262,7 @@ namespace Marr.Data.Mapping
 			{
 				return AutoMapPropertiesWhere(m =>
 					m.MemberType == MemberTypes.Property &&
+					(m as PropertyInfo).CanWrite &&
 					!DataHelper.IsSimpleType((m as PropertyInfo).PropertyType));
 			}
 			
