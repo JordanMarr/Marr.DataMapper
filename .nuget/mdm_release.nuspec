@@ -2,8 +2,8 @@
 <package xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
 		<id>MarrDataMapper</id>
-		<title>Marr DataMapper</title>
-		<version>3.37</version>
+		<title>Marr.DataMapper</title>
+		<version>3.38</version>
 		<copyright>2008</copyright>		
 		<authors>Jordan Marr</authors>
 		<requireLicenseAcceptance>true</requireLicenseAcceptance>
