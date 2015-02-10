@@ -17,6 +17,14 @@ namespace Marr.Data.UnitTests.Entities
         public int Age { get; set; }
         public DateTime BirthDate { get; set; }
         public bool IsHappy { get; set; }
+		
+		public string NameAndId
+		{
+			get
+			{
+				return Name + ID.ToString();
+			}
+		}
 
         public List<UnmappedPet> Pets { get; set; }
     }
