@@ -153,6 +153,14 @@ namespace Marr.Data
             return member.Name == otherMember.Name && member.DeclaringType == otherMember.DeclaringType;
         }
 
+		public static bool EqualsMember(this EntityGraph g, MemberInfo otherMember)
+		{
+			return 
+				g.Member != null &&
+				g.Member.Name == otherMember.Name && 
+				g.Parent.EntityType == otherMember.DeclaringType;
+		}
+
         /// <summary>
         /// Determines if a type is not a complex object.
         /// </summary>

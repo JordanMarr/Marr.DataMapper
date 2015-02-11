@@ -186,21 +186,28 @@ namespace Marr.Data.QGen
 			IsGraph = true;
 
 			var membersToLoad = childrenToLoad.Select(exp => (exp.Body as MemberExpression).Member);
+			var membersNotFoundInGraph = new List<string>();
 
 			// Populate RelationshipsToLoad
 			foreach (var member in membersToLoad)
 			{
 				// Translate into members into mapped relationships
 				var rel = EntGraph
-					.Where(g => g.Member != null && g.Member.EqualsMember(member))
+					.Where(g => g.EqualsMember(member))
 					.Select(g => g.Relationship)
 					.FirstOrDefault();
 
 				if (rel != null)
-				{
 					RelationshipsToLoad.Add(rel);
-				}
+				else
+					membersNotFoundInGraph.Add(string.Format("- {0} -> {1}", member.DeclaringType.Name, member.Name));
 			}
+
+			if (membersNotFoundInGraph.Any())
+				throw new RelationshipLoadException(
+					string.Format("The following requested members are not mapped as relationships on the '{0}' entity:\n{1}",
+						typeof(T).Name, 
+						string.Join(",\n", membersNotFoundInGraph.ToArray())));
 
 			if (!membersToLoad.Any())
 			{
