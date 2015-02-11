@@ -152,15 +152,37 @@ namespace Marr.Data.Mapping
 			}
 
 			/// <summary>
-			/// Creates a ColumnMapBuilder that starts out with no pre-populated columns.
-			/// All columns must be added manually using the builder.
+			/// Provides a fluent way to manually add column mappings for the current entity..
 			/// </summary>
-			/// <typeparam name="T"></typeparam>
+			/// <param name="overwriteExistingMappings">
+			/// Overwrites existing mappings if true, or appends if false.
+			/// Default is true.
+			/// </param>
 			/// <returns></returns>
-			public ColumnMapBuilder<TEntity> MapProperties()
+			public ColumnMapBuilder<TEntity> MapProperties(bool overwriteExistingMappings = true)
 			{
-				ColumnMapCollection columns = new ColumnMapCollection();
-				MapRepository.Instance.Columns[_entityType] = columns;
+				var repos = MapRepository.Instance;
+
+				ColumnMapCollection columns = null;
+
+				if (overwriteExistingMappings)
+				{
+					columns = new ColumnMapCollection();
+					repos.Columns[_entityType] = columns;
+				}
+				else
+				{
+					if (repos.Columns.ContainsKey(_entityType))
+					{
+						columns = repos.Columns[_entityType];
+					}
+					else
+					{
+						columns = new ColumnMapCollection();
+						repos.Columns[_entityType] = columns;
+					}
+				}
+
 				return new ColumnMapBuilder<TEntity>(_fluentEntity, columns);
 			}
 		}
@@ -281,14 +303,37 @@ namespace Marr.Data.Mapping
 			}
 
 			/// <summary>
-			/// Creates a RelationshipBuilder that starts out with no pre-populated relationships.
-			/// All relationships must be added manually using the builder.
+			/// Provides a fluent way to manually add relationship mappings for the current entity.
 			/// </summary>
+			/// <param name="overwriteExistingMappings">
+			/// Overwrites existing mappings if true, or appends if false.
+			/// Default is true.
+			/// </param>
 			/// <returns></returns>
-			public RelationshipBuilder<TEntity> MapProperties()
+			public RelationshipBuilder<TEntity> MapProperties(bool overwriteExistingMappings = true)
 			{
-				RelationshipCollection relationships = new RelationshipCollection();
-				MapRepository.Instance.Relationships[_entityType] = relationships;
+				var repos = MapRepository.Instance;
+
+				RelationshipCollection relationships = null;
+
+				if (overwriteExistingMappings)
+				{
+					relationships = new RelationshipCollection();
+					repos.Relationships[_entityType] = relationships;
+				}
+				else
+				{
+					if (repos.Columns.ContainsKey(_entityType))
+					{
+						relationships = repos.Relationships[_entityType];
+					}
+					else
+					{
+						relationships = new RelationshipCollection();
+						repos.Relationships[_entityType] = relationships;
+					}
+				}
+
 				return new RelationshipBuilder<TEntity>(_fluentEntity, relationships);
 			}
 		}

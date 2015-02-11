@@ -242,8 +242,7 @@ namespace Marr.Data.QGen
 				foreach (var r in relationshipsToLoad)
 				{
 					var node = EntGraph
-						.Where(g => g.Member != null &&
-								g.Member.EqualsMember(r.Member) &&
+						.Where(g => g.EqualsMember(r.Member) &&
 								!r.IsEagerLoaded &&
 								!r.IsLazyLoaded)
 								.FirstOrDefault();
