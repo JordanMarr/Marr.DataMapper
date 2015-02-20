@@ -61,7 +61,8 @@ namespace Marr.Data.IntegrationTests.DB_SqlServer
 																				.FirstOrDefault())
 				.Entity<Entities.FluentMappedReceipt>()
 					.Table.MapTable("Receipt")
-					.Columns.AutoMapSimpleTypeProperties();
+					.Columns.AutoMapSimpleTypeProperties()
+						.For(r => r.OrderItemID).SetPrimaryKey(); // Not really a PK, but works as a grouping key since this is a 1-1 relationship wtih order item
 		}
 
 		private void SeedDB()

@@ -22,146 +22,188 @@ using System.Data.Common;
 using System.Linq;
 using Marr.Data.Mapping;
 using System.Reflection;
+using Marr.Data.QGen;
 
 namespace Marr.Data
 {
-    /// <summary>
-    /// Holds metadata about an object graph that is being queried and eagerly loaded.
-    /// Contains all metadata needed to instantiate the object and fill it with data from a DataReader.
-    /// </summary>
-    internal class EntityGraph : IEnumerable<EntityGraph>
-    {
-        private MapRepository _repos;
-        private EntityGraph _parent;
-        private Type _entityType;
-        private Relationship _relationship;
-        private ColumnMapCollection _columns;
-        private RelationshipCollection _relationships;
-        private List<EntityGraph> _children;
-        private object _entity;
-        private GroupingKeyCollection _groupingKeyColumns;
-        private Dictionary<string, EntityReference> _entityReferences;
+	/// <summary>
+	/// Holds metadata about an object graph that is being queried and eagerly loaded.
+	/// Contains all metadata needed to instantiate the object and fill it with data from a DataReader.
+	/// </summary>
+	internal class EntityGraph : IEnumerable<EntityGraph>
+	{
+		private MapRepository _repos;
+		private EntityGraph _parent;
+		private Type _entityType;
+		private Relationship _relationship;
+		private ColumnMapCollection _columns;
+		private RelationshipCollection _relationships;
+		private List<EntityGraph> _children;
+		private object _entity;
+		private GroupingKeyCollection _groupingKeyColumns;
+		private Dictionary<string, EntityReference> _entityReferences;
 
-        internal IList RootList { get; private set; }
-        internal bool IsParentReference { get; private set; }
+		internal IList RootList { get; set; }
+		internal bool IsParentReference { get; private set; }
+		internal int GraphIndex { get; private set; }
+		internal int GraphRootIndex { get; set; }
 
-        /// <summary>
-        /// Recursively builds an entity graph of the given parent type.
-        /// </summary>
-        /// <param name="entityType"></param>
-        public EntityGraph(Type entityType, IList rootList)
-            : this(entityType, null, null) // Recursively constructs hierarchy
-        {
-            RootList = rootList;
-        }
-
-        /// <summary>
-        /// Recursively builds entity graph hierarchy.
-        /// </summary>
-        /// <param name="entityType"></param>
-        /// <param name="parent"></param>
-        /// <param name="relationship"></param>
-		private EntityGraph(Type entityType, EntityGraph parent, Relationship relationship)
-        {
-            _repos = MapRepository.Instance;
-
-            _entityType = entityType;
-            _parent = parent;
-            _relationship = relationship;
-            IsParentReference = !IsRoot && AnyParentsAreOfType(entityType);
-            if (!IsParentReference)
-            {
-                _columns = _repos.GetColumns(entityType);
-            }
-
-            _relationships = _repos.GetRelationships(entityType);
-            _children = new List<EntityGraph>();
-            Member = relationship != null ? relationship.Member : null;
-            _entityReferences = new Dictionary<string, EntityReference>();
-
-            if (IsParentReference)
-            {
-                return;
-            }
-
-            // Create a new EntityGraph for each child relationship
-            foreach (Relationship childRelationship in this.Relationships)
-            {
-				_children.Add(new EntityGraph(childRelationship.RelationshipInfo.EntityType, this, childRelationship));
-            }
-        }
-
-        public MemberInfo Member { get; private set; }
-
-        /// <summary>
-        /// Gets the parent of this EntityGraph.
-        /// </summary>
-        public EntityGraph Parent
-        {
-            get
-            {
-                return _parent;
-            }
-        }
-
-        /// <summary>
-        /// Gets the Type of this EntityGraph.
-        /// </summary>
-        public Type EntityType
-        {
-            get { return _entityType; }
-        }
-
-        /// <summary>
-        /// Gets a boolean than indicates whether this entity is the root node in the graph.
-        /// </summary>
-        public bool IsRoot
-        {
-            get
-            {
-                return _parent == null;
-            }
-        }
-
-        /// <summary>
-        /// Gets a boolean that indicates whether this entity is a child.
-        /// </summary>
-        public bool IsChild
-        {
-            get
-            {
-                return _parent != null;
-            }
-        }
-
-		public bool HasDirectChildrenToMergeInQuery(IEnumerable<Relationship> relationshipsToLoad)
+		/// <summary>
+		/// Recursively builds an entity graph of the given parent type.
+		/// </summary>
+		/// <param name="entityType"></param>
+		public EntityGraph(Type entityType, IList rootList)
+			: this(entityType, null, null) // Recursively constructs hierarchy
 		{
-			// Has no children
-			if (!Children.Any())
-				return false;
-
-			// Or has any children with undefined or join relationships
-			return Children
-				.Where(c => relationshipsToLoad.Any(rtl => rtl.Member.EqualsMember(c.Relationship.Member)))
-				.Any(c => c.Relationship.IsUndefined || c.Relationship.IsEagerLoadedJoin);
+			RootList = rootList;
 		}
 
-        /// <summary>
-        /// Gets the columns mapped to this entity.
-        /// </summary>
-        public ColumnMapCollection Columns
-        {
-            get { return _columns; }
-        }
+		/// <summary>
+		/// Recursively builds entity graph hierarchy.
+		/// </summary>
+		/// <param name="entityType"></param>
+		/// <param name="parent"></param>
+		/// <param name="relationship"></param>
+		private EntityGraph(Type entityType, EntityGraph parent, Relationship relationship)
+		{
+			GraphIndex = parent == null ? 0 : parent.GraphIndex + 1;
 
-        /// <summary>
-        /// Gets the relationships mapped to this entity.
-        /// </summary>
-        public RelationshipCollection Relationships
-        {
-            get { return _relationships; }
-        }
-		
+			_repos = MapRepository.Instance;
+
+			if (relationship != null && relationship.IsLazyLoaded)
+			{
+				var genericType = relationship.LazyLoaded.GetType();
+				_entityType = genericType.GetGenericArguments().First();
+			}
+			else
+			{
+				_entityType = entityType;
+			}
+			_parent = parent;
+			_relationship = relationship;
+			IsParentReference = !IsRoot && AnyParentsAreOfType(entityType);
+			if (!IsParentReference)
+			{
+				_columns = _repos.GetColumns(entityType);
+			}
+			_relationships = _repos.GetRelationships(entityType);
+			_children = new List<EntityGraph>();
+			Member = relationship != null ? relationship.Member : null;
+			_entityReferences = new Dictionary<string, EntityReference>();
+
+			if (IsParentReference)
+			{
+				return;
+			}
+
+			// Create a new EntityGraph for each child relationship
+			foreach (Relationship childRelationship in this.Relationships)
+			{
+				_children.Add(new EntityGraph(childRelationship.RelationshipInfo.EntityType, this, childRelationship));
+			}
+		}
+
+		public MemberInfo Member { get; private set; }
+
+		/// <summary>
+		/// Gets the parent of this EntityGraph.
+		/// </summary>
+		public EntityGraph Parent
+		{
+			get
+			{
+				return _parent;
+			}
+		}
+
+		/// <summary>
+		/// Gets the Type of this EntityGraph.
+		/// </summary>
+		public Type EntityType
+		{
+			get { return _entityType; }
+		}
+
+		/// <summary>
+		/// Gets a boolean than indicates whether this entity is the root node in the graph.
+		/// </summary>
+		public bool IsRoot
+		{
+			get
+			{
+				return GraphIndex == GraphRootIndex;
+			}
+		}
+
+		/// <summary>
+		/// Gets a boolean that indicates whether this entity is a child.
+		/// </summary>
+		public bool IsChild
+		{
+			get
+			{
+				return GraphIndex > GraphRootIndex;
+			}
+		}
+
+		public IEnumerable<EntityGraph> GetDirectChildrenLazyOrEager(IEnumerable<RelationshipLoadRequest> relationshipsToLoad)
+		{
+			// Return any children with undefined or join relationsnQhips
+			return Children
+				.Where(c => relationshipsToLoad.Any(rtl => rtl.BuildEntityTypePath() == c.BuildEntityTypePath()))
+				.Where(c => c.Relationship.IsLazyLoaded || c.Relationship.IsEagerLoaded)
+				.ToArray();
+		}
+
+		public IEnumerable<EntityGraph> GetDirectChildrenToMergeInQuery(IEnumerable<RelationshipLoadRequest> relationshipsToLoad)
+		{
+			// Return any children with undefined or join relationsnQhips
+			return Children
+				.Where(c => relationshipsToLoad.Any(rtl => rtl.BuildEntityTypePath() == c.BuildEntityTypePath()))
+				.Where(c => c.Relationship.IsUndefined || c.Relationship.IsEagerLoadedJoin)
+				.ToArray();
+		}
+
+		public IEnumerable<EntityGraph> EnumerateAllChildrenToMergeInQuery(IEnumerable<RelationshipLoadRequest> relationshipsToLoad)
+		{
+			var stack = new Stack<EntityGraph>();
+			stack.Push(this);
+			while (stack.Any())
+			{
+				var ent = stack.Pop();
+				yield return ent;
+
+				var directChildrenToMerge = ent.GetDirectChildrenToMergeInQuery(relationshipsToLoad);
+				foreach (var c in directChildrenToMerge)
+				{
+					stack.Push(c);
+				}
+			}
+			
+			
+		}
+
+		public bool HasDirectChildrenToMergeInQuery(IEnumerable<RelationshipLoadRequest> relationshipsToLoad)
+		{
+			return GetDirectChildrenToMergeInQuery(relationshipsToLoad).Any();
+		}
+
+		/// <summary>
+		/// Gets the columns mapped to this entity.
+		/// </summary>
+		public ColumnMapCollection Columns
+		{
+			get { return _columns; }
+		}
+
+		/// <summary>
+		/// Gets the relationships mapped to this entity.
+		/// </summary>
+		public RelationshipCollection Relationships
+		{
+			get { return _relationships; }
+		}
+
 		/// <summary>
 		/// Gets this entities relationship to its parent.
 		/// </summary>
@@ -170,257 +212,269 @@ namespace Marr.Data
 			get { return _relationship; }
 		}
 
-        /// <summary>
-        /// A list of EntityGraph objects that hold metadata about the child entities that will be loaded.
-        /// </summary>
-        public List<EntityGraph> Children
-        {
-            get { return _children; }
-        }
+		/// <summary>
+		/// A list of EntityGraph objects that hold metadata about the child entities that will be loaded.
+		/// </summary>
+		public List<EntityGraph> Children
+		{
+			get { return _children; }
+		}
 
-        /// <summary>
-        /// Adds an entity to the appropriate place in the object graph.
-        /// </summary>
-        /// <param name="entityInstance"></param>
-        public void AddEntity(object entityInstance)
-        {
-            _entity = entityInstance;
+		public string BuildEntityTypePath()
+		{
+			var stack = new Stack<Type>();
+			var node = this;
+			while (node != null)
+			{
+				if (node.Parent != null) // Do not add root entity type
+					stack.Push(node.EntityType);
 
-            // Add newly created entityInstance to list (Many) or set it to field (One)
-            if (this.IsRoot)
-            {
-                RootList.Add(entityInstance);
-            }
-            else if (_relationship.RelationshipInfo.RelationType == RelationshipTypes.Many)
-            {
-                var list = _parent._entityReferences[_parent.GroupingKeyColumns.GroupingKey]
-                    .ChildLists[_relationship.Member.Name];
+				node = node.Parent;
+			}
+			return string.Join("-", stack.Select(t => t.Name).ToArray());
+		}
 
-                list.Add(entityInstance);
-            }
-            else // RelationTypes.One
-            {
-                _relationship.Setter(_parent._entity, entityInstance);
-            }
+		/// <summary>
+		/// Adds an entity to the appropriate place in the object graph.
+		/// </summary>
+		/// <param name="entityInstance"></param>
+		public void AddEntity(object entityInstance)
+		{
+			_entity = entityInstance;
 
-            EntityReference entityRef = new EntityReference(entityInstance);
-            _entityReferences.Add(GroupingKeyColumns.GroupingKey, entityRef);
+			// Add newly created entityInstance to list (Many) or set it to field (One)
+			if (this.IsRoot)
+			{
+				RootList.Add(entityInstance);
+			}
+			else if (_relationship.RelationshipInfo.RelationType == RelationshipTypes.Many)
+			{
+				var list = _parent._entityReferences[_parent.GroupingKeyColumns.GroupingKey]
+					.ChildLists[_relationship.Member.Name];
 
-            InitOneToManyChildLists(entityRef);
-        }
+				list.Add(entityInstance);
+			}
+			else // RelationTypes.One
+			{
+				_relationship.Setter(_parent._entity, entityInstance);
+			}
 
-        /// <summary>
-        /// Searches for a previously loaded parent entity and then sets that reference to the mapped Relationship property.
-        /// </summary>
-        public void AddParentReference()
-        {
-            var parentReference = FindParentReference();
-            _relationship.Setter(_parent._entity, parentReference);
-        }
+			EntityReference entityRef = new EntityReference(entityInstance);
+			_entityReferences.Add(GroupingKeyColumns.GroupingKey, entityRef);
 
-        /// <summary>
-        /// Concatenates the values of the GroupingKeys property and compares them
-        /// against the LastKeyGroup property.  Returns true if the values are different,
-        /// or false if the values are the same.
-        /// The currently concatenated keys are saved in the LastKeyGroup property.
-        /// </summary>
-        /// <param name="reader"></param>
-        /// <returns></returns>
-        public bool IsNewGroup(DbDataReader reader, bool useAltName)
-        {
-            bool isNewGroup = false;
+			InitOneToManyChildLists(entityRef);
+		}
 
-            // Get primary keys from parent entity and any one-to-one child entites
-            GroupingKeyCollection groupingKeyColumns = this.GroupingKeyColumns;
+		/// <summary>
+		/// Searches for a previously loaded parent entity and then sets that reference to the mapped Relationship property.
+		/// </summary>
+		public void AddParentReference()
+		{
+			var parentReference = FindParentReference();
+			_relationship.Setter(_parent._entity, parentReference);
+		}
 
-            // Concatenate column values
-            KeyGroupInfo keyGroupInfo = groupingKeyColumns.CreateGroupingKey(reader, useAltName);
+		/// <summary>
+		/// Concatenates the values of the GroupingKeys property and compares them
+		/// against the LastKeyGroup property.  Returns true if the values are different,
+		/// or false if the values are the same.
+		/// The currently concatenated keys are saved in the LastKeyGroup property.
+		/// </summary>
+		/// <param name="reader"></param>
+		/// <returns></returns>
+		public bool IsNewGroup(DbDataReader reader, bool useAltName)
+		{
+			bool isNewGroup = false;
 
-            if (!keyGroupInfo.HasNullKey && !_entityReferences.ContainsKey(keyGroupInfo.GroupingKey))
-            {
-                isNewGroup = true;
-            }
+			// Get primary keys from parent entity and any one-to-one child entites
+			GroupingKeyCollection groupingKeyColumns = this.GroupingKeyColumns;
 
-            return isNewGroup;
-        }
+			// Concatenate column values
+			KeyGroupInfo keyGroupInfo = groupingKeyColumns.CreateGroupingKey(reader, useAltName);
 
-        /// <summary>
-        /// Gets the GroupingKeys for this entity.  
-        /// GroupingKeys determine when to create and add a new entity to the graph.
-        /// </summary>
-        /// <remarks>
-        /// A simple entity with no relationships will return only its PrimaryKey columns.
-        /// A parent entity with one-to-one child relationships will include its own PrimaryKeys,
-        /// and it will recursively traverse all Children with one-to-one relationships and add their PrimaryKeys.
-        /// A child entity that has a one-to-one relationship with its parent will use the same 
-        /// GroupingKeys already defined by its parent.
-        /// </remarks>
-        public GroupingKeyCollection GroupingKeyColumns
-        {
-            get
-            {
-                if (_groupingKeyColumns == null)
-                    _groupingKeyColumns = GetGroupingKeyColumns();
+			if (!keyGroupInfo.HasNullKey && !_entityReferences.ContainsKey(keyGroupInfo.GroupingKey))
+			{
+				isNewGroup = true;
+			}
 
-                return _groupingKeyColumns;
-            }
-        }
+			return isNewGroup;
+		}
 
-        private bool AnyParentsAreOfType(Type type)
-        {
-            EntityGraph parent = _parent;
-            while (parent != null)
-            {
-                if (parent._entityType == type)
-                {
-                    return true;
-                }
-                parent = parent._parent;
-            }
+		/// <summary>
+		/// Gets the GroupingKeys for this entity.  
+		/// GroupingKeys determine when to create and add a new entity to the graph.
+		/// </summary>
+		/// <remarks>
+		/// A simple entity with no relationships will return only its PrimaryKey columns.
+		/// A parent entity with one-to-one child relationships will include its own PrimaryKeys,
+		/// and it will recursively traverse all Children with one-to-one relationships and add their PrimaryKeys.
+		/// A child entity that has a one-to-one relationship with its parent will use the same 
+		/// GroupingKeys already defined by its parent.
+		/// </remarks>
+		public GroupingKeyCollection GroupingKeyColumns
+		{
+			get
+			{
+				if (_groupingKeyColumns == null)
+					_groupingKeyColumns = GetGroupingKeyColumns();
 
-            return false;
-        }
+				return _groupingKeyColumns;
+			}
+		}
 
-        private object FindParentReference()
-        {
-            var parent = this.Parent.Parent;
-            while (parent != null)
-            {
-                if (parent._entityType == _relationship.MemberType)
-                {
-                    return parent._entity;
-                }
+		private bool AnyParentsAreOfType(Type type)
+		{
+			EntityGraph parent = _parent;
+			while (parent != null)
+			{
+				if (parent._entityType == type)
+				{
+					return true;
+				}
+				parent = parent._parent;
+			}
 
-                parent = parent.Parent;
-            }
+			return false;
+		}
 
-            return null;
-        }
+		private object FindParentReference()
+		{
+			var parent = this.Parent.Parent;
+			while (parent != null)
+			{
+				if (parent._entityType == _relationship.MemberType)
+				{
+					return parent._entity;
+				}
 
-        /// <summary>
-        /// Initializes the owning lists on many-to-many Children.
-        /// </summary>
-        /// <param name="entityInstance"></param>
-        private void InitOneToManyChildLists(EntityReference entityRef)
-        {
-            // Get a reference to the parent's the childrens' OwningLists to the parent entity
-            for (int i = 0; i < Relationships.Count; i++)
-            {
-                Relationship relationship = Relationships[i];
-                if (relationship.RelationshipInfo.RelationType == RelationshipTypes.Many)
-                {
-                    try
-                    {
-                        IList list = (IList)_repos.ReflectionStrategy.CreateInstance(relationship.MemberType);
-                        relationship.Setter(entityRef.Entity, list);
+				parent = parent.Parent;
+			}
 
-                        // Save a reference to each 1-M list
-                        entityRef.AddChildList(relationship.Member.Name, list);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new DataMappingException(
-                            string.Format("{0}.{1} is a \"Many\" relationship type so it must derive from IList.",
-                                entityRef.Entity.GetType().Name, relationship.Member.Name),
-                            ex);
-                    }
-                }
-            }
-        }
+			return null;
+		}
 
-        /// <summary>
-        /// Gets a list of keys to group by.
-        /// </summary>
-        /// <remarks>
-        /// When converting an unnormalized set of data from a database view,
-        /// a new entity is only created when the grouping keys have changed.
-        /// NOTE: This behavior works on the assumption that the view result set
-        /// has been sorted by the root entity primary key(s), followed by the
-        /// child entity primary keys.
-        /// </remarks>
-        /// <returns></returns>
-        private GroupingKeyCollection GetGroupingKeyColumns()
-        {
-            // Get primary keys for this parent entity
-            GroupingKeyCollection groupingKeyColumns = new GroupingKeyCollection();
-            groupingKeyColumns.PrimaryKeys.AddRange(Columns.PrimaryKeys);
+		/// <summary>
+		/// Initializes the owning lists on many-to-many Children.
+		/// </summary>
+		/// <param name="entityInstance"></param>
+		private void InitOneToManyChildLists(EntityReference entityRef)
+		{
+			// Get a reference to the parent's the childrens' OwningLists to the parent entity
+			for (int i = 0; i < Relationships.Count; i++)
+			{
+				Relationship relationship = Relationships[i];
+				if (relationship.RelationshipInfo.RelationType == RelationshipTypes.Many)
+				{
+					try
+					{
+						IList list = (IList)_repos.ReflectionStrategy.CreateInstance(relationship.MemberType);
+						relationship.Setter(entityRef.Entity, list);
 
-            // The following conditions should fail with an exception:
-            // 1) Any parent entity (entity with children) must have at least one PK specified or an exception will be thrown
-            // 2) All 1-M relationship entities must have at least one PK specified
-            // * Only 1-1 entities with no children are allowed to have 0 PKs specified.
+						// Save a reference to each 1-M list
+						entityRef.AddChildList(relationship.Member.Name, list);
+					}
+					catch (Exception ex)
+					{
+						throw new DataMappingException(
+							string.Format("{0}.{1} is a \"Many\" relationship type so it must derive from IList.",
+								entityRef.Entity.GetType().Name, relationship.Member.Name),
+							ex);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets a list of keys to group by.
+		/// </summary>
+		/// <remarks>
+		/// When converting an unnormalized set of data from a database view,
+		/// a new entity is only created when the grouping keys have changed.
+		/// </remarks>
+		/// <returns></returns>
+		private GroupingKeyCollection GetGroupingKeyColumns()
+		{
+			// Get primary keys for this parent entity
+			GroupingKeyCollection groupingKeyColumns = new GroupingKeyCollection();
+			groupingKeyColumns.PrimaryKeys.AddRange(Columns.PrimaryKeys);
+
+			// The following conditions should fail with an exception:
+			// 1) Any parent entity (entity with children) must have at least one PK specified or an exception will be thrown
+			// 2) All 1-M relationship entities must have at least one PK specified
+			// * Only 1-1 entities with no children are allowed to have 0 PKs specified.
 			if ((groupingKeyColumns.PrimaryKeys.Count == 0 && _children.Count > 0) ||
-				(groupingKeyColumns.PrimaryKeys.Count == 0 && !IsRoot && _relationship.RelationshipInfo.RelationType == RelationshipTypes.Many))
-                throw new MissingPrimaryKeyException(string.Format("There are no primary key mappings defined for the following entity: '{0}'.", this.EntityType.Name));
+				(groupingKeyColumns.PrimaryKeys.Count == 0 && IsChild && _relationship.RelationshipInfo.RelationType == RelationshipTypes.Many) ||
+				groupingKeyColumns.PrimaryKeys.Count == 0 && !IsChild)
+				throw new MissingPrimaryKeyException(string.Format("There are no primary key mappings defined for the following entity: '{0}'.", this.EntityType.Name));
 
-            // Add parent's keys
-            if (IsChild)
-                groupingKeyColumns.ParentPrimaryKeys.AddRange(Parent.GroupingKeyColumns);
+			// Add parent's keys
+			if (IsChild)
+				groupingKeyColumns.ParentPrimaryKeys.AddRange(Parent.GroupingKeyColumns);
 
-            return groupingKeyColumns;
-        }
+			return groupingKeyColumns;
+		}
+		
+		#region IEnumerable<EntityGraph> Members
 
-        #region IEnumerable<EntityGraph> Members
+		public IEnumerator<EntityGraph> GetEnumerator()
+		{
+			return TraverseGraph(this);
+		}
 
-        public IEnumerator<EntityGraph> GetEnumerator()
-        {
-            return TraverseGraph(this);
-        }
+		/// <summary>
+		/// Recursively traverses through every entity in the EntityGraph.
+		/// </summary>
+		/// <param name="entityGraph"></param>
+		/// <returns></returns>
+		private static IEnumerator<EntityGraph> TraverseGraph(EntityGraph entityGraph)
+		{
+			Stack<EntityGraph> stack = new Stack<EntityGraph>();
+			stack.Push(entityGraph);
 
-        /// <summary>
-        /// Recursively traverses through every entity in the EntityGraph.
-        /// </summary>
-        /// <param name="entityGraph"></param>
-        /// <returns></returns>
-        private static IEnumerator<EntityGraph> TraverseGraph(EntityGraph entityGraph)
-        {
-            Stack<EntityGraph> stack = new Stack<EntityGraph>();
-            stack.Push(entityGraph);
+			while (stack.Count > 0)
+			{
+				EntityGraph node = stack.Pop();
+				yield return node;
 
-            while (stack.Count > 0)
-            {
-                EntityGraph node = stack.Pop();
-                yield return node;
-
-                foreach (EntityGraph childGraph in node.Children)
-                {
-                    stack.Push(childGraph);
-                }
-            }
-        }
+				foreach (EntityGraph childGraph in node.Children)
+				{
+					stack.Push(childGraph);
+				}
+			}
+		}
 
 
-        #endregion
+		#endregion
 
-        #region IEnumerable Members
+		#region IEnumerable Members
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator();
-        }
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return this.GetEnumerator();
+		}
 
-        #endregion
-    }
+		#endregion
+	}
 }
 
 public struct KeyGroupInfo
 {
-    private string _groupingKey;
-    private bool _hasNullKey;
+	private string _groupingKey;
+	private bool _hasNullKey;
 
-    public KeyGroupInfo(string groupingKey, bool hasNullKey)
-    {
-        _groupingKey = groupingKey;
-        _hasNullKey = hasNullKey;
-    }
+	public KeyGroupInfo(string groupingKey, bool hasNullKey)
+	{
+		_groupingKey = groupingKey;
+		_hasNullKey = hasNullKey;
+	}
 
-    public string GroupingKey
-    {
-        get { return _groupingKey; }
-    }
+	public string GroupingKey
+	{
+		get { return _groupingKey; }
+	}
 
-    public bool HasNullKey
-    {
-        get { return _hasNullKey; }
-    }
+	public bool HasNullKey
+	{
+		get { return _hasNullKey; }
+	}
 }

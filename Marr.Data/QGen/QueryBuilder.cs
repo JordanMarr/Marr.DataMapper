@@ -16,14 +16,15 @@ namespace Marr.Data.QGen
 	/// </summary>
 	public abstract class QueryBuilder : ExpressionVisitor
 	{
-		public QueryBuilder(QueryBuilder parentQuery = null)
+		public QueryBuilder(QueryBuilder rootQuery, int graphIndex)
 		{
-			ParentQuery = parentQuery;
-			RelationshipsToLoad = new List<Relationship>();
+			RootQuery = rootQuery;
+			GraphIndex = graphIndex;
+			RelationshipsToLoad = new List<RelationshipLoadRequest>();
 		}
 
-		internal QueryBuilder ParentQuery { get; set; }
-		internal List<Relationship> RelationshipsToLoad { get; set; }
+		internal QueryBuilder RootQuery { get; set; }
+		internal List<RelationshipLoadRequest> RelationshipsToLoad { get; set; }
 		internal bool IsGraph { get; set; }
 		internal int SkipCount { get; set; }
 		internal int TakeCount { get; set; }
@@ -33,7 +34,9 @@ namespace Marr.Data.QGen
 		internal bool IsFromView { get; set; }
 		internal bool IsFromTable { get; set; }
 		internal bool HasDirectChildrenToMergeInQuery { get; set; }
-		internal string CommandText;
+		internal TableCollection Tables;
+		internal string CommandText { get; set; }
+		internal int GraphIndex { get; set; }
 
 		private EntityGraph _entityGraph;
 		internal EntityGraph EntGraph
@@ -42,7 +45,16 @@ namespace Marr.Data.QGen
 			{
 				if (_entityGraph == null)
 				{
-					_entityGraph = LoadEntityGraph();
+					if (GraphIndex == 0)
+					{
+						_entityGraph = LoadEntityGraphForT();
+						_entityGraph.RootList = GetResultsListForT();
+					}
+					else
+					{
+						_entityGraph = RootQuery.EntGraph.ElementAt(GraphIndex);
+						_entityGraph.RootList = GetResultsListForT();
+					}
 				}
 
 				return _entityGraph;
@@ -53,8 +65,11 @@ namespace Marr.Data.QGen
 		{
 			return IsFromView || IsJoin || HasDirectChildrenToMergeInQuery;
 		}
+		
+		internal abstract Type GetEntityType();
 
-		internal abstract EntityGraph LoadEntityGraph();
+		internal abstract EntityGraph LoadEntityGraphForT();
+		internal abstract IList GetResultsListForT();
 	}
 
 	/// <summary>
@@ -66,11 +81,10 @@ namespace Marr.Data.QGen
 		#region - Private Members -
 
 		private DataMapper _db;
-		private Dialects.Dialect _dialect;
-		private TableCollection _tables;
+		private Dialects.Dialect _dialect;		
 		private WhereBuilder<T> _whereBuilder;
-		private SortBuilder<T> _sortBuilder;
-		private bool _singleOrFirstNullable;        
+		private bool _singleOrFirstNullable;
+		private SortBuilder<T> _sortBuilder;		
 		private SortBuilder<T> SortBuilder
 		{
 			get
@@ -79,35 +93,29 @@ namespace Marr.Data.QGen
 				if (_sortBuilder == null)
 				{
 					bool useAltNames = UseAltNames();
-					_sortBuilder = new SortBuilder<T>(this, _db, _whereBuilder, _dialect, _tables, useAltNames);
+					_sortBuilder = new SortBuilder<T>(this, _db, _whereBuilder, _dialect, Tables, useAltNames);
 				}
 
 				return _sortBuilder;
 			}
 		}
 		private List<T> _results = new List<T>();
-		
+
 		#endregion
 
 		#region - Constructor -
-
-		public QueryBuilder()
-			: base(null)
-		{
-			// Used only for unit testing with mock frameworks
-		}
-
-		public QueryBuilder(DataMapper db, Dialects.Dialect dialect, QueryBuilder parentQuery = null)
-			: base(parentQuery)
+		
+		public QueryBuilder(DataMapper db, Dialects.Dialect dialect, QueryBuilder rootQuery = null, int graphIndex = 0)
+			: base(rootQuery, graphIndex)
 		{
 			_db = db;
 			_dialect = dialect;
-			_tables = new TableCollection();
-			_tables.Add(new Table(typeof(T)));
+			Tables = new TableCollection();
+			Tables.Add(new Table(typeof(T)));
 
-			if (parentQuery != null)
+			if (rootQuery != null)
 			{
-				PrepareGraphQuery(parentQuery.RelationshipsToLoad);
+				PrepareGraphQuery(rootQuery.RelationshipsToLoad);
 			}
 		}
 
@@ -137,14 +145,14 @@ namespace Marr.Data.QGen
 			HasDirectChildrenToMergeInQuery = true;
 
 			// Replace the base table with a view with tables
-			if (_tables[0] is View)
+			if (Tables[0] is View)
 			{
-				(_tables[0] as View).Name = viewName;
+				(Tables[0] as View).Name = viewName;
 			}
 			else
 			{
-				View view = new View(viewName, _tables.ToArray());
-				_tables.ReplaceBaseTable(view);
+				View view = new View(viewName, Tables.ToArray());
+				Tables.ReplaceBaseTable(view);
 			}
 
 			return this;
@@ -162,7 +170,7 @@ namespace Marr.Data.QGen
 			IsFromTable = true;
 
 			// Override the base table name
-			_tables[0].Name = table;
+			Tables[0].Name = table;
 			return this;
 		}
 
@@ -185,40 +193,37 @@ namespace Marr.Data.QGen
 		{
 			IsGraph = true;
 
-			var membersToLoad = childrenToLoad.Select(exp => (exp.Body as MemberExpression).Member);
 			var membersNotFoundInGraph = new List<string>();
 
 			// Populate RelationshipsToLoad
-			foreach (var member in membersToLoad)
+			foreach (var ctl in childrenToLoad)
 			{
-				// Translate into members into mapped relationships
-				var rel = EntGraph
-					.Where(g => g.EqualsMember(member))
-					.Select(g => g.Relationship)
+				var rtl = new RelationshipLoadRequest(ctl);
+				
+				// Set the corresponding ent graph node
+				var graphNode = EntGraph
+					.Where(n => n.BuildEntityTypePath() == rtl.BuildEntityTypePath())
 					.FirstOrDefault();
 
-				if (rel != null)
-					RelationshipsToLoad.Add(rel);
+				rtl.EntGraphNode = graphNode;
+
+				if (graphNode != null)
+					RelationshipsToLoad.Add(rtl);
 				else
-					membersNotFoundInGraph.Add(string.Format("- {0} -> {1}", member.DeclaringType.Name, member.Name));
+					membersNotFoundInGraph.Add(string.Format("- {0}", rtl.BuildMemberPath()));
 			}
 
 			if (membersNotFoundInGraph.Any())
 				throw new RelationshipLoadException(
 					string.Format("The following requested members are not mapped as relationships on the '{0}' entity:\n{1}",
-						typeof(T).Name, 
+						typeof(T).Name,
 						string.Join(",\n", membersNotFoundInGraph.ToArray())));
 
-			if (!membersToLoad.Any())
+			if (!childrenToLoad.Any())
 			{
-				// Load all
-				var relationships = EntGraph
-					.Where(g => g.Relationship != null)
-					.Select(g => g.Relationship);
-
-				foreach (var r in relationships)
+				foreach (var node in EntGraph.Where(g => g.Member != null))
 				{
-					RelationshipsToLoad.Add(r);
+					RelationshipsToLoad.Add(new RelationshipLoadRequest(node));
 				}
 			}
 
@@ -227,30 +232,30 @@ namespace Marr.Data.QGen
 			return this;
 		}
 
-		internal void PrepareGraphQuery(IEnumerable<Relationship> relationshipsToLoad)
+		internal void PrepareGraphQuery(IEnumerable<RelationshipLoadRequest> relationshipsToLoad)
 		{
-			HasDirectChildrenToMergeInQuery = EntGraph.First().HasDirectChildrenToMergeInQuery(relationshipsToLoad);
+			HasDirectChildrenToMergeInQuery = EntGraph.HasDirectChildrenToMergeInQuery(relationshipsToLoad);
 
 			// Populate _tables that need to added to the generated query
 			// (ignore eager/lazy loaded entities)
 			var tablesInView = new TableCollection();
 			// Load specific layers (starting with root table/entity)
-			tablesInView.Add(_tables[0]);
+			tablesInView.Add(Tables[0]);
 
 			if (HasDirectChildrenToMergeInQuery)
 			{
-				foreach (var r in relationshipsToLoad)
+				foreach (var rtl in relationshipsToLoad)
 				{
 					var node = EntGraph
-						.Where(g => g.EqualsMember(r.Member) &&
-								!r.IsEagerLoaded &&
-								!r.IsLazyLoaded)
+						.Where(g => g.BuildEntityTypePath() == rtl.BuildEntityTypePath() &&
+								!rtl.EntGraphNode.Relationship.IsEagerLoaded &&
+								!rtl.EntGraphNode.Relationship.IsLazyLoaded)
 								.FirstOrDefault();
 
 					if (node != null)
 					{
-						if (r.IsEagerLoadedJoin)
-							r.EagerLoadedJoin.Join(this);
+						if (rtl.EntGraphNode.Relationship.IsEagerLoadedJoin)
+							rtl.EntGraphNode.Relationship.EagerLoadedJoin.Join(this);
 						else
 							tablesInView.Add(new Table(node.EntityType, JoinType.None));
 					}
@@ -260,11 +265,11 @@ namespace Marr.Data.QGen
 			if (!IsJoin)
 			{
 				// Replace the base table with a view with tables
-				View view = new View(_tables[0].Name, tablesInView.ToArray());
-				_tables.ReplaceBaseTable(view);
+				View view = new View(Tables[0].Name, tablesInView.ToArray());
+				Tables.ReplaceBaseTable(view);
 			}
 		}
-		
+
 		public virtual QueryBuilder<T> Page(int pageNumber, int pageSize)
 		{
 			EnablePaging = true;
@@ -272,7 +277,7 @@ namespace Marr.Data.QGen
 			TakeCount = pageSize;
 			return this;
 		}
-		
+
 		private string[] ParseChildrenToLoad(Expression<Func<T, object>>[] childrenToLoad)
 		{
 			List<string> entitiesToLoad = new List<string>();
@@ -282,7 +287,7 @@ namespace Marr.Data.QGen
 			{
 				MemberInfo member = (exp.Body as MemberExpression).Member;
 				entitiesToLoad.Add(member.Name);
-				
+
 			}
 
 			return entitiesToLoad.ToArray();
@@ -322,7 +327,7 @@ namespace Marr.Data.QGen
 			string where = _whereBuilder != null ? _whereBuilder.ToString() : string.Empty;
 
 			bool useAltNames = HasDirectChildrenToMergeInQuery;
-			IQuery query = QueryFactory.CreateRowCountSelectQuery(_tables, _db, where, SortBuilder, useAltNames);
+			IQuery query = QueryFactory.CreateRowCountSelectQuery(Tables, _db, where, SortBuilder, useAltNames);
 			string queryText = query.Generate();
 
 			_db.SqlMode = SqlModes.Text;
@@ -344,7 +349,10 @@ namespace Marr.Data.QGen
 
 			BuildQueryOrAppendClauses();
 
-			if (EntGraph.HasDirectChildrenToMergeInQuery(RelationshipsToLoad) || IsJoin)
+			//if (EntGraph.HasDirectChildrenToMergeInQuery(RelationshipsToLoad) || IsJoin)
+			var rootQuery = RootQuery ?? this;
+			//if (rootQuery.HasDirectChildrenToMergeInQuery || IsJoin)
+			if (rootQuery.IsGraph || rootQuery.IsJoin)
 			{
 				// Project a query join results into an object graph
 				_results = (List<T>)_db.QueryToGraph<T>(this);
@@ -391,7 +399,7 @@ namespace Marr.Data.QGen
 
 			if (IsJoin && IsFromTable)
 				throw new InvalidOperationException("Cannot use FromView in conjunction with Join");
-			
+
 			if (IsFromView && IsFromTable)
 				throw new InvalidOperationException("Cannot use FromView in conjunction with FromTable");
 		}
@@ -431,11 +439,11 @@ namespace Marr.Data.QGen
 			IQuery query = null;
 			if (EnablePaging)
 			{
-				query = QueryFactory.CreatePagingSelectQuery(_tables, _db, where, SortBuilder, useAltNames, SkipCount, TakeCount);
+				query = QueryFactory.CreatePagingSelectQuery(Tables, _db, where, SortBuilder, useAltNames, SkipCount, TakeCount);
 			}
 			else
 			{
-				query = QueryFactory.CreateSelectQuery(_tables, _db, where, SortBuilder, useAltNames);
+				query = QueryFactory.CreateSelectQuery(Tables, _db, where, SortBuilder, useAltNames);
 			}
 
 			CommandText = query.Generate();
@@ -447,9 +455,19 @@ namespace Marr.Data.QGen
 
 		#region - Helper Methods -
 
-		internal override EntityGraph LoadEntityGraph()
+		internal override Type GetEntityType()
+		{
+			return typeof(T);
+		}
+
+		internal override EntityGraph LoadEntityGraphForT()
 		{
 			return new EntityGraph(typeof(T), _results);
+		}
+
+		internal override IList GetResultsListForT()
+		{
+			return _results;
 		}
 
 		public static implicit operator List<T>(QueryBuilder<T> builder)
@@ -465,7 +483,7 @@ namespace Marr.Data.QGen
 		{
 			bool useAltNames = HasDirectChildrenToMergeInQuery && !IsJoin;
 			bool addTablePrefixToColumns = true;
-			_whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, useAltNames, addTablePrefixToColumns);
+			_whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, Tables, useAltNames, addTablePrefixToColumns);
 			return SortBuilder;
 		}
 
@@ -473,7 +491,7 @@ namespace Marr.Data.QGen
 		{
 			bool useAltNames = HasDirectChildrenToMergeInQuery && !IsJoin;
 			bool addTablePrefixToColumns = true;
-			_whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, _tables, useAltNames, addTablePrefixToColumns);
+			_whereBuilder = new WhereBuilder<T>(_db.Command, _dialect, filterExpression, Tables, useAltNames, addTablePrefixToColumns);
 			return SortBuilder;
 		}
 
@@ -625,23 +643,25 @@ namespace Marr.Data.QGen
 		{
 			IsJoin = true;
 			HasDirectChildrenToMergeInQuery = true;
-						
+
 			var rightNode = EntGraph
 				.Where(g => g.Member != null && g.Member.EqualsMember(rightMember))
-				.Select(g => g.Relationship)
+				//.Select(g => g.Relationship)
 				.FirstOrDefault();
 
-			if (rightNode != null && !RelationshipsToLoad.ContainsMember(rightNode.Member))
-				RelationshipsToLoad.Add(rightNode);
+			if (rightNode != null && !RelationshipsToLoad.Any(rtl => rtl.BuildEntityTypePath() == rightNode.BuildEntityTypePath()))
+				RelationshipsToLoad.Add(new RelationshipLoadRequest(rightNode));
+			//if (rightNode != null && !RelationshipsToLoad.Any(rtl => rtl.Member.EqualsMember(rightNode.Member)))
+				//RelationshipsToLoad.Add(new RelationshipLoadRequest(rightNode));
 
 
 			Table table = new Table(typeof(TRight), joinType);
-			_tables.Add(table);
+			Tables.Add(table);
 
 			JoinBuilder<TLeft, TRight> builder = null;
 			try
 			{
-				builder = new JoinBuilder<TLeft, TRight>(_db.Command, _dialect, filterExpression, _tables);
+				builder = new JoinBuilder<TLeft, TRight>(_db.Command, _dialect, filterExpression, Tables);
 			}
 			catch (Exception ex)
 			{
@@ -649,7 +669,7 @@ namespace Marr.Data.QGen
 					string.Format("Join failed for {0} -> {1}.", typeof(TLeft).Name, rightMember.Name),
 					ex);
 			}
-
+			
 			table.JoinClause = builder.ToString();
 			return this;
 		}

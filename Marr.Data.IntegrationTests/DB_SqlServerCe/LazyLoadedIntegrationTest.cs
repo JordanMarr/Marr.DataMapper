@@ -29,8 +29,8 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
                             .LazyLoad((db, building) => 
 								db.Query<Office>().Where(o => o.BuildingName == building.Name).ToList())
                 .Entity<Office>()
-                    .Columns.AutoMapSimpleTypeProperties();
-						//.For(o => o.Number).SetPrimaryKey();
+                    .Columns.AutoMapSimpleTypeProperties()
+						.For(o => o.Number).SetPrimaryKey();
         }
 
         [TestMethod]

@@ -12,30 +12,34 @@ namespace Marr.Data
 	/// </summary>
 	internal class RelationshipDataMapper : DataMapper
 	{
-		private QueryBuilder _parentQuery;
+		private QueryBuilder _rootQuery;
+		private int _graphIndex;
 
 		/// <summary>
 		/// A database provider agnostic initialization.
 		/// </summary>
 		/// <param name="connectionString">The db connection string.</param>
 		/// <param name="dbProviderFactory">The db provider factory.</param>
-		/// <param name="parentQuery">
+		/// <param name="rootQuery">
 		/// A parent query that provides the contextual information from the parent query.
 		/// This includes which levels of the object graph should be returned in the result set.
 		/// </param>
-		internal RelationshipDataMapper(DbProviderFactory dbProviderFactory, string connectionString, QueryBuilder parentQuery)
+		/// <param name="graphIndex">The current graph index.</param>
+		internal RelationshipDataMapper(DbProviderFactory dbProviderFactory, string connectionString, QueryBuilder rootQuery, int graphIndex)
 			: base(dbProviderFactory, connectionString)
 		{
-			if (parentQuery == null)
+			if (rootQuery == null)
 				throw new ArgumentNullException("parentQuery");
 
-			_parentQuery = parentQuery;
+			_rootQuery = rootQuery;
+			_graphIndex = graphIndex;
 		}
 
 		public override QueryBuilder<T> Query<T>()
 		{
 			var dialect = QGen.QueryFactory.CreateDialect(this);
-			return new QueryBuilder<T>(this, dialect, _parentQuery);
+			var nextGraphIndex = _graphIndex + 1;
+			return new QueryBuilder<T>(this, dialect, _rootQuery, nextGraphIndex);
 		}
 	}
 }
