@@ -29,29 +29,35 @@ namespace Marr.Data.UnitTests
         [TestMethod]
         public void LazyLoaded_Implicit_Conversion_When_Not_IsLoad_Should_Call_DB_Once()
         {
-            // Arrange
-            IDataMapper db = MockRepository.GenerateMock<IDataMapper>();
-            Office office1 = new Office { Number = 1 };
-            Office office2 = new Office { Number = 2 };
-            List<Office> offices = new List<Office> { office1, office2 };
-            db.Expect(d => d.Query<Office>().ToList()).Return(offices);
+			// Arrange
+			StubResultSet rsOffices = new StubResultSet("Number");
+			rsOffices.AddRow(1);
+			rsOffices.AddRow(2);
+			
+			var db = CreateDB_ForQuery(rsOffices);
 
-            Building building = new Building();
-            var lazyProxy = new LazyLoaded<Building, List<Office>>((d,b) => d.Query<Office>().ToList());
-            lazyProxy.Prepare(() => db, building, "Offices");
-            building._offices = lazyProxy;
+			Building building = new Building();
+			int calls = 0;
+			var lazyProxy = new LazyLoaded<Building, List<Office>>((d, b) => {
+				calls++;
+				return d.Query<Office>().ToList();
+			});
+			lazyProxy.Prepare(() => db, building, "Offices");
+			building._offices = lazyProxy;
 
-            // Act
-            int count = building.Offices.Count;
+			// Act
+			int count = building.Offices.Count;
 
-            // Assert
-            Assert.IsTrue(count == 2);
+			// Assert
+			Assert.AreEqual(2, count);
+			Assert.AreEqual(1, calls);
 
-            // Act
-            count = building.Offices.Count;
+			// Act again (should not hit db)
+			count = building.Offices.Count;
 
-            // Assert
-            db.AssertWasCalled(d => d.Query<Office>(), o => o.Repeat.Once()); // Should hit DB once
+			// Assert
+			Assert.AreEqual(2, count);
+			Assert.AreEqual(1, calls);
         }
 
 		[TestMethod]
@@ -59,14 +65,18 @@ namespace Marr.Data.UnitTests
 		public void LazyLoadedException_ShouldThrowDataMappingException()
 		{
 			// Arrange
-			IDataMapper db = MockRepository.GenerateStub<IDataMapper>();
-			Office office1 = new Office { Number = 1 };
-			Office office2 = new Office { Number = 2 };
-			List<Office> offices = new List<Office> { office1, office2 };
-			db.Stub(d => d.Query<Office>().ToList()).Throw(new NullReferenceException("lazy load error!"));
+			StubResultSet rsOffices = new StubResultSet("Number");
+			rsOffices.AddRow(1);
+			rsOffices.AddRow(2);
+
+			var db = CreateDB_ForQuery(rsOffices);
 
 			Building building = new Building();
-			var lazyProxy = new LazyLoaded<Building, List<Office>>((d, b) => d.Query<Office>().ToList());
+			var lazyProxy = new LazyLoaded<Building, List<Office>>((d, b) =>
+			{
+				throw new Exception("Oops!");
+				//return d.Query<Office>().ToList();
+			});
 			lazyProxy.Prepare(() => db, building, "Offices");
 			building._offices = lazyProxy;
 
