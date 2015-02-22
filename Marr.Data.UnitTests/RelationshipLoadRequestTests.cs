@@ -22,7 +22,6 @@ namespace Marr.Data.UnitTests
 			var rtl = new RelationshipLoadRequest(loadExp);
 
 			Assert.AreEqual(1, rtl.MemberPath.Count);
-			Assert.AreEqual("OrderItems", rtl.BuildMemberPath());
 			Assert.AreEqual("OrderItem", rtl.BuildEntityTypePath());
 		}
 
@@ -46,7 +45,6 @@ namespace Marr.Data.UnitTests
 			var rtl = new RelationshipLoadRequest(loadExp);
 
 			Assert.AreEqual(2, rtl.MemberPath.Count);
-			Assert.AreEqual("OrderItems-ItemReceipt", rtl.BuildMemberPath());
 			Assert.AreEqual("OrderItem-Receipt", rtl.BuildEntityTypePath());
 		}
 
@@ -59,7 +57,6 @@ namespace Marr.Data.UnitTests
 			var rtl = new RelationshipLoadRequest(loadExp);
 
 			Assert.AreEqual(2, rtl.MemberPath.Count);
-			Assert.AreEqual("OrderItems-ItemReceipt", rtl.BuildMemberPath());
 			Assert.AreEqual("OrderItem-Receipt", rtl.BuildEntityTypePath());
 		}
 
@@ -90,22 +87,7 @@ namespace Marr.Data.UnitTests
 			Assert.AreEqual("OrderItem", paths[0]);
 			Assert.AreEqual("OrderItem-Receipt", paths[1]);
 		}
-
-		[TestMethod]
-		public void RelationshipToLoad_ParseEntireEntGraph_BuildMemberPaths()
-		{
-			var entGraph = new EntityGraph(typeof(Order), new List<Order>());
-
-			var relationshipsToLoad = entGraph
-				.Where(g => g.Member != null)
-				.Select(g => new RelationshipLoadRequest(g)).ToArray();
-			string[] paths = relationshipsToLoad.Select(rtl => rtl.BuildMemberPath()).ToArray();
-
-			Assert.AreEqual(2, paths.Length);
-			Assert.AreEqual("OrderItems", paths[0]);
-			Assert.AreEqual("OrderItems-ItemReceipt", paths[1]);
-		}
-
+		
 		//[TestMethod]
 		//public void QueryBuilder_Graph()
 		//{

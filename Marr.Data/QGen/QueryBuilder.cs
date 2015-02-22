@@ -215,7 +215,7 @@ namespace Marr.Data.QGen
 				if (graphNode != null)
 					RelationshipsToLoad.Add(rtl);
 				else
-					membersNotFoundInGraph.Add(string.Format("- {0}", rtl.BuildMemberPath()));
+					membersNotFoundInGraph.Add(string.Format("- {0}", ctl.ToString()));
 			}
 
 			if (membersNotFoundInGraph.Any())

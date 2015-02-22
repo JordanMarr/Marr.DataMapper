@@ -55,12 +55,7 @@ namespace Marr.Data.QGen
 		{
 			return string.Join("-", TypePath.Select(t => t.Name).ToArray());
 		}
-
-		public string BuildMemberPath()
-		{
-			return string.Join("-", MemberPath.Select(m => m.Name).ToArray());
-		}
-
+		
 		#region - Expression Visitor -
 
 		protected override Expression VisitMemberAccess(MemberExpression memberExp)
