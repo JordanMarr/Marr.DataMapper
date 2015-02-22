@@ -680,6 +680,7 @@ namespace Marr.Data
 			var mappingHelper = new MappingHelper(this);
 			Type parentType = typeof(T);
 			Command.CommandText = query.CommandText;
+			var relationshipsToLoad = parentQuery.RelationshipsToLoad;
 
 			try
 			{
@@ -689,10 +690,9 @@ namespace Marr.Data
 				{
 					while (reader.Read())
 					{
-						// The entire EntityGraph is traversed for each record, 
+						// The EntityGraph is traversed for each record, 
 						// and multiple entities are created from each view record.
-						//foreach (EntityGraph lvl in query.EntGraph)
-						var ents = query.EntGraph.EnumerateAllChildrenToMergeInQuery(query.RelationshipsToLoad);
+						var ents = query.EntGraph.EnumerateAllChildrenToMergeInQuery(relationshipsToLoad);
 						foreach (EntityGraph lvl in ents)
 						{
 							lvl.GraphRootIndex = query.GraphIndex;
@@ -702,9 +702,9 @@ namespace Marr.Data
 								// A child specified a circular reference to its previously loaded parent
 								lvl.AddParentReference();
 							}
-							else if (parentQuery.RelationshipsToLoad.Any() && 
+							else if (relationshipsToLoad.Any() && 
 								lvl.IsChild &&
-								!parentQuery.RelationshipsToLoad.Any(rtl => rtl.BuildEntityTypePath() == lvl.BuildEntityTypePath()))
+								!relationshipsToLoad.Any(rtl => rtl.BuildEntityTypePath() == lvl.BuildEntityTypePath()))
 							{
 								// A list of relationships-to-load was specified and this relationship was not included
 								continue;
@@ -734,7 +734,7 @@ namespace Marr.Data
 
 					if (parentEntitiesWithLazyOrEagerChildren.Any())
 					{
-						var directChildrenLazyOrEager = query.EntGraph.GetDirectChildrenLazyOrEager(parentQuery.RelationshipsToLoad);
+						var directChildrenLazyOrEager = query.EntGraph.GetDirectChildrenLazyOrEager(relationshipsToLoad);
 						if (directChildrenLazyOrEager.Any())
 						{
 							// Handle eager or lazy loaded

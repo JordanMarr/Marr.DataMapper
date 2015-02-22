@@ -90,6 +90,26 @@ namespace Marr.Data.Mapping
             }
         }
 
+		public Type GetLazyLoadedEntityType()
+		{
+			if (!IsLazyLoaded)
+				return RelationshipInfo.EntityType;
+
+			// Generic type: LazyLoaded<TParent, TChild>
+			var genericType = LazyLoaded.GetType();
+			var tChildArg = genericType.GetGenericArguments()[1];
+			if (typeof(System.Collections.ICollection).IsAssignableFrom(tChildArg))
+			{
+				// Is a one-to-many (list)
+				return tChildArg.GetGenericArguments()[0];
+			}
+			else
+			{
+				// Is a one-to-one (single entity)
+				return tChildArg;
+			}
+		}
+
 		public IEagerLoaded EagerLoaded { get; set; }
 		public bool IsEagerLoaded
 		{

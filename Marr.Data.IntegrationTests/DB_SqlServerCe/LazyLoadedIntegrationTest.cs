@@ -30,6 +30,7 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
 								db.Query<Office>().Where(o => o.BuildingName == building.Name).ToList())
                 .Entity<Office>()
                     .Columns.AutoMapSimpleTypeProperties()
+						.For(o => o.BuildingName).SetPrimaryKey()
 						.For(o => o.Number).SetPrimaryKey();
         }
 

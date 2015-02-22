@@ -72,8 +72,7 @@ namespace Marr.Data
 
 			if (relationship != null && relationship.IsLazyLoaded)
 			{
-				var genericType = relationship.LazyLoaded.GetType();
-				_entityType = genericType.GetGenericArguments().First();
+				_entityType = relationship.GetLazyLoadedEntityType();
 			}
 			else
 			{
@@ -81,12 +80,12 @@ namespace Marr.Data
 			}
 			_parent = parent;
 			_relationship = relationship;
-			IsParentReference = !IsRoot && AnyParentsAreOfType(entityType);
+			IsParentReference = !IsRoot && AnyParentsAreOfType(_entityType);
 			if (!IsParentReference)
 			{
-				_columns = _repos.GetColumns(entityType);
+				_columns = _repos.GetColumns(_entityType);
 			}
-			_relationships = _repos.GetRelationships(entityType);
+			_relationships = _repos.GetRelationships(_entityType);
 			_children = new List<EntityGraph>();
 			Member = relationship != null ? relationship.Member : null;
 			_entityReferences = new Dictionary<string, EntityReference>();
@@ -159,8 +158,11 @@ namespace Marr.Data
 		{
 			// Return any children with undefined or join relationsnQhips
 			return Children
-				.Where(c => relationshipsToLoad.Any(rtl => rtl.BuildEntityTypePath() == c.BuildEntityTypePath()))
-				.Where(c => c.Relationship.IsUndefined || c.Relationship.IsEagerLoadedJoin)
+				.Where(c => c.IsParentReference ||
+							relationshipsToLoad.Any(rtl => rtl.BuildEntityTypePath() == c.BuildEntityTypePath()))
+				.Where(c => c.Relationship.IsUndefined || 
+							c.Relationship.IsEagerLoadedJoin ||
+							c.IsParentReference)
 				.ToArray();
 		}
 

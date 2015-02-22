@@ -147,7 +147,7 @@ namespace Marr.Data.Mapping
 				var relationships = _repos.Relationships[entType];
 				foreach (var rel in relationships.Where(r => r.IsLazyLoaded))
 				{
-					if (!directChildrenLazyOrEager.Any(dc => rel.RelationshipInfo.EntityType == dc.EntityType))
+					if (!directChildrenLazyOrEager.Any(dc => rel.GetLazyLoadedEntityType() == dc.EntityType))
 						continue;
 
 					var lazyLoadedProxy = (ILazyLoaded)rel.LazyLoaded.Clone();
