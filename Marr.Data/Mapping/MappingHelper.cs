@@ -97,7 +97,6 @@ namespace Marr.Data.Mapping
 			{
 				var mappedRelationships = _repos.Relationships[entType];
 				foreach (var mappedRelationship in mappedRelationships.Where(r => r.IsEagerLoaded))
-				//foreach (var directChildToLoad in directChildrenToQuery.Where(c => c.Relationship.IsEagerLoaded))
 				{
 					// Ensure that user specified RelationshipsToLoad includes this one
 					if (!directChildrenLazyOrEager.Any(dc =>
@@ -144,9 +143,10 @@ namespace Marr.Data.Mapping
 					return db;
 				};
 
-				var relationships = _repos.Relationships[entType];
-				foreach (var rel in relationships.Where(r => r.IsLazyLoaded))
+				var mappedRelationships = _repos.Relationships[entType];
+				foreach (var rel in mappedRelationships.Where(r => r.IsLazyLoaded))
 				{
+					// Ensure that user specified RelationshipsToLoad includes this one
 					if (!directChildrenLazyOrEager.Any(dc => rel.GetLazyLoadedEntityType() == dc.EntityType))
 						continue;
 
