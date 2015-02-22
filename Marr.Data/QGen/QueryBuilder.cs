@@ -349,9 +349,7 @@ namespace Marr.Data.QGen
 
 			BuildQueryOrAppendClauses();
 
-			//if (EntGraph.HasDirectChildrenToMergeInQuery(RelationshipsToLoad) || IsJoin)
 			var rootQuery = RootQuery ?? this;
-			//if (rootQuery.HasDirectChildrenToMergeInQuery || IsJoin)
 			if (rootQuery.IsGraph || rootQuery.IsJoin)
 			{
 				// Project a query join results into an object graph
@@ -646,14 +644,10 @@ namespace Marr.Data.QGen
 
 			var rightNode = EntGraph
 				.Where(g => g.Member != null && g.Member.EqualsMember(rightMember))
-				//.Select(g => g.Relationship)
 				.FirstOrDefault();
 
 			if (rightNode != null && !RelationshipsToLoad.Any(rtl => rtl.BuildEntityTypePath() == rightNode.BuildEntityTypePath()))
 				RelationshipsToLoad.Add(new RelationshipLoadRequest(rightNode));
-			//if (rightNode != null && !RelationshipsToLoad.Any(rtl => rtl.Member.EqualsMember(rightNode.Member)))
-				//RelationshipsToLoad.Add(new RelationshipLoadRequest(rightNode));
-
 
 			Table table = new Table(typeof(TRight), joinType);
 			Tables.Add(table);
