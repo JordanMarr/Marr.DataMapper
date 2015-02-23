@@ -17,38 +17,30 @@ namespace Marr.Data.QGen
 		public RelationshipLoadRequest(Expression relationshipToLoadExp)
 		{
 			TypePath = new List<Type>();
-			MemberPath = new List<MemberInfo>();
 
 			// Populate MemberPath
 			Visit(relationshipToLoadExp);
-			MemberPath.Reverse();
 			TypePath.Reverse();
 		}
 
 		internal RelationshipLoadRequest(EntityGraph entGraphNode)
 		{
 			TypePath = new List<Type>();
-			MemberPath = new List<MemberInfo>();
 			EntGraphNode = entGraphNode;
 
 			// Populate MemberPath and TypePath
 			var node = entGraphNode;
 			while (node != null)
 			{
-				if (node.Member != null)
-					MemberPath.Add(node.Member);
-
 				if (node.Parent != null) // Do not add root entity type
 					TypePath.Add(node.EntityType);
 
 				node = node.Parent;
 			}
-			MemberPath.Reverse();
 			TypePath.Reverse();
 		}
 
 		internal EntityGraph EntGraphNode { get; set; }
-		public List<MemberInfo> MemberPath { get; private set; }
 		public List<Type> TypePath { get; private set; }
 
 		public string BuildEntityTypePath()
@@ -60,19 +52,14 @@ namespace Marr.Data.QGen
 
 		protected override Expression VisitMemberAccess(MemberExpression memberExp)
 		{
-			MemberPath.Add(memberExp.Member);
 			var type = (memberExp.Member as PropertyInfo).PropertyType;
+
 			if (!type.IsGenericType)
 				TypePath.Add(type);
 			else
 				TypePath.Add(type.GetGenericArguments().First());
 			
-			// Nested relationships are added using the First() method
-			var methodExp = memberExp.Expression as MethodCallExpression;
-			if (methodExp != null)
-			{
-				Visit(methodExp);
-			}
+			Visit(memberExp.Expression);
 
 			return memberExp;
 		}
@@ -99,7 +86,6 @@ namespace Marr.Data.QGen
 				{
 					Visit(arg);
 				}
-				//Visit(methodCallExp);
 			}
 
 			var memberExpression = lambdaExpression.Body as MemberExpression;

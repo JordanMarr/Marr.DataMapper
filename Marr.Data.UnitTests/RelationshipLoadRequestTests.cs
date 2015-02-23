@@ -21,7 +21,7 @@ namespace Marr.Data.UnitTests
 
 			var rtl = new RelationshipLoadRequest(loadExp);
 
-			Assert.AreEqual(1, rtl.MemberPath.Count);
+			Assert.AreEqual(1, rtl.TypePath.Count);
 			Assert.AreEqual("OrderItem", rtl.BuildEntityTypePath());
 		}
 
@@ -44,7 +44,7 @@ namespace Marr.Data.UnitTests
 
 			var rtl = new RelationshipLoadRequest(loadExp);
 
-			Assert.AreEqual(2, rtl.MemberPath.Count);
+			Assert.AreEqual(2, rtl.TypePath.Count);
 			Assert.AreEqual("OrderItem-Receipt", rtl.BuildEntityTypePath());
 		}
 
@@ -56,7 +56,7 @@ namespace Marr.Data.UnitTests
 
 			var rtl = new RelationshipLoadRequest(loadExp);
 
-			Assert.AreEqual(2, rtl.MemberPath.Count);
+			Assert.AreEqual(2, rtl.TypePath.Count);
 			Assert.AreEqual("OrderItem-Receipt", rtl.BuildEntityTypePath());
 		}
 
@@ -87,23 +87,40 @@ namespace Marr.Data.UnitTests
 			Assert.AreEqual("OrderItem", paths[0]);
 			Assert.AreEqual("OrderItem-Receipt", paths[1]);
 		}
-		
-		//[TestMethod]
-		//public void QueryBuilder_Graph()
-		//{
-		//	StubResultSet rs = new StubResultSet("ID", "OrderName", "OrderItemID", "OrderID", "ItemDescription", "Price", "AmountPaid");
-		//	rs.AddRow(1, "Order1", 50, 1, "Red car", 100.35m, DBNull.Value);
-		//	rs.AddRow(1, "Order1", 51, 1, "Blue wagon", 44.87m, DBNull.Value);
-		//	rs.AddRow(2, "Order2", 60, 2, "Guitar", 1500.50m, 1500.50m);
-		//	rs.AddRow(2, "Order2", 61, 3, "Bass", 2380.00m, 50.00m);
-		//	rs.AddRow(3, "Order3", DBNull.Value, DBNull.Value, DBNull.Value, DBNull.Value, DBNull.Value);
 
-		//	var db = base.CreateDB_ForQuery(rs);
-		//	var query = db.Query<Order>().Graph();
+		[TestMethod]
+		public void EntityTypePath_ShouldHandle_OneToOne_Relationships()
+		{
+			Expression<Func<Invoice, object>> loadExp =
+				i => i.Header.Customer;
 
-		//	var qbPath = query.BuildEntityTypePath();
+			var rtl = new RelationshipLoadRequest(loadExp);
 
-		//	Assert.AreEqual("Order-OrderItem-Receipt", qbPath);
-		//}
+			Assert.AreEqual(2, rtl.TypePath.Count);
+			Assert.AreEqual("InvoiceHeader-Customer", rtl.BuildEntityTypePath());
+		}
+
+		private class Invoice
+		{
+			public int ID { get; set; }
+			public int Number { get; set; }
+
+			public InvoiceHeader Header { get; set; }
+		}
+
+		private class InvoiceHeader
+		{
+			public DateTime Date { get; set; }
+
+			public Customer Customer { get; set; }
+		}
+
+		public class Customer
+		{
+			public string FirstName { get; set; }
+			public string LastName { get; set; }
+		}
 	}
+
+	
 }
