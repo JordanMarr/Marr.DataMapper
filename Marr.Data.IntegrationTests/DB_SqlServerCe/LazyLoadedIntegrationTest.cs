@@ -82,6 +82,9 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
 
             Building building = db.Query<Building>().Graph().Where(b => b.Name == "Building1").FirstOrDefault();
 
+			int oc = building.Offices.Count;
+			Assert.AreEqual(3, oc);
+
             int officeCount = building.OfficesDynamic.Count;
             Assert.AreEqual(3, officeCount);
 

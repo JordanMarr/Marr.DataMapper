@@ -89,34 +89,28 @@ namespace Marr.Data.Mapping
 		/// <param name="rootQuery">The root query that specifies which children to load.</param>
 		/// <param name="directChildrenLazyOrEager"></param>
 		/// <param name="graphIndex">The current graph index.</param>
-		public void LoadEagerLoadedProperties(object ent, QGen.QueryBuilder rootQuery, IEnumerable<EntityGraph> directChildrenLazyOrEager, int graphIndex)
+		public void LoadEagerLoadedProperties(object ent, QGen.QueryBuilder rootQuery, IEnumerable<EntityGraph> directChildrenLazyOrEager)
 		{
 			// Load eager loaded properties
 			Type entType = ent.GetType();
-			if (_repos.Relationships.ContainsKey(entType))
+			var mappedRelationships = _repos.Relationships[entType];
+			foreach (var entGraphToLoad in directChildrenLazyOrEager.Where(g => g.Relationship.IsEagerLoaded))
 			{
-				var mappedRelationships = _repos.Relationships[entType];
-				foreach (var mappedRelationship in mappedRelationships.Where(r => r.IsEagerLoaded))
+				var rel = mappedRelationships.Where(r => r.Member.Name == entGraphToLoad.Member.Name).FirstOrDefault();
+				if (rel != null)
 				{
-					var entGraphToLoad = directChildrenLazyOrEager
-						.Where(dc => mappedRelationship.RelationshipInfo.EntityType == dc.EntityType)
-						.FirstOrDefault();
-
-					if (entGraphToLoad == null)
-						continue;
-
 					using (var db = new RelationshipDataMapper(_db.ProviderFactory, _db.ConnectionString, rootQuery, entGraphToLoad.GraphIndex))
 					{
 						// NOTE: If parent _db is in a transaction, new db will be outside of that transaction.
 						try
 						{
-							object eagerLoadedValue = mappedRelationship.EagerLoaded.Load(db, ent);
-							mappedRelationship.Setter(ent, eagerLoadedValue);
+							object eagerLoadedValue = rel.EagerLoaded.Load(db, ent);
+							rel.Setter(ent, eagerLoadedValue);
 						}
 						catch (Exception ex)
 						{
 							throw new RelationshipLoadException(
-								string.Format("Eager load failed for {0} -> {1}.", entType.Name, mappedRelationship.Member.Name),
+								string.Format("Eager load failed for {0} -> {1}.", entType.Name, rel.Member.Name),
 								ex);
 						}
 					}
@@ -130,29 +124,23 @@ namespace Marr.Data.Mapping
 		/// </summary>
 		/// <param name="ent"></param>
 		/// <param name="rootQuery"></param>
-		public void PrepareLazyLoadedProperties(object ent, QGen.QueryBuilder rootQuery, IEnumerable<EntityGraph> directChildrenLazyOrEager, int graphIndex)
+		public void PrepareLazyLoadedProperties(object ent, QGen.QueryBuilder rootQuery, IEnumerable<EntityGraph> directChildrenLazyOrEager)
 		{
 			// Handle lazy loaded properties
 			Type entType = ent.GetType();
-			if (_repos.Relationships.ContainsKey(entType))
+			var mappedRelationships = _repos.Relationships[entType];
+			foreach (var entGraphToLoad in directChildrenLazyOrEager.Where(g => g.Relationship.IsLazyLoaded))
 			{
-				var mappedRelationships = _repos.Relationships[entType];
-				foreach (var rel in mappedRelationships.Where(r => r.IsLazyLoaded))
+				var rel = mappedRelationships.Where(r => r.Member.Name == entGraphToLoad.Member.Name).FirstOrDefault();
+				if (rel != null)
 				{
-					var entGraphToLoad = directChildrenLazyOrEager
-						.Where(dc => rel.GetLazyLoadedEntityType() == dc.EntityType)
-						.FirstOrDefault();
-
-					if (entGraphToLoad == null)
-						continue;
-
 					Func<IDataMapper> dbCreate = () =>
 					{
 						var db = new RelationshipDataMapper(_db.ProviderFactory, _db.ConnectionString, rootQuery, entGraphToLoad.GraphIndex);
 						db.SqlMode = SqlModes.Text;
 						return db;
 					};
-					
+
 					var lazyLoadedProxy = (ILazyLoaded)rel.LazyLoaded.Clone();
 					lazyLoadedProxy.Prepare(dbCreate, ent, rel.Member.Name);
 					rel.Setter(ent, lazyLoadedProxy);

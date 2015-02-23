@@ -741,8 +741,8 @@ namespace Marr.Data
 							foreach (var ent in parentEntitiesWithLazyOrEagerChildren)
 							{
 								// Pass in the root query so we can check RelationshipsToLoad
-								mappingHelper.LoadEagerLoadedProperties(ent, parentQuery, directChildrenLazyOrEager, query.GraphIndex);
-								mappingHelper.PrepareLazyLoadedProperties(ent, parentQuery, directChildrenLazyOrEager, query.GraphIndex);
+								mappingHelper.LoadEagerLoadedProperties(ent, parentQuery, directChildrenLazyOrEager);
+								mappingHelper.PrepareLazyLoadedProperties(ent, parentQuery, directChildrenLazyOrEager);
 							}
 						}
 					}

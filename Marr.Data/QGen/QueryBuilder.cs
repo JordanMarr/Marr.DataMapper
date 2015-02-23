@@ -52,7 +52,7 @@ namespace Marr.Data.QGen
 					}
 					else
 					{
-						_entityGraph = RootQuery.EntGraph.ElementAt(GraphIndex);
+						_entityGraph = RootQuery.EntGraph.Where(e => e.GraphIndex == GraphIndex).First();
 						_entityGraph.RootList = GetResultsListForT();
 					}
 				}
