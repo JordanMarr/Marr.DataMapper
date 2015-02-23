@@ -98,14 +98,14 @@ namespace Marr.Data.Mapping
 				var mappedRelationships = _repos.Relationships[entType];
 				foreach (var mappedRelationship in mappedRelationships.Where(r => r.IsEagerLoaded))
 				{
-					// Ensure that user specified RelationshipsToLoad includes this one
-					if (!directChildrenLazyOrEager.Any(dc =>
-							mappedRelationship.RelationshipInfo.EntityType == dc.EntityType))
-					{
-						continue;
-					}
+					var entGraphToLoad = directChildrenLazyOrEager
+						.Where(dc => mappedRelationship.RelationshipInfo.EntityType == dc.EntityType)
+						.FirstOrDefault();
 
-					using (var db = new RelationshipDataMapper(_db.ProviderFactory, _db.ConnectionString, rootQuery, graphIndex))
+					if (entGraphToLoad == null)
+						continue;
+
+					using (var db = new RelationshipDataMapper(_db.ProviderFactory, _db.ConnectionString, rootQuery, entGraphToLoad.GraphIndex))
 					{
 						// NOTE: If parent _db is in a transaction, new db will be outside of that transaction.
 						try
@@ -136,20 +136,23 @@ namespace Marr.Data.Mapping
 			Type entType = ent.GetType();
 			if (_repos.Relationships.ContainsKey(entType))
 			{
-				Func<IDataMapper> dbCreate = () =>
-				{
-					var db = new RelationshipDataMapper(_db.ProviderFactory, _db.ConnectionString, rootQuery, graphIndex);
-					db.SqlMode = SqlModes.Text;
-					return db;
-				};
-
 				var mappedRelationships = _repos.Relationships[entType];
 				foreach (var rel in mappedRelationships.Where(r => r.IsLazyLoaded))
 				{
-					// Ensure that user specified RelationshipsToLoad includes this one
-					if (!directChildrenLazyOrEager.Any(dc => rel.GetLazyLoadedEntityType() == dc.EntityType))
+					var entGraphToLoad = directChildrenLazyOrEager
+						.Where(dc => rel.GetLazyLoadedEntityType() == dc.EntityType)
+						.FirstOrDefault();
+
+					if (entGraphToLoad == null)
 						continue;
 
+					Func<IDataMapper> dbCreate = () =>
+					{
+						var db = new RelationshipDataMapper(_db.ProviderFactory, _db.ConnectionString, rootQuery, entGraphToLoad.GraphIndex);
+						db.SqlMode = SqlModes.Text;
+						return db;
+					};
+					
 					var lazyLoadedProxy = (ILazyLoaded)rel.LazyLoaded.Clone();
 					lazyLoadedProxy.Prepare(dbCreate, ent, rel.Member.Name);
 					rel.Setter(ent, lazyLoadedProxy);

@@ -53,7 +53,7 @@ namespace Marr.Data
 		/// </summary>
 		/// <param name="entityType"></param>
 		public EntityGraph(Type entityType, IList rootList)
-			: this(entityType, null, null) // Recursively constructs hierarchy
+			: this(entityType, null, null, 0) // Recursively constructs hierarchy
 		{
 			RootList = rootList;
 		}
@@ -64,9 +64,9 @@ namespace Marr.Data
 		/// <param name="entityType"></param>
 		/// <param name="parent"></param>
 		/// <param name="relationship"></param>
-		private EntityGraph(Type entityType, EntityGraph parent, Relationship relationship)
+		private EntityGraph(Type entityType, EntityGraph parent, Relationship relationship, int graphIndex)
 		{
-			GraphIndex = parent == null ? 0 : parent.GraphIndex + 1;
+			GraphIndex = graphIndex;
 
 			_repos = MapRepository.Instance;
 
@@ -96,9 +96,10 @@ namespace Marr.Data
 			}
 
 			// Create a new EntityGraph for each child relationship
+			int nextGraphIndex = graphIndex;
 			foreach (Relationship childRelationship in this.Relationships)
 			{
-				_children.Add(new EntityGraph(childRelationship.RelationshipInfo.EntityType, this, childRelationship));
+				_children.Add(new EntityGraph(childRelationship.RelationshipInfo.EntityType, this, childRelationship, ++nextGraphIndex));
 			}
 		}
 

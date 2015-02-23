@@ -52,12 +52,7 @@ namespace Marr.Data.QGen
 					}
 					else
 					{
-						// The GraphIndex finds the correct level of children in the graph
-						var node = RootQuery.EntGraph.ElementAt(GraphIndex);
-
-						// Find the node that matches the type being loaded for this level
-						var entityType = this.GetEntityType();
-						_entityGraph =  node.Parent.Children.Where(c => c.EntityType == entityType).First();
+						_entityGraph = RootQuery.EntGraph.ElementAt(GraphIndex);
 						_entityGraph.RootList = GetResultsListForT();
 					}
 				}
