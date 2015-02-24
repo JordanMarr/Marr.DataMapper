@@ -5,7 +5,7 @@ namespace Marr.Data
     public interface ILazyLoaded : ICloneable
     {
         bool IsLoaded { get; }
-		void Prepare(Func<IDataMapper> dataMapperFactory, object parent, string memberName);
+		void Prepare(Func<IDataMapper> dataMapperFactory, object parent, string entityTypePath);
         void LazyLoad();
     }
 
@@ -38,7 +38,7 @@ namespace Marr.Data
 
         public bool IsLoaded { get; protected set; }
 
-		public virtual void Prepare(Func<IDataMapper> dataMapperFactory, object parent, string memberName)
+		public virtual void Prepare(Func<IDataMapper> dataMapperFactory, object parent, string entityTypePath)
         { }
 
         public virtual void LazyLoad()
@@ -69,7 +69,7 @@ namespace Marr.Data
     {
 		private Func<IDataMapper> _dbMapperFactory;
         private TParent _parent;
-		private string _memberName;
+		private string _entityTypePath;
 
         private readonly Func<IDataMapper, TParent, TChild> _query;
         private readonly Func<TParent, bool> _condition;
@@ -93,11 +93,11 @@ namespace Marr.Data
         /// <param name="dataMapperFactory">Knows how to instantiate a new IDataMapper.</param>
         /// <param name="parent">The parent entity.</param>
 		/// <param name="member">The name of the member that is being lazy loaded.</param>
-		public override void Prepare(Func<IDataMapper> dataMapperFactory, object parent, string memberName)
+		public override void Prepare(Func<IDataMapper> dataMapperFactory, object parent, string entityTypePath)
         {
             _dbMapperFactory = dataMapperFactory;
             _parent = (TParent)parent;
-			_memberName = memberName;
+			_entityTypePath = entityTypePath;
         }
 
         public override void LazyLoad()
@@ -119,7 +119,7 @@ namespace Marr.Data
 						catch (Exception ex)
 						{
 							throw new RelationshipLoadException(
-								string.Format("Lazy load failed for {0} -> {1}.", typeof(TParent).Name, _memberName),
+								string.Format("Lazy load failed for {0}.", _entityTypePath),
 								ex);
 						}
                     }

@@ -110,7 +110,7 @@ namespace Marr.Data.Mapping
 						catch (Exception ex)
 						{
 							throw new RelationshipLoadException(
-								string.Format("Eager load failed for {0} -> {1}.", entType.Name, rel.Member.Name),
+								string.Format("Eager load failed for {0}.", entType.Name, entGraphToLoad.BuildEntityTypePath()),
 								ex);
 						}
 					}
@@ -142,7 +142,7 @@ namespace Marr.Data.Mapping
 					};
 
 					var lazyLoadedProxy = (ILazyLoaded)rel.LazyLoaded.Clone();
-					lazyLoadedProxy.Prepare(dbCreate, ent, rel.Member.Name);
+					lazyLoadedProxy.Prepare(dbCreate, ent, entGraphToLoad.BuildEntityTypePath());
 					rel.Setter(ent, lazyLoadedProxy);
 				}
 			}
