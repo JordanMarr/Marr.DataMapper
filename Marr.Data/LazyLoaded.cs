@@ -118,6 +118,10 @@ namespace Marr.Data
 						}
 						catch (Exception ex)
 						{
+							var rtlEx = ex as RelationshipLoadException;
+							if (rtlEx != null)
+								throw;
+
 							throw new RelationshipLoadException(
 								string.Format("Lazy load failed for {0}.", _entityTypePath),
 								ex);

@@ -109,6 +109,10 @@ namespace Marr.Data.Mapping
 						}
 						catch (Exception ex)
 						{
+							var rtlEx = ex as RelationshipLoadException;
+							if (rtlEx != null)
+								throw;
+
 							throw new RelationshipLoadException(
 								string.Format("Eager load failed for {0}.", entGraphToLoad.BuildEntityTypePath()),
 								ex);
