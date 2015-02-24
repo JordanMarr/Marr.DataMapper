@@ -110,7 +110,7 @@ namespace Marr.Data.Mapping
 						catch (Exception ex)
 						{
 							throw new RelationshipLoadException(
-								string.Format("Eager load failed for {0}.", entType.Name, entGraphToLoad.BuildEntityTypePath()),
+								string.Format("Eager load failed for {0}.", entGraphToLoad.BuildEntityTypePath()),
 								ex);
 						}
 					}
