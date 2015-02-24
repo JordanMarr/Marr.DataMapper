@@ -24,7 +24,6 @@ namespace Marr.Data.QGen
         private MapRepository _repos;
         private DbCommand _command;
         private string _paramPrefix;
-        private bool _isLeftSide = true;
         protected bool _useAltName;
         protected Dialect _dialect;
         protected StringBuilder _sb;
@@ -67,12 +66,10 @@ namespace Marr.Data.QGen
         {
             _sb.Append("(");
 
-            _isLeftSide = true;
             Visit(expression.Left);
 
             _sb.AppendFormat(" {0} ", Decode(expression));
 
-            _isLeftSide = false;
             Visit(expression.Right);
 
             _sb.Append(")");
@@ -107,7 +104,7 @@ namespace Marr.Data.QGen
 
         protected override Expression VisitMemberAccess(MemberExpression expression)
         {
-            if (_isLeftSide)
+			if (expression.Expression is ParameterExpression)
             {
                 string fqColumn = GetFullyQualifiedColumnName(expression.Member, expression.Expression.Type);
                 _sb.Append(fqColumn);
