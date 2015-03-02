@@ -158,11 +158,11 @@ namespace Marr.Data
 		{
 			// Return any children with undefined or join relationsnQhips
 			return Children
-				.Where(c => c.IsParentReference ||
+				.Where(c => //c.IsParentReference ||
 							relationshipsToLoad.Any(rtl => rtl.BuildEntityTypePath() == c.BuildEntityTypePath()))
 				.Where(c => c.Relationship.IsUndefined || 
-							c.Relationship.IsEagerLoadedJoin ||
-							c.IsParentReference)
+							c.Relationship.IsEagerLoadedJoin) // ||
+							//c.IsParentReference)
 				.ToArray();
 		}
 
