@@ -80,7 +80,7 @@ namespace Marr.Data
 			}
 			_parent = parent;
 			_relationship = relationship;
-			IsParentReference = !IsRoot && AnyParentsAreOfType(_entityType);
+			IsParentReference = AnyParentsAreOfType(_entityType);
 			if (!IsParentReference)
 			{
 				_columns = _repos.GetColumns(_entityType);
@@ -156,13 +156,12 @@ namespace Marr.Data
 
 		public IEnumerable<EntityGraph> GetDirectChildrenToMergeInQuery(IEnumerable<RelationshipLoadRequest> relationshipsToLoad)
 		{
-			// Return any children with undefined or join relationsnQhips
+			// Return any children with undefined or join relationships
 			return Children
-				.Where(c => //c.IsParentReference ||
+				.Where(c => c.IsParentReference ||
 							relationshipsToLoad.Any(rtl => rtl.BuildEntityTypePath() == c.BuildEntityTypePath()))
 				.Where(c => c.Relationship.IsUndefined || 
-							c.Relationship.IsEagerLoadedJoin) // ||
-							//c.IsParentReference)
+							c.Relationship.IsEagerLoadedJoin)
 				.ToArray();
 		}
 
