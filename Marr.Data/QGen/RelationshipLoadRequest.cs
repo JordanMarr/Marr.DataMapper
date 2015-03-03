@@ -21,6 +21,7 @@ namespace Marr.Data.QGen
 			// Populate MemberPath
 			Visit(relationshipToLoadExp);
 			TypePath.Reverse();
+			EntityTypePath = BuildEntityTypePath();
 		}
 
 		internal RelationshipLoadRequest(EntityGraph entGraphNode)
@@ -38,12 +39,14 @@ namespace Marr.Data.QGen
 				node = node.Parent;
 			}
 			TypePath.Reverse();
+			EntityTypePath = BuildEntityTypePath();
 		}
 
 		internal EntityGraph EntGraphNode { get; set; }
 		public List<Type> TypePath { get; private set; }
-
-		public string BuildEntityTypePath()
+		public string EntityTypePath { get; private set; }
+		
+		private string BuildEntityTypePath()
 		{
 			return string.Join("-", TypePath.Select(t => t.Name).ToArray());
 		}

@@ -704,7 +704,7 @@ namespace Marr.Data
 							}
 							else if (relationshipsToLoad.Any() && 
 								lvl.IsChild &&
-								!relationshipsToLoad.Any(rtl => rtl.BuildEntityTypePath() == lvl.BuildEntityTypePath()))
+								!relationshipsToLoad.Any(rtl => rtl.EntityTypePath == lvl.EntityTypePath))
 							{
 								// A list of relationships-to-load was specified and this relationship was not included
 								continue;

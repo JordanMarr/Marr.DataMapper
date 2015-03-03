@@ -202,7 +202,7 @@ namespace Marr.Data.QGen
 				
 				// Set the corresponding ent graph node
 				var graphNode = EntGraph
-					.Where(n => n.BuildEntityTypePath() == rtl.BuildEntityTypePath())
+					.Where(n => n.EntityTypePath == rtl.EntityTypePath)
 					.FirstOrDefault();
 
 				rtl.EntGraphNode = graphNode;
@@ -227,6 +227,25 @@ namespace Marr.Data.QGen
 				}
 			}
 
+			// For a given path, ensure that all parent node paths are also included
+			// Ex: o => o.OrderItems.Receipts should also load o => o.OrderItems
+			for (int i = RelationshipsToLoad.Count - 1; i >= 0; i--)
+			{
+				var rtl = RelationshipsToLoad[i];
+
+				// Add parent nodes if they don't exist
+				var parentNode = rtl.EntGraphNode.Parent;
+				while (parentNode != null)
+				{
+					var parentRtl = new RelationshipLoadRequest(parentNode);
+					if (parentRtl.TypePath.Count > 0 && !RelationshipsToLoad.Any(r => r.EntityTypePath == parentRtl.EntityTypePath))
+						RelationshipsToLoad.Add(parentRtl);
+
+					parentNode = parentNode.Parent;
+				}
+			}
+
+
 			PrepareGraphQuery(RelationshipsToLoad);
 
 			return this;
@@ -247,7 +266,7 @@ namespace Marr.Data.QGen
 				foreach (var rtl in relationshipsToLoad)
 				{
 					var node = EntGraph
-						.Where(g => g.BuildEntityTypePath() == rtl.BuildEntityTypePath() &&
+						.Where(g => g.EntityTypePath == rtl.EntityTypePath &&
 								!rtl.EntGraphNode.Relationship.IsEagerLoaded &&
 								!rtl.EntGraphNode.Relationship.IsLazyLoaded)
 								.FirstOrDefault();
@@ -646,7 +665,7 @@ namespace Marr.Data.QGen
 				.Where(g => g.Member != null && g.Member.EqualsMember(rightMember))
 				.FirstOrDefault();
 
-			if (rightNode != null && !RelationshipsToLoad.Any(rtl => rtl.BuildEntityTypePath() == rightNode.BuildEntityTypePath()))
+			if (rightNode != null && !RelationshipsToLoad.Any(rtl => rtl.EntityTypePath == rightNode.EntityTypePath))
 				RelationshipsToLoad.Add(new RelationshipLoadRequest(rightNode));
 
 			Table table = new Table(typeof(TRight), joinType);

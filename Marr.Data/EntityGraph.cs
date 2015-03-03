@@ -149,7 +149,7 @@ namespace Marr.Data
 		{
 			// Return any children with undefined or join relationsnQhips
 			return Children
-				.Where(c => relationshipsToLoad.Any(rtl => rtl.BuildEntityTypePath() == c.BuildEntityTypePath()))
+				.Where(c => relationshipsToLoad.Any(rtl => rtl.EntityTypePath == c.EntityTypePath))
 				.Where(c => c.Relationship.IsLazyLoaded || c.Relationship.IsEagerLoaded)
 				.ToArray();
 		}
@@ -159,7 +159,7 @@ namespace Marr.Data
 			// Return any children with undefined or join relationships
 			return Children
 				.Where(c => c.IsParentReference ||
-							relationshipsToLoad.Any(rtl => rtl.BuildEntityTypePath() == c.BuildEntityTypePath()))
+							relationshipsToLoad.Any(rtl => rtl.EntityTypePath == c.BuildEntityTypePath()))
 				.Where(c => c.Relationship.IsUndefined || 
 							c.Relationship.IsEagerLoadedJoin)
 				.ToArray();
@@ -221,7 +221,19 @@ namespace Marr.Data
 			get { return _children; }
 		}
 
-		public string BuildEntityTypePath()
+		private string _entityTypePath;
+		public string EntityTypePath
+		{
+			get
+			{
+				if (_entityTypePath == null)
+					_entityTypePath = BuildEntityTypePath();
+
+				return _entityTypePath;
+			}
+		}
+
+		private string BuildEntityTypePath()
 		{
 			var stack = new Stack<Type>();
 			var node = this;
