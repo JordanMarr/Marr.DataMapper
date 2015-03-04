@@ -692,8 +692,8 @@ namespace Marr.Data
 					{
 						// The EntityGraph is traversed for each record, 
 						// and multiple entities are created from each view record.
-						var ents = query.EntGraph.EnumerateAllChildrenToMergeInQuery(relationshipsToLoad);
-						foreach (EntityGraph lvl in ents)
+						var levelsToMergeInQuery = query.EntGraph.EnumerateAllChildrenToMergeInQuery(relationshipsToLoad).ToArray();
+						foreach (EntityGraph lvl in levelsToMergeInQuery)
 						{
 							lvl.GraphRootIndex = query.GraphIndex;
 
@@ -715,7 +715,7 @@ namespace Marr.Data
 								// These will be loaded separately
 								continue;
 							}
-							else if (lvl.IsNewGroup(reader, useAltName))
+							else if (levelsToMergeInQuery.Length == 1 || lvl.IsNewGroup(reader, useAltName))
 							{
 								// Create a new entity with the data reader
 								var newEntity = mappingHelper.CreateAndLoadEntity(lvl.EntityType, lvl.Columns, reader, useAltName);

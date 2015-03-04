@@ -273,7 +273,8 @@ namespace Marr.Data
 			}
 
 			EntityReference entityRef = new EntityReference(entityInstance);
-			_entityReferences.Add(GroupingKeyColumns.GroupingKey, entityRef);
+			if (GroupingKeyColumns.GroupingKey != null && !_entityReferences.ContainsKey(GroupingKeyColumns.GroupingKey))
+				_entityReferences.Add(GroupingKeyColumns.GroupingKey, entityRef);
 
 			InitOneToManyChildLists(entityRef);
 		}
