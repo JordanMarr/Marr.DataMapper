@@ -22,7 +22,7 @@ namespace Marr.Data.UnitTests
         protected DbConnection _connection;
         protected DbParameterCollection _parameters;
 
-        protected IDataMapper CreateDB_ForQuery(StubResultSet rs)
+        protected IDataMapper CreateDB_ForQuery(params StubResultSet[] rs)
         {
             return StubDataMapperFactory.CreateForQuery(rs);
         }

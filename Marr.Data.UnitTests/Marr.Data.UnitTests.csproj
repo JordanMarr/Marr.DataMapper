@@ -70,6 +70,7 @@
     <Compile Include="QGenTest.cs" />
     <Compile Include="QueryBuilderTest.cs" />
     <Compile Include="RelationshipLoadRequestTests.cs" />
+    <Compile Include="SameEntityTests.cs" />
     <Compile Include="SimpleTypeQueryTest.cs" />
     <Compile Include="StubEntityResultSetTest.cs" />
     <Compile Include="TestBase.cs" />

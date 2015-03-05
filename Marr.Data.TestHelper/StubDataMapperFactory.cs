@@ -22,94 +22,102 @@ using System.Data.Common;
 
 namespace Marr.Data.TestHelper
 {
-    /// <summary>
-    /// Initializes a new DataMapper instance with a stubbed result set and mocked internals.
-    /// </summary>
-    public static class StubDataMapperFactory
-    {
-        /// <summary>
-        /// Creates a DataMapper that can be used to test queries.
-        /// </summary>
-        /// <param name="rs">The stubbed record set.</param>
-        /// <returns>Returns a StubDataMapper.</returns>
-        public static IDataMapper CreateForQuery(StubResultSet rs)
-        {
-            StubDataReader reader = new StubDataReader(rs);
+	/// <summary>
+	/// Initializes a new DataMapper instance with a stubbed result set and mocked internals.
+	/// </summary>
+	public static class StubDataMapperFactory
+	{
+		/// <summary>
+		/// Creates a DataMapper that can be used to test queries.
+		/// </summary>
+		/// <param name="rs">The stubbed record set.</param>
+		/// <returns>Returns a StubDataMapper.</returns>
+		public static IDataMapper CreateForQuery(params StubResultSet[] resultSets)
+		{
+			var readers = resultSets.Select(rs => new StubDataReader(rs)).ToArray();
 
-            var parameters = MockRepository.GenerateMock<DbParameterCollection>();
-            parameters.Expect(p => p.Add(null)).Return(1).IgnoreArguments();
+			//var parameters = MockRepository.GenerateMock<DbParameterCollection>();
+			//var command = MockRepository.GenerateMock<DbCommand>();
+			//var connection = MockRepository.GenerateMock<DbConnection>();
+			var dbFactory = MockRepository.GenerateMock<DbProviderFactory>();
 
-            var command = MockRepository.GenerateMock<DbCommand>();
-            command.Expect(c => c.ExecuteReader()).Return(reader);
+			foreach (var reader in readers)
+			{
+				var parameters = MockRepository.GenerateMock<DbParameterCollection>();
+				parameters.Expect(p => p.Add(null)).Return(1).IgnoreArguments();
 
-            command.Expect(c => c.Parameters).Return(parameters);
-            command.Expect(c => c.CreateParameter()).Return(new System.Data.SqlClient.SqlParameter()).Repeat.Any();
-            command.Stub(c => c.CommandText);
+				var command = MockRepository.GenerateMock<DbCommand>();
+				command.Expect(c => c.ExecuteReader()).Return(reader);
 
-            var connection = MockRepository.GenerateMock<DbConnection>();
-            connection.Expect(c => c.CreateCommand()).Return(command);
+				command.Expect(c => c.Parameters).Return(parameters);
+				command.Expect(c => c.CreateParameter()).Return(new System.Data.SqlClient.SqlParameter()).Repeat.Any();
+				command.Stub(c => c.CommandText);
 
-            command.Expect(c => c.Connection).Return(connection);
+				var connection = MockRepository.GenerateMock<DbConnection>();
+				connection.Expect(c => c.CreateCommand()).Return(command);
 
-            DbProviderFactory dbFactory = MockRepository.GenerateMock<DbProviderFactory>();
-            dbFactory.Expect(f => f.CreateConnection()).Return(connection);
+				command.Expect(c => c.Connection).Return(connection);
 
-            return new StubDataMapper(dbFactory, command, connection, parameters);
-        }
+				//var dbFactory = MockRepository.GenerateMock<DbProviderFactory>();
+				dbFactory.Expect(f => f.CreateConnection()).Return(connection).Repeat.Once();
+			}
 
-        /// <summary>
-        /// Creates a DataMapper that can be used to test updates.
-        /// </summary>
-        /// <returns>Returns a StubDataMapper.</returns>
-        public static IDataMapper CreateForUpdate()
-        {
-            var parameters = MockRepository.GenerateMock<DbParameterCollection>();
+			return new StubDataMapper(dbFactory);
+		}
 
-            var command = MockRepository.GenerateMock<DbCommand>();
-            command.Expect(c => c.Parameters).Return(parameters);
-            command.Stub(c => c.CommandText);
-            command.Expect(c => c.ExecuteNonQuery()).Return(1);
-            command
-                .Expect(c => c.CreateParameter())
-                .Repeat.Any()
-                .Return(MockRepository.GenerateStub<DbParameter>());
+		/// <summary>
+		/// Creates a DataMapper that can be used to test updates.
+		/// </summary>
+		/// <returns>Returns a StubDataMapper.</returns>
+		public static IDataMapper CreateForUpdate()
+		{
+			var parameters = MockRepository.GenerateMock<DbParameterCollection>();
 
-            var connection = MockRepository.GenerateMock<DbConnection>();
-            connection.Expect(c => c.CreateCommand()).Return(command);
+			var command = MockRepository.GenerateMock<DbCommand>();
+			command.Expect(c => c.Parameters).Return(parameters);
+			command.Stub(c => c.CommandText);
+			command.Expect(c => c.ExecuteNonQuery()).Return(1);
+			command
+				.Expect(c => c.CreateParameter())
+				.Repeat.Any()
+				.Return(MockRepository.GenerateStub<DbParameter>());
 
-            command.Expect(c => c.Connection).Return(connection);
+			var connection = MockRepository.GenerateMock<DbConnection>();
+			connection.Expect(c => c.CreateCommand()).Return(command);
 
-            DbProviderFactory dbFactory = MockRepository.GenerateMock<DbProviderFactory>();
-            dbFactory.Expect(f => f.CreateConnection()).Return(connection);
+			command.Expect(c => c.Connection).Return(connection);
 
-            return new StubDataMapper(dbFactory, command, connection, parameters);
-        }
+			DbProviderFactory dbFactory = MockRepository.GenerateMock<DbProviderFactory>();
+			dbFactory.Expect(f => f.CreateConnection()).Return(connection);
 
-        /// <summary>
-        /// Creates a DataMapper that can be used to test inserts.
-        /// </summary>
-        /// <returns>Returns a StubDataMapper.</returns>
-        public static IDataMapper CreateForInsert()
-        {
-            var parameters = MockRepository.GenerateMock<DbParameterCollection>();
+			return new StubDataMapper(dbFactory);
+		}
 
-            var command = MockRepository.GenerateMock<DbCommand>();
-            command.Expect(c => c.Parameters).Return(parameters);
-            command.Stub(c => c.CommandText);
-            command
-                .Expect(c => c.CreateParameter())
-                .Repeat.Any()
-                .Return(MockRepository.GenerateStub<DbParameter>());
+		/// <summary>
+		/// Creates a DataMapper that can be used to test inserts.
+		/// </summary>
+		/// <returns>Returns a StubDataMapper.</returns>
+		public static IDataMapper CreateForInsert()
+		{
+			var parameters = MockRepository.GenerateMock<DbParameterCollection>();
 
-            var connection = MockRepository.GenerateMock<DbConnection>();
-            connection.Expect(c => c.CreateCommand()).Return(command);
+			var command = MockRepository.GenerateMock<DbCommand>();
+			command.Expect(c => c.Parameters).Return(parameters);
+			command.Stub(c => c.CommandText);
+			command
+				.Expect(c => c.CreateParameter())
+				.Repeat.Any()
+				.Return(MockRepository.GenerateStub<DbParameter>());
 
-            command.Expect(c => c.Connection).Return(connection);
+			var connection = MockRepository.GenerateMock<DbConnection>();
+			connection.Expect(c => c.CreateCommand()).Return(command);
 
-            DbProviderFactory dbFactory = MockRepository.GenerateMock<DbProviderFactory>();
-            dbFactory.Expect(f => f.CreateConnection()).Return(connection);
+			command.Expect(c => c.Connection).Return(connection);
 
-            return new StubDataMapper(dbFactory, command, connection, parameters);
-        }
-    }
+			DbProviderFactory dbFactory = MockRepository.GenerateMock<DbProviderFactory>();
+			dbFactory.Expect(f => f.CreateConnection()).Return(connection);
+
+			return new StubDataMapper(dbFactory);
+		}
+	}
 }

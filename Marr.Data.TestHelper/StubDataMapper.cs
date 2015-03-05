@@ -24,16 +24,9 @@ namespace Marr.Data.TestHelper
 {
     public class StubDataMapper : DataMapper
     {
-        protected DbCommand _command;
-        protected DbConnection _connection;
-        protected DbParameterCollection _parameters;
-
-        internal StubDataMapper(DbProviderFactory dbfactory, DbCommand command, DbConnection connection, DbParameterCollection parameters)
+        internal StubDataMapper(DbProviderFactory dbfactory)
             : base(dbfactory, "connection string") 
         {
-            _command = command;
-            _connection = connection;
-            _parameters = parameters;
         }
     }
 }
