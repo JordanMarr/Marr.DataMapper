@@ -15,7 +15,7 @@ namespace Marr.Data.Reflection
         private static MemberInfo GetMember(Type entityType, string name)
         {
             MemberInfo member;
-            var key = entityType.FullName + name;
+            var key = string.Concat(entityType.FullName, ".", name);
             if (!MemberCache.TryGetValue(key, out member))
             {
                 member = entityType.GetMember(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)[0];
@@ -63,7 +63,7 @@ namespace Marr.Data.Reflection
         public GetterDelegate BuildGetter(Type type, string memberName)
         {
             GetterDelegate getter;
-            var key = type.FullName + memberName;
+            var key = string.Concat(type.FullName, ".", memberName);
             if (!GetterCache.TryGetValue(key, out getter))
             {
                 getter = GetPropertyGetter(GetMember(type, memberName));
@@ -75,7 +75,7 @@ namespace Marr.Data.Reflection
         public SetterDelegate BuildSetter(Type type, string memberName)
         {
             SetterDelegate setter;
-            var key = type.FullName + memberName;
+            var key = string.Concat(type.FullName, ".", memberName);
             if (!SetterCache.TryGetValue(key, out setter))
             {
                 setter = GetPropertySetter(GetMember(type, memberName));
