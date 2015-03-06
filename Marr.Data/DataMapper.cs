@@ -678,7 +678,6 @@ namespace Marr.Data
 			QueryBuilder parentQuery = query.RootQuery ?? query;
 			bool useAltName = query.UseAltNames();
 			var mappingHelper = new MappingHelper(this);
-			Type parentType = typeof(T);
 			Command.CommandText = query.CommandText;
 			var relationshipsToLoad = parentQuery.RelationshipsToLoad;
 
@@ -695,25 +694,13 @@ namespace Marr.Data
 						var levelsToMergeInQuery = query.EntGraph.EnumerateAllChildrenToMergeInQuery(relationshipsToLoad).ToArray();
 						foreach (EntityGraph lvl in levelsToMergeInQuery)
 						{
+							// Set the current root index (affects IsParent / IsChild checks)
 							lvl.GraphRootIndex = query.GraphIndex;
 
 							if (lvl.IsParentReference)
 							{
 								// A child specified a circular reference to its previously loaded parent
 								lvl.AddParentReference();
-							}
-							else if (relationshipsToLoad.Any() && 
-								lvl.IsChild &&
-								!relationshipsToLoad.Any(rtl => rtl.EntityTypePath == lvl.EntityTypePath))
-							{
-								// A list of relationships-to-load was specified and this relationship was not included
-								continue;
-							}
-							else if (lvl.IsChild &&
-								(lvl.Relationship.IsEagerLoaded || lvl.Relationship.IsLazyLoaded))
-							{
-								// These will be loaded separately
-								continue;
 							}
 							else if (levelsToMergeInQuery.Length == 1 || lvl.IsNewGroup(reader, useAltName))
 							{
