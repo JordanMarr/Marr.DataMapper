@@ -21,8 +21,8 @@ namespace Marr.Data.UnitTests
 
 			var rtl = new RelationshipLoadRequest(loadExp);
 
-			Assert.AreEqual(1, rtl.TypePath.Count);
-			Assert.AreEqual("OrderItem", rtl.EntityTypePath);
+			Assert.AreEqual(2, rtl.TypePath.Count);
+			Assert.AreEqual("OrderItem-OrderItems", rtl.EntityTypePath);
 		}
 
 		[TestMethod]
@@ -33,7 +33,7 @@ namespace Marr.Data.UnitTests
 
 			string path = orderItemsNode.EntityTypePath;
 
-			Assert.AreEqual("OrderItem", path);
+			Assert.AreEqual("OrderItem-OrderItems", path);
 		}
 
 		[TestMethod]
@@ -44,8 +44,8 @@ namespace Marr.Data.UnitTests
 
 			var rtl = new RelationshipLoadRequest(loadExp);
 
-			Assert.AreEqual(2, rtl.TypePath.Count);
-			Assert.AreEqual("OrderItem-Receipt", rtl.EntityTypePath);
+			Assert.AreEqual(4, rtl.TypePath.Count);
+			Assert.AreEqual("OrderItem-OrderItems-Receipt-ItemReceipt", rtl.EntityTypePath);
 		}
 
 		[TestMethod]
@@ -56,8 +56,8 @@ namespace Marr.Data.UnitTests
 
 			var rtl = new RelationshipLoadRequest(loadExp);
 
-			Assert.AreEqual(2, rtl.TypePath.Count);
-			Assert.AreEqual("OrderItem-Receipt", rtl.EntityTypePath);
+			Assert.AreEqual(4, rtl.TypePath.Count);
+			Assert.AreEqual("OrderItem-OrderItems-Receipt-ItemReceipt", rtl.EntityTypePath);
 		}
 
 		[TestMethod]
@@ -69,8 +69,8 @@ namespace Marr.Data.UnitTests
 
 			Assert.AreEqual(3, paths.Length);
 			Assert.AreEqual("", paths[0]);
-			Assert.AreEqual("OrderItem", paths[1]);
-			Assert.AreEqual("OrderItem-Receipt", paths[2]);
+			Assert.AreEqual("OrderItem-OrderItems", paths[1]);
+			Assert.AreEqual("OrderItem-OrderItems-Receipt-ItemReceipt", paths[2]);
 		}
 		
 		[TestMethod]
@@ -84,8 +84,8 @@ namespace Marr.Data.UnitTests
 			string[] paths = relationshipsToLoad.Select(rtl => rtl.EntityTypePath).ToArray();
 
 			Assert.AreEqual(2, paths.Length);
-			Assert.AreEqual("OrderItem", paths[0]);
-			Assert.AreEqual("OrderItem-Receipt", paths[1]);
+			Assert.AreEqual("OrderItem-OrderItems", paths[0]);
+			Assert.AreEqual("OrderItem-OrderItems-Receipt-ItemReceipt", paths[1]);
 		}
 
 		[TestMethod]
@@ -96,8 +96,8 @@ namespace Marr.Data.UnitTests
 
 			var rtl = new RelationshipLoadRequest(loadExp);
 
-			Assert.AreEqual(2, rtl.TypePath.Count);
-			Assert.AreEqual("InvoiceHeader-Customer", rtl.EntityTypePath);
+			Assert.AreEqual(4, rtl.TypePath.Count);
+			Assert.AreEqual("InvoiceHeader-Header-Customer-Customer", rtl.EntityTypePath);
 		}
 
 		private class Invoice

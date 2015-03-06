@@ -147,7 +147,6 @@ namespace Marr.Data
 
 		public IEnumerable<EntityGraph> GetDirectChildrenLazyOrEager(IEnumerable<RelationshipLoadRequest> relationshipsToLoad)
 		{
-			// Return any children with undefined or join relationsnQhips
 			return Children
 				.Where(c => relationshipsToLoad.Any(rtl => rtl.EntityTypePath == c.EntityTypePath))
 				.Where(c => c.Relationship.IsLazyLoaded || c.Relationship.IsEagerLoaded)
@@ -159,7 +158,7 @@ namespace Marr.Data
 			// Return any children with undefined or join relationships
 			return Children
 				.Where(c => c.IsParentReference ||
-							relationshipsToLoad.Any(rtl => rtl.EntityTypePath == c.BuildEntityTypePath()))
+							relationshipsToLoad.Any(rtl => rtl.EntityTypePath == c.EntityTypePath))
 				.Where(c => c.Relationship.IsUndefined || 
 							c.Relationship.IsEagerLoadedJoin)
 				.ToArray();
@@ -235,16 +234,19 @@ namespace Marr.Data
 
 		private string BuildEntityTypePath()
 		{
-			var stack = new Stack<Type>();
+			var stack = new Stack<string>();
 			var node = this;
 			while (node != null)
 			{
 				if (node.Parent != null) // Do not add root entity type
-					stack.Push(node.EntityType);
+				{
+					stack.Push(node.Member.Name);
+					stack.Push(node.EntityType.Name);
+				}
 
 				node = node.Parent;
 			}
-			return string.Join("-", stack.Select(t => t.Name).ToArray());
+			return string.Join("-", stack.Select(name => name).ToArray());
 		}
 
 		/// <summary>

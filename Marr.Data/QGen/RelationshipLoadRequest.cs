@@ -16,7 +16,7 @@ namespace Marr.Data.QGen
 	{
 		public RelationshipLoadRequest(Expression relationshipToLoadExp)
 		{
-			TypePath = new List<Type>();
+			TypePath = new List<string>();
 
 			// Populate MemberPath
 			Visit(relationshipToLoadExp);
@@ -26,7 +26,7 @@ namespace Marr.Data.QGen
 
 		internal RelationshipLoadRequest(EntityGraph entGraphNode)
 		{
-			TypePath = new List<Type>();
+			TypePath = new List<string>();
 			EntGraphNode = entGraphNode;
 
 			// Populate MemberPath and TypePath
@@ -34,7 +34,10 @@ namespace Marr.Data.QGen
 			while (node != null)
 			{
 				if (node.Parent != null) // Do not add root entity type
-					TypePath.Add(node.EntityType);
+				{
+					TypePath.Add(node.Member.Name);
+					TypePath.Add(node.EntityType.Name);					
+				}
 
 				node = node.Parent;
 			}
@@ -43,12 +46,12 @@ namespace Marr.Data.QGen
 		}
 
 		internal EntityGraph EntGraphNode { get; set; }
-		public List<Type> TypePath { get; private set; }
+		public List<string> TypePath { get; private set; }
 		public string EntityTypePath { get; private set; }
 		
 		private string BuildEntityTypePath()
 		{
-			return string.Join("-", TypePath.Select(t => t.Name).ToArray());
+			return string.Join("-", TypePath.Select(name => name).ToArray());
 		}
 		
 		#region - Expression Visitor -
@@ -58,9 +61,15 @@ namespace Marr.Data.QGen
 			var type = (memberExp.Member as PropertyInfo).PropertyType;
 
 			if (!type.IsGenericType)
-				TypePath.Add(type);
+			{
+				TypePath.Add(memberExp.Member.Name);
+				TypePath.Add(type.Name);
+			}
 			else
-				TypePath.Add(type.GetGenericArguments().First());
+			{
+				TypePath.Add(memberExp.Member.Name);
+				TypePath.Add(type.GetGenericArguments().First().Name);
+			}
 			
 			Visit(memberExp.Expression);
 
