@@ -75,6 +75,7 @@
     <Compile Include="StubEntityResultSetTest.cs" />
     <Compile Include="TestBase.cs" />
     <Compile Include="UnitOfWorkTest.cs" />
+    <Compile Include="ImplicitLoadingTests.cs" />
     <Compile Include="WhereBuilderTest.cs" />
   </ItemGroup>
   <ItemGroup>
