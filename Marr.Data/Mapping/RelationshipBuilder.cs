@@ -98,9 +98,11 @@ namespace Marr.Data.Mapping
 		{
 			AssertCurrentPropertyIsSet();
 
-			Relationships[_currentPropertyName].EagerLoaded = new EagerLoaded<TEntity, TChild>
+			var relationship = Relationships[_currentPropertyName];
+			relationship.EagerLoaded = new EagerLoaded<TEntity, TChild>
 				{
 					Query = query,
+					RelationshipType = relationship.RelationshipInfo.RelationType,
 					Condition = condition
 				};
 			return this;

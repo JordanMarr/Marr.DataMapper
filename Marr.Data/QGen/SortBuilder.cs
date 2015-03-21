@@ -14,7 +14,7 @@ namespace Marr.Data.QGen
     /// It also has some methods that coincide with Linq methods, to provide Linq compatibility.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class SortBuilder<T> : IEnumerable<T>, ISortQueryBuilder
+	public class SortBuilder<T> : IEnumerable<T>, ISortQueryBuilder, IQueryToList
     {
         private string _constantOrderByClause;
         private QueryBuilder<T> _baseBuilder;
@@ -262,9 +262,14 @@ namespace Marr.Data.QGen
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
-            throw new NotImplementedException();
+			return this.GetEnumerator();
         }
 
         #endregion
-    }
+		
+		object IQueryToList.ToListObject()
+		{
+			return (_baseBuilder as IQueryToList).ToListObject();
+		}
+	}
 }

@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Marr.Data.Mapping;
+using Marr.Data.QGen;
 
 namespace Marr.Data
 {
@@ -25,6 +29,8 @@ namespace Marr.Data
 		/// </summary>
 		public Func<TParent, bool> Condition { get; set; }
 
+		public RelationshipTypes RelationshipType { get; set; }
+
 		public object Load(IDataMapper db, object parent)
 		{
 			TParent tParent = (TParent)parent;
@@ -35,7 +41,28 @@ namespace Marr.Data
 			}
 			else
 			{
-				return Query(db, tParent);
+				var result = Query(db, tParent);
+
+				IQueryToList query = result as IQueryToList;
+				if (query != null)
+				{
+					// User did not call ToList or FirstOrDefault
+					var enumerable = result as System.Collections.IEnumerable;
+					if (RelationshipType == RelationshipTypes.Many)
+					{
+						return query.ToListObject();
+					}
+					else
+					{
+						var enumeratorOne = enumerable.GetEnumerator();
+						return enumeratorOne.MoveNext() ? enumeratorOne.Current : null;
+					}
+				}
+				else
+				{
+					// User already called ToList or FirstOrDefault
+					return result;
+				}
 			}
 		}
 	}

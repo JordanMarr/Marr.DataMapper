@@ -76,7 +76,7 @@ namespace Marr.Data.QGen
 	/// This class is responsible for building a query.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	public class QueryBuilder<T> : QueryBuilder, IEnumerable<T>, IQueryBuilder
+	public class QueryBuilder<T> : QueryBuilder, IEnumerable<T>, IQueryBuilder, IQueryToList
 	{
 		#region - Private Members -
 
@@ -709,5 +709,10 @@ namespace Marr.Data.QGen
 		}
 
 		#endregion
+
+		object IQueryToList.ToListObject()
+		{
+			return ToList();
+		}
 	}
 }
