@@ -1,4 +1,6 @@
 ﻿using System;
+using Marr.Data.Mapping;
+using Marr.Data.QGen;
 
 namespace Marr.Data
 {
@@ -71,12 +73,14 @@ namespace Marr.Data
         private TParent _parent;
 		private string _entityTypePath;
 
-        private readonly Func<IDataMapper, TParent, TChild> _query;
+		private readonly Func<IDataMapper, TParent, object> _query;
+		private RelationshipTypes _relationshipType;
         private readonly Func<TParent, bool> _condition;
 
-        internal LazyLoaded(Func<IDataMapper, TParent, TChild> query, Func<TParent, bool> condition = null)
+		public LazyLoaded(Func<IDataMapper, TParent, object> query, RelationshipTypes relationshipType, Func<TParent, bool> condition = null)
         {
             _query = query;
+			_relationshipType = relationshipType;
             _condition = condition;
         }
 
@@ -114,7 +118,28 @@ namespace Marr.Data
                     {
 						try
 						{
-							_value = _query(db, _parent);
+							object result = _query(db, _parent);
+
+							IQueryToList query = result as IQueryToList;
+							if (query != null)
+							{
+								// User did not call ToList or FirstOrDefault
+								var enumerable = result as System.Collections.IEnumerable;
+								if (_relationshipType == RelationshipTypes.Many)
+								{
+									_value = (TChild)query.ToListObject();
+								}
+								else
+								{
+									var enumeratorOne = enumerable.GetEnumerator();
+									_value = (TChild)(enumeratorOne.MoveNext() ? enumeratorOne.Current : null);
+								}
+							}
+							else
+							{
+								// User already called ToList or FirstOrDefault
+								_value = (TChild)result;
+							}
 						}
 						catch (Exception ex)
 						{

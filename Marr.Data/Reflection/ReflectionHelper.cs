@@ -59,9 +59,14 @@ namespace Marr.Data
                 memberType = typeof(object);
 
             // Handle nullable types - get underlying type
-            if (memberType.IsGenericType && memberType.GetGenericTypeDefinition() == typeof(Nullable<>))
+            if (memberType.IsGenericType)
             {
-                memberType = memberType.GetGenericArguments()[0];
+				Type genericTypeDefinition = memberType.GetGenericTypeDefinition();
+				if (genericTypeDefinition == typeof(Nullable<>) ||
+					genericTypeDefinition == typeof(LazyLoaded<>))
+				{
+					memberType = memberType.GetGenericArguments()[0];
+				}
             }
 
             return memberType;

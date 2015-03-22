@@ -181,5 +181,15 @@ namespace Marr.Data
             return (theType.IsGenericType && theType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)));
         }
 
+		public static MethodInfo FindPropertyForBackingField(Type entity, MemberInfo backingField)
+		{
+			string backingFieldName = "get" + backingField.Name;
+
+			return entity.GetProperties()
+				.Where(p => p.CanRead)
+				.Select(p => p.GetGetMethod())
+				.Where(pm => string.Compare(pm.Name, backingFieldName, true) == 0)
+				.FirstOrDefault();				
+		}
     }
 }

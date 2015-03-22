@@ -379,7 +379,7 @@ namespace Marr.Data
 			for (int i = 0; i < Relationships.Count; i++)
 			{
 				Relationship relationship = Relationships[i];
-				if (relationship.RelationshipInfo.RelationType == RelationshipTypes.Many)
+				if (!relationship.IsLazyLoaded && relationship.RelationshipInfo.RelationType == RelationshipTypes.Many)
 				{
 					try
 					{

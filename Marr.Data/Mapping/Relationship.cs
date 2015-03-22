@@ -35,14 +35,25 @@ namespace Marr.Data.Mapping
             // Try to determine the RelationshipType
             if (relationshipInfo.RelationType == RelationshipTypes.AutoDetect)
             {
-                if (typeof(System.Collections.IEnumerable).IsAssignableFrom(MemberType))
-                {
-                    relationshipInfo.RelationType = RelationshipTypes.Many;
-                }
-                else
-                {
-                    relationshipInfo.RelationType = RelationshipTypes.One;
-                }
+				if (member.MemberType == MemberTypes.Field && MemberType == typeof(object))
+				{
+					// Handles dynamic member fields that are lazy loaded
+					var prop = DataHelper.FindPropertyForBackingField(member.ReflectedType, member);
+					if (prop != null)
+					{
+						if (typeof(System.Collections.IEnumerable).IsAssignableFrom(prop.ReturnType))
+							relationshipInfo.RelationType = RelationshipTypes.Many;
+						else
+							relationshipInfo.RelationType = RelationshipTypes.One;
+					}
+				}
+				else
+				{
+					if (typeof(System.Collections.IEnumerable).IsAssignableFrom(MemberType))
+						relationshipInfo.RelationType = RelationshipTypes.Many;
+					else
+						relationshipInfo.RelationType = RelationshipTypes.One;
+				}
             }
 
             // Try to determine the EntityType
@@ -55,12 +66,16 @@ namespace Marr.Data.Mapping
                         // Assume a Collection<T> or List<T> and return T
                         relationshipInfo.EntityType = MemberType.GetGenericArguments()[0];
                     }
-                    else
-                    {
-                        throw new ArgumentException(string.Format(
-                            "The DataMapper could not determine the RelationshipAttribute EntityType for {0}.",
-                            MemberType.Name));
-                    }
+					else if (MemberType == typeof(object))
+					{
+						relationshipInfo.EntityType = typeof(object);
+					}
+					else
+					{
+						throw new ArgumentException(string.Format(
+							"The DataMapper could not determine the RelationshipAttribute EntityType for {0}.",
+							MemberType.Name));
+					}
                 }
                 else
                 {

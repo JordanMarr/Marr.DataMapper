@@ -41,7 +41,7 @@ namespace Marr.Data.UnitTests
 			var lazyProxy = new LazyLoaded<Building, List<Office>>((d, b) => {
 				calls++;
 				return d.Query<Office>().ToList();
-			});
+			}, RelationshipTypes.Many);
 			lazyProxy.Prepare(() => db, building, "Offices");
 			building._offices = lazyProxy;
 
@@ -76,7 +76,7 @@ namespace Marr.Data.UnitTests
 			{
 				throw new Exception("Oops!");
 				//return d.Query<Office>().ToList();
-			});
+			}, RelationshipTypes.Many);
 			lazyProxy.Prepare(() => db, building, "Offices");
 			building._offices = lazyProxy;
 

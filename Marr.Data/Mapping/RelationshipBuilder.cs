@@ -64,26 +64,37 @@ namespace Marr.Data.Mapping
         /// <param name="query"></param>
         /// <param name="condition">condition in which a child could exist. eg. avoid call to db if foreign key is 0 or null</param>
         /// <returns></returns>
-        public RelationshipBuilder<TEntity> LazyLoad<TChild>(Func<IDataMapper, TEntity, TChild> query, Func<TEntity, bool> condition)
+		public RelationshipBuilder<TEntity> LazyLoad(Func<IDataMapper, TEntity, object> query, Func<TEntity, bool> condition = null)
         {
             AssertCurrentPropertyIsSet();
 
-            Relationships[_currentPropertyName].LazyLoaded = new LazyLoaded<TEntity, TChild>(query, condition);
-            return this;
-        }
+			var relationship = Relationships[_currentPropertyName];
 
+			Type childType = null;
+			bool isLazyLoadProxyMember = typeof(ILazyLoaded).IsAssignableFrom(relationship.MemberType);
+			if (isLazyLoadProxyMember)
+			{
+				// Field is a LazyLoaded proxy class
+				childType = relationship.MemberType.GetGenericArguments()[0];
+			}
+			else
+			{
+				// Field is a dyanmic object type - find property that points to this backing field
+				var member = DataHelper.FindPropertyForBackingField(typeof(TEntity), relationship.Member);
+				if (member == null)
+					throw new DataMappingException("Unable to infer the data type for this lazy loaded member. Try manually calling 'ToList()' or 'FirstOrDefault()'.");
+				childType = member.ReturnType;
+			}
 
-        /// <summary>
-        /// Sets the current property to be lazy loaded with the given query.
-        /// </summary>
-        /// <typeparam name="TChild"></typeparam>
-        /// <param name="query"></param>
-        /// <returns></returns>
-        public RelationshipBuilder<TEntity> LazyLoad<TChild>(Func<IDataMapper, TEntity, TChild> query)
-        {
-            AssertCurrentPropertyIsSet();
+			// Make generic LazyLoaded type with matching child property
+			Type lazyLoadedType = typeof(LazyLoaded<,>);
+			var lazyLoadedInstanceType = lazyLoadedType.MakeGenericType(typeof(TEntity), childType);
+			var lazyLoaded = Activator.CreateInstance(lazyLoadedInstanceType, 
+				query, 
+				relationship.RelationshipInfo.RelationType, 
+				condition);
 
-            Relationships[_currentPropertyName].LazyLoaded = new LazyLoaded<TEntity, TChild>(query);
+			relationship.LazyLoaded = (ILazyLoaded)lazyLoaded;
             return this;
         }
 

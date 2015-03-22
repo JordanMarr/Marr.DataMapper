@@ -22,12 +22,10 @@ namespace Marr.Data.IntegrationTests.DB_SqlServerCe
                     .Relationships.AutoMapICollectionOrComplexProperties()
                         .Ignore(b => b.Offices)
                         .Ignore(b => b.OfficesDynamic)
-                        .For("_offices")
-                            .LazyLoad((db, building) => 
-								db.Query<Office>().Where(o => o.BuildingName == building.Name).ToList())
-                        .For("_officesDynamic")
-                            .LazyLoad((db, building) => 
-								db.Query<Office>().Where(o => o.BuildingName == building.Name).ToList())
+						.For("_offices")
+							.LazyLoad((db, building) => db.Query<Office>().Where(o => o.BuildingName == building.Name))
+						.For("_officesDynamic")
+							.LazyLoad((db, building) => db.Query<Office>().Where(o => o.BuildingName == building.Name))
                 .Entity<Office>()
                     .Columns.AutoMapSimpleTypeProperties()
 						.For(o => o.BuildingName).SetPrimaryKey()
