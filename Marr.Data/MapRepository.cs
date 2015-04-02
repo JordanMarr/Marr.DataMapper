@@ -119,7 +119,7 @@ namespace Marr.Data
 
         #region - Table repository -
 
-        internal string GetTableName(Type entityType)
+        public string GetTableName(Type entityType)
         {
             if (!Tables.ContainsKey(entityType))
             {
