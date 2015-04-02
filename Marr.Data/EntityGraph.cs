@@ -80,7 +80,9 @@ namespace Marr.Data
 			}
 			_parent = parent;
 			_relationship = relationship;
-			IsParentReference = AnyParentsAreOfType(_entityType);
+
+			var anyParentsAreOfSameType = AnyParentsAreOfType(_entityType);
+			IsParentReference = relationship != null && !relationship.IsEagerLoaded && !relationship.IsLazyLoaded && anyParentsAreOfSameType;
 			if (!IsParentReference)
 			{
 				_columns = _repos.GetColumns(_entityType);
@@ -90,7 +92,7 @@ namespace Marr.Data
 			Member = relationship != null ? relationship.Member : null;
 			_entityReferences = new Dictionary<string, EntityReference>();
 
-			if (IsParentReference)
+			if (anyParentsAreOfSameType)
 			{
 				return;
 			}
