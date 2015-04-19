@@ -12,8 +12,8 @@ namespace Marr.Data.Mapping
     /// <typeparam name="TEntity"></typeparam>
     public class RelationshipBuilder<TEntity>
     {
-        private FluentMappings.MappingsFluentEntity<TEntity> _fluentEntity;
-        private string _currentPropertyName;
+        protected FluentMappings.MappingsFluentEntity<TEntity> _fluentEntity;
+		protected string _currentPropertyName;
 
         public RelationshipBuilder(FluentMappings.MappingsFluentEntity<TEntity> fluentEntity, RelationshipCollection relationships)
         {
@@ -33,17 +33,22 @@ namespace Marr.Data.Mapping
         /// </summary>
         /// <param name="property"></param>
         /// <returns></returns>
-        public RelationshipBuilder<TEntity> For(Expression<Func<TEntity, object>> property)
+        public RelationshipBuilderFor<TEntity, TChild> For<TChild>(Expression<Func<TEntity, TChild>> property)
         {
-            return For(property.GetMemberName());
+			return For<TChild>(property.GetMemberName());
         }
+
+		public RelationshipBuilderFor<TEntity, TChild> For<TChild>(Expression<Func<TEntity, List<TChild>>> property)
+		{
+			return For<TChild>(property.GetMemberName());
+		}
 
         /// <summary>
         /// Initializes the configurator to configure the given property or field.
         /// </summary>
         /// <param name="propertyName"></param>
         /// <returns></returns>
-        public RelationshipBuilder<TEntity> For(string propertyName)
+        public RelationshipBuilderFor<TEntity, TChild> For<TChild>(string propertyName)
         {
             _currentPropertyName = propertyName;
 
@@ -53,9 +58,8 @@ namespace Marr.Data.Mapping
                 TryAddRelationshipForField(_currentPropertyName);
             }
 
-            return this;
+            return new RelationshipBuilderFor<TEntity,TChild>(_fluentEntity, Relationships, _currentPropertyName);
         }
-
 
         /// <summary>
 		/// Sets the current property to be lazy loaded with the given query.
@@ -116,36 +120,6 @@ namespace Marr.Data.Mapping
 					RelationshipType = relationship.RelationshipInfo.RelationType,
 					Condition = condition
 				};
-			return this;
-		}
-
-		/// <summary>
-		/// Eager loads property of type 'TChild' using the foreign key member 'fk' on the TEntity.
-		/// </summary>
-		/// <param name="fk"></param>
-		/// <returns></returns>
-		public RelationshipBuilder<TEntity> EagerLoadOne<TChild>(Expression<Func<TEntity, object>> fkProperty, Func<TEntity, bool> condition = null)
-		{
-			AssertCurrentPropertyIsSet();
-
-			var relationship = Relationships[_currentPropertyName];
-			var relationshipType = relationship.RelationshipInfo.RelationType;
-			relationship.EagerLoaded = new EagerLoadedOn<TEntity, TChild>(fkProperty.GetMemberName(), relationshipType, condition);
-			return this;
-		}
-
-		/// <summary>
-		/// Eager loads property of type 'TChild' using the foreign key member 'fk' on the TChild.
-		/// </summary>
-		/// <param name="fk"></param>
-		/// <returns></returns>
-		public RelationshipBuilder<TEntity> EagerLoadMany<TChild>(Expression<Func<TChild, object>> fkProperty, Func<TEntity, bool> condition = null)
-		{
-			AssertCurrentPropertyIsSet();
-
-			var relationship = Relationships[_currentPropertyName];
-			var relationshipType = relationship.RelationshipInfo.RelationType;
-			relationship.EagerLoaded = new EagerLoadedOn<TEntity, TChild>(fkProperty.GetMemberName(), relationshipType, condition);
 			return this;
 		}
 
@@ -311,7 +285,7 @@ namespace Marr.Data.Mapping
         /// Tries to add a Relationship for the given field name.  
         /// Throws and exception if field cannot be found.
         /// </summary>
-        private void TryAddRelationshipForField(string fieldName)
+        protected void TryAddRelationshipForField(string fieldName)
         {
             // Set strategy to filter for public or private fields
             ConventionMapStrategy strategy = new ConventionMapStrategy(false);
@@ -335,7 +309,7 @@ namespace Marr.Data.Mapping
         /// <summary>
         /// Throws an exception if the "current" property has not been set.
         /// </summary>
-        private void AssertCurrentPropertyIsSet()
+		protected void AssertCurrentPropertyIsSet()
         {
             if (string.IsNullOrEmpty(_currentPropertyName))
             {
@@ -345,4 +319,46 @@ namespace Marr.Data.Mapping
 
         #endregion
     }
+
+	public class RelationshipBuilderFor<TEntity, TChild> : RelationshipBuilder<TEntity>
+	{
+		public RelationshipBuilderFor(
+			FluentMappings.MappingsFluentEntity<TEntity> fluentEntity, 
+			RelationshipCollection relationships, 
+			string currentPropertyName)
+			: base(fluentEntity, relationships)
+        {
+			_currentPropertyName = currentPropertyName;
+		}
+
+		/// <summary>
+		/// Eager loads property of type 'TChild' using the foreign key member 'fk' on the TEntity.
+		/// </summary>
+		/// <param name="fk"></param>
+		/// <returns></returns>
+		public RelationshipBuilder<TEntity> EagerLoadOne(Expression<Func<TEntity, object>> fkProperty, Func<TEntity, bool> condition = null)
+		{
+			AssertCurrentPropertyIsSet();
+
+			var relationship = Relationships[_currentPropertyName];
+			var relationshipType = relationship.RelationshipInfo.RelationType;
+			relationship.EagerLoaded = new EagerLoadedOn<TEntity, TChild>(fkProperty.GetMemberName(), relationshipType, condition);
+			return this;
+		}
+
+		/// <summary>
+		/// Eager loads property of type 'TChild' using the foreign key member 'fk' on the TChild.
+		/// </summary>
+		/// <param name="fk"></param>
+		/// <returns></returns>
+		public RelationshipBuilder<TEntity> EagerLoadMany(Expression<Func<TChild, object>> fkProperty, Func<TEntity, bool> condition = null)
+		{
+			AssertCurrentPropertyIsSet();
+
+			var relationship = Relationships[_currentPropertyName];
+			var relationshipType = relationship.RelationshipInfo.RelationType;
+			relationship.EagerLoaded = new EagerLoadedOn<TEntity, TChild>(fkProperty.GetMemberName(), relationshipType, condition);
+			return this;
+		}
+	}
 }
