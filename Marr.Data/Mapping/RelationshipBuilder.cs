@@ -120,6 +120,51 @@ namespace Marr.Data.Mapping
 		}
 
 		/// <summary>
+		/// Eager loads property of type 'TChild' using the foreign key member 'fk' on the TEntity.
+		/// </summary>
+		/// <param name="fk"></param>
+		/// <returns></returns>
+		public RelationshipBuilder<TEntity> EagerLoadOne<TChild>(Expression<Func<TEntity, object>> fkProperty, Func<TEntity, bool> condition = null)
+		{
+			AssertCurrentPropertyIsSet();
+
+			var relationship = Relationships[_currentPropertyName];
+			var relationshipType = relationship.RelationshipInfo.RelationType;
+			relationship.EagerLoaded = new EagerLoadedOn<TEntity, TChild>(fkProperty.GetMemberName(), relationshipType, condition);
+			return this;
+		}
+
+		/// <summary>
+		/// Eager loads property of type 'TChild' using the foreign key member 'fk' on the TChild.
+		/// </summary>
+		/// <param name="fk"></param>
+		/// <returns></returns>
+		public RelationshipBuilder<TEntity> EagerLoadMany<TChild>(Expression<Func<TChild, object>> fkProperty, Func<TEntity, bool> condition = null)
+		{
+			AssertCurrentPropertyIsSet();
+
+			var relationship = Relationships[_currentPropertyName];
+			var relationshipType = relationship.RelationshipInfo.RelationType;
+			relationship.EagerLoaded = new EagerLoadedOn<TEntity, TChild>(fkProperty.GetMemberName(), relationshipType, condition);
+			return this;
+		}
+
+		/// <summary>
+		/// Eager loads property of type 'TChild' using the foreign key member 'fk'.
+		/// </summary>
+		/// <param name="fk"></param>
+		/// <returns></returns>
+		public RelationshipBuilder<TEntity> EagerLoadFK<TChild>(string fk, Func<TEntity, bool> condition = null)
+		{
+			AssertCurrentPropertyIsSet();
+
+			var relationship = Relationships[_currentPropertyName];
+			var relationshipType = relationship.RelationshipInfo.RelationType;
+			relationship.EagerLoaded = new EagerLoadedOn<TEntity, TChild>(fk, relationshipType, condition);
+			return this;
+		}
+
+		/// <summary>
 		/// Sets the current one-to-one relationship property to be eager loaded using the given join relationship.
 		/// </summary>
 		/// <typeparam name="TRight">The type of entity that will be the right join.</typeparam>

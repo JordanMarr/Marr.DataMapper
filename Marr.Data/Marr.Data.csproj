@@ -59,6 +59,7 @@
     <Compile Include="DataMappingException.cs" />
     <Compile Include="EagerLoaded.cs" />
     <Compile Include="EagerLoadedJoin.cs" />
+    <Compile Include="EagerLoadedOn.cs" />
     <Compile Include="EntityGraph.cs" />
     <Compile Include="EntityMerger.cs" />
     <Compile Include="EntityReference.cs" />
