@@ -299,7 +299,7 @@ namespace Marr.Data.Mapping
 				strategy.RelationshipPredicate = predicate;
 				RelationshipCollection relationships = strategy.MapRelationships(_entityType);
 				MapRepository.Instance.Relationships[_entityType] = relationships;
-				return new RelationshipBuilder<TEntity>(_fluentEntity, relationships);
+				return new RelationshipBuilder<TEntity>(_fluentEntity, _entityType, relationships);
 			}
 
 			/// <summary>
@@ -334,7 +334,7 @@ namespace Marr.Data.Mapping
 					}
 				}
 
-				return new RelationshipBuilder<TEntity>(_fluentEntity, relationships);
+				return new RelationshipBuilder<TEntity>(_fluentEntity, _entityType, relationships);
 			}
 		}
 	}

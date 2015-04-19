@@ -14,10 +14,15 @@ namespace Marr.Data.Mapping
     {
         protected FluentMappings.MappingsFluentEntity<TEntity> _fluentEntity;
 		protected string _currentPropertyName;
+		protected Type _tEntityType; // This will differ from TEntity if using ForEachEntity mapping
 
-        public RelationshipBuilder(FluentMappings.MappingsFluentEntity<TEntity> fluentEntity, RelationshipCollection relationships)
+        public RelationshipBuilder(
+			FluentMappings.MappingsFluentEntity<TEntity> fluentEntity, 
+			Type tEntityType, 
+			RelationshipCollection relationships)
         {
             _fluentEntity = fluentEntity;
+			_tEntityType = tEntityType;
             Relationships = relationships;
         }
 
@@ -58,7 +63,7 @@ namespace Marr.Data.Mapping
                 TryAddRelationshipForField(_currentPropertyName);
             }
 
-            return new RelationshipBuilderFor<TEntity,TChild>(_fluentEntity, Relationships, _currentPropertyName);
+            return new RelationshipBuilderFor<TEntity,TChild>(_fluentEntity, _tEntityType, Relationships, _currentPropertyName);
         }
 
         /// <summary>
@@ -134,7 +139,7 @@ namespace Marr.Data.Mapping
 
 			var relationship = Relationships[_currentPropertyName];
 			var relationshipType = relationship.RelationshipInfo.RelationType;
-			relationship.EagerLoaded = new EagerLoadedOn<TEntity, TChild>(fk, relationshipType, condition);
+			relationship.EagerLoaded = new EagerLoadedOn<TEntity, TChild>(fk, _tEntityType, relationshipType, condition);
 			return this;
 		}
 
@@ -324,9 +329,10 @@ namespace Marr.Data.Mapping
 	{
 		public RelationshipBuilderFor(
 			FluentMappings.MappingsFluentEntity<TEntity> fluentEntity, 
+			Type tEntityType,
 			RelationshipCollection relationships, 
 			string currentPropertyName)
-			: base(fluentEntity, relationships)
+			: base(fluentEntity, tEntityType, relationships)
         {
 			_currentPropertyName = currentPropertyName;
 		}
@@ -334,30 +340,26 @@ namespace Marr.Data.Mapping
 		/// <summary>
 		/// Eager loads property of type 'TChild' using the foreign key member 'fk' on the TEntity.
 		/// </summary>
-		/// <param name="fk"></param>
-		/// <returns></returns>
-		public RelationshipBuilder<TEntity> EagerLoadOne(Expression<Func<TEntity, object>> fkProperty, Func<TEntity, bool> condition = null)
+		public RelationshipBuilder<TEntity> EagerLoadOne(Expression<Func<TEntity, object>> fkOnParent, Func<TEntity, bool> condition = null)
 		{
 			AssertCurrentPropertyIsSet();
 
 			var relationship = Relationships[_currentPropertyName];
 			var relationshipType = relationship.RelationshipInfo.RelationType;
-			relationship.EagerLoaded = new EagerLoadedOn<TEntity, TChild>(fkProperty.GetMemberName(), relationshipType, condition);
+			relationship.EagerLoaded = new EagerLoadedOn<TEntity, TChild>(fkOnParent.GetMemberName(), _tEntityType, relationshipType, condition);
 			return this;
 		}
 
 		/// <summary>
 		/// Eager loads property of type 'TChild' using the foreign key member 'fk' on the TChild.
 		/// </summary>
-		/// <param name="fk"></param>
-		/// <returns></returns>
-		public RelationshipBuilder<TEntity> EagerLoadMany(Expression<Func<TChild, object>> fkProperty, Func<TEntity, bool> condition = null)
+		public RelationshipBuilder<TEntity> EagerLoadMany(Expression<Func<TChild, object>> fkOnChild, Func<TEntity, bool> condition = null)
 		{
 			AssertCurrentPropertyIsSet();
 
 			var relationship = Relationships[_currentPropertyName];
 			var relationshipType = relationship.RelationshipInfo.RelationType;
-			relationship.EagerLoaded = new EagerLoadedOn<TEntity, TChild>(fkProperty.GetMemberName(), relationshipType, condition);
+			relationship.EagerLoaded = new EagerLoadedOn<TEntity, TChild>(fkOnChild.GetMemberName(), _tEntityType, relationshipType, condition);
 			return this;
 		}
 	}

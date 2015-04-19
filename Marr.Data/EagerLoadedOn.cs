@@ -14,17 +14,19 @@ namespace Marr.Data
 	public class EagerLoadedOn<TParent, TChild> : IEagerLoaded
 	{
 		private string _fk;
+		private Type _tParentType; // Will differ from TParent if using ForEachEntity mapping
 		private RelationshipTypes _relationshipType;
 		private ColumnMapCollection _parentColumns;
 		private ColumnMapCollection _childColumns;
 
-		public EagerLoadedOn(string fk, RelationshipTypes relationshipType, Func<TParent, bool> condition)
+		public EagerLoadedOn(string fk, Type tParentType, RelationshipTypes relationshipType, Func<TParent, bool> condition)
 		{
 			var repos = MapRepository.Instance;
 
 			_fk = fk;
+			_tParentType = tParentType;
 			_relationshipType = relationshipType;
-			_parentColumns = repos.Columns[typeof(TParent)];
+			_parentColumns = repos.Columns[_tParentType];
 			_childColumns = repos.Columns[typeof(TChild)];
 
 			Condition = condition;

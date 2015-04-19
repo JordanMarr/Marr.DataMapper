@@ -166,7 +166,7 @@ namespace Marr.Data.Mapping
             strategy.RelationshipPredicate = predicate;
             RelationshipCollection relationships = strategy.MapRelationships(entityType);
             MapRepository.Instance.Relationships[entityType] = relationships;
-            return new RelationshipBuilder<T>(null, relationships);
+			return new RelationshipBuilder<T>(null, entityType, relationships);
         }
 
         /// <summary>
@@ -180,7 +180,7 @@ namespace Marr.Data.Mapping
             Type entityType = typeof(T);
             RelationshipCollection relationships = new RelationshipCollection();
             MapRepository.Instance.Relationships[entityType] = relationships;
-            return new RelationshipBuilder<T>(null, relationships);
+            return new RelationshipBuilder<T>(null, entityType, relationships);
         }
         
         #endregion
