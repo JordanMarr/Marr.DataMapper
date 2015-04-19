@@ -472,6 +472,38 @@ namespace Marr.Data.QGen
 
 		#region - Helper Methods -
 
+		/// <summary>
+		/// Builds a fully qualified column name.
+		/// (To be used for the Where overload that takes a string).
+		/// </summary>
+		public string BuildColumnName(string col, bool addTablePrefix = true)
+		{
+			bool useAltName = HasDirectChildrenToMergeInQuery && !IsJoin;
+			Type declaringType = typeof(T);
+
+			if (addTablePrefix)
+			{
+				Table table = Tables.FindTable(declaringType);
+
+				if (table == null)
+				{
+					string msg = string.Format("The property '{0} -> {1}' you are trying to reference belongs to an entity that has not been included in your query.  To reference this property, you must join the '{0}' entity using the Join or Graph method.",
+						declaringType,
+						col);
+
+					throw new DataMappingException(msg);
+				}
+
+				string columnName = DataHelper.GetColumnName(declaringType, col, useAltName);
+				return _dialect.CreateToken(string.Format("{0}.{1}", table.Alias, columnName));
+			}
+			else
+			{
+				string columnName = DataHelper.GetColumnName(declaringType, col, useAltName);
+				return _dialect.CreateToken(columnName);
+			}
+		}
+
 		internal override Type GetEntityType()
 		{
 			return typeof(T);

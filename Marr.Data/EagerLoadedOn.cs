@@ -59,7 +59,9 @@ namespace Marr.Data
 						throw new DataMappingException(string.Format("'{0}' does not contain foreign key field '{1}'.", typeof(TParent), _fk));
 
 					db.AddParameter("@FK", parentFK.Getter(parent));
-					return db.Query<TChild>().Where(childPK.ColumnInfo.Name + "=@FK").FirstOrDefault();
+					var query = db.Query<TChild>();
+					string whereClause = query.BuildColumnName(childPK.ColumnInfo.Name) + "=@FK";
+					return query.Where(whereClause).FirstOrDefault();
 				}
 				else if (_relationshipType == RelationshipTypes.Many)
 				{
@@ -74,7 +76,9 @@ namespace Marr.Data
 						throw new DataMappingException(string.Format("'{0}' does not contain foreign key field '{1}'.", typeof(TChild), _fk));
 
 					db.AddParameter("@PK", parentPK.Getter(parent));
-					return db.Query<TChild>().Where(childFK.ColumnInfo.Name + "=@PK").ToList();
+					var query = db.Query<TChild>();
+					string whereClause = query.BuildColumnName(childFK.ColumnInfo.Name) + "=@PK";
+					return query.Where(whereClause).ToList();
 				}
 				else
 				{
